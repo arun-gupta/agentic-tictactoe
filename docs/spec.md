@@ -447,6 +447,65 @@ Configuration is loaded in priority order: defaults in code, config.json, .env f
 
 **Fault Tolerance**: Handle agent server failures gracefully, retry logic, fallback to local mode if MCP unavailable.
 
+### Containerization and Orchestration
+
+**Docker Files**:
+
+The project should include simple, functional Dockerfiles:
+
+**Dockerfile**: Single Dockerfile for the application
+- Base image: Python 3.11+
+- Install dependencies from requirements.txt
+- Copy application code
+- Expose ports: 8000 (API) and 8501 (UI)
+- Default command to run the application
+
+**Docker Compose**:
+
+**docker-compose.yml**: Simple compose file for local development
+- Services: api (FastAPI) and ui (Streamlit)
+- Network for service communication
+- Environment variables from .env file
+- Volume mounts for code (development only)
+
+**Kubernetes Helm Charts**:
+
+**Chart Structure**:
+```
+helm/
+├── Chart.yaml
+├── values.yaml
+└── templates/
+    ├── deployment.yaml  # Deployments for API and UI services
+    ├── service.yaml     # Services for API and UI
+    ├── configmap.yaml   # Application configuration
+    └── secret.yaml      # API keys and secrets
+```
+
+**Helm Chart Components**:
+
+**Deployments**: Simple deployments for API and UI services
+- Single replica per service (configurable via values)
+- Environment variables from ConfigMap and Secrets
+- Basic container image configuration
+
+**Services**: ClusterIP services for API and UI
+- API service on port 8000
+- UI service on port 8501
+
+**ConfigMap**: Application configuration (model names, timeouts, feature flags)
+
+**Secret**: LLM API keys and sensitive configuration
+- Store API keys for OpenAI, Anthropic, Google Gemini
+- Use Kubernetes secrets (create manually or via kubectl)
+
+**values.yaml**: Basic configuration
+- Image name and tag
+- Number of replicas (default: 1)
+- Service ports
+- LLM provider settings
+- Environment-specific overrides
+
 ---
 
 ## 11. Testing Strategy
