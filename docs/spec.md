@@ -204,7 +204,9 @@ All API responses use Pydantic models for validation and serialization.
 
 ## 6. Streamlit UI Requirements
 
-### Main Game Interface
+### Main Panel (Active During Game)
+
+The main panel displays the game interface and is visible throughout gameplay:
 
 **Game Board Display**: Visual 3x3 grid showing X, O, and empty cells. Clickable cells for player moves. Highlights last move. Shows current player turn. Displays move history directly on the board game interface, showing a chronological list of moves with player/AI indicator, move number, position, and timestamp. Move history entries include expandable details showing agent reasoning.
 
@@ -215,13 +217,42 @@ All API responses use Pydantic models for validation and serialization.
 
 **Game Status Display**: Shows current player, move number, game over status, winner (if any), and draw status.
 
-### Metrics Dashboard
+### Metrics Panel (Available After Game Completion)
 
-**Performance Metrics**: Per-agent execution times, success rates, LLM call counts, token usage, error rates.
+The Metrics panel becomes available and displayed after the game is completed (win, loss, or draw). It provides detailed insights into the agent coordination and LLM interactions:
 
-**Game Metrics**: Total moves, game duration, win/loss/draw statistics, average move time.
+**Coordinator-Agent Communication**: JSON payloads showing:
+- Coordinator requests to each agent (Scout, Strategist, Executor)
+- Agent responses and results
+- Input/output data structures for each agent call
+- Request/response flow through the agent pipeline
 
-**Visualizations**: Charts for agent response times, token usage over time, success rate trends.
+**Backend LLM Interactions**: 
+- LLM API calls made by each agent
+- Request prompts sent to LLM
+- LLM responses received
+- Token usage per LLM call
+- Response times for each LLM interaction
+- Model/provider information for each call
+
+**Agent Switch Information**:
+- Agent mode used (LangChain local or LangChain+MCP distributed)
+- Agent initialization details
+- Agent configuration settings
+- Mode switching events (if any occurred during the game)
+
+**Performance Summary**:
+- Per-agent execution times (min, max, average)
+- Total LLM calls per agent
+- Total token usage
+- Success/failure rates
+- Error details (if any)
+
+**Game Metrics**:
+- Total moves
+- Game duration
+- Win/loss/draw outcome
+- Average move time
 
 ### Configuration Panel
 
