@@ -1238,101 +1238,162 @@ All API requests and responses must use strongly-typed, validated models. Implem
 
 ---
 
-## 6. Web UI Requirements
+## 6. Web UI Functional Requirements
 
-### Main Panel (Active During Game)
+This section defines **what** the UI must do (functional requirements). Visual design specifications (colors, animations, layouts, typography, spacing) will be provided separately as Figma designs.
 
-The main panel displays the game interface and is visible throughout gameplay:
+### User Stories: Game Board
 
-**Game Board Display**: Visual 3x3 grid showing X, O, and empty cells. Clickable cells for player moves. Highlights last move with animated transitions. Shows current player turn. Displays move history directly on the board game interface, showing a chronological list of moves with player/AI indicator, move number, position, and timestamp. Move history entries include expandable details showing agent reasoning. Animated moves provide smooth visual transitions when pieces are placed on the board.
+**US-001: Display Game Board**
+- As a player, I MUST see a 3x3 grid representing the game board
+- The board MUST display current cell states (EMPTY, X, or O)
+- The board MUST update immediately when game state changes
 
-**Agent Insights Panel**: Real-time display of:
-- Scout analysis (threats, opportunities, strategic moves)
-- Strategist strategy (recommended move, reasoning, priority)
-- Executor execution (validation, success status, timing)
-- Loading indicators for each agent step showing current agent activity
-- Agent "thinking" animation/progress indicator with visual feedback during LLM processing
-- Estimated time remaining for AI move based on historical agent performance
+**US-002: Make Player Move**
+- As a player, I MUST be able to click any empty cell to make a move
+- The UI MUST disable the board during AI turn
+- The UI MUST show validation errors for invalid moves (occupied cell, out of bounds)
 
-**AI Processing Status Display**:
+**US-003: View Last Move**
+- As a player, I MUST see which move was made most recently
+- The last move indicator MUST update after each player or AI move
 
-Progressive status updates based on elapsed time:
-- **0-2 seconds**: Show subtle loading spinner next to current agent name (e.g., "Scout analyzing...")
-- **2-5 seconds**: Upgrade to animated progress bar with message "AI is thinking..."
-- **5-10 seconds**: Show detailed progress with message "AI is analyzing carefully..." and elapsed time counter
-- **10-15 seconds**: Show warning indicator with message "Taking longer than usual, preparing fallback..." and option to force fallback
-- **15+ seconds**: Automatically trigger fallback, show message "Using quick analysis..." with explanation
+**US-004: View Current Turn**
+- As a player, I MUST know whose turn it is (player or AI)
+- The current turn indicator MUST update after each move
 
-**Status Indicators**:
-- Green pulse: Agent actively processing
-- Yellow pulse: Agent taking longer than expected (>5s)
-- Orange pulse: Approaching timeout (>10s)
-- Blue checkmark: Agent completed successfully
-- Red X: Agent failed, using fallback
-- Gray: Agent not yet started or skipped
+**US-005: View Game Status**
+- As a player, I MUST see the current move number
+- As a player, I MUST see if the game is over
+- As a player, I MUST see who won (X, O, or DRAW) when game ends
 
-**Interactive Elements**:
-- "Force Fallback" button appears after 10 seconds, allows user to skip waiting
-- "Show Details" expands to show exact timeout values and fallback strategy
-- "Retry with Different Model" option appears on timeout/failure
+### User Stories: Move History
 
-**Game Status Display**: Shows current player, move number, game over status, winner (if any), and draw status.
+**US-006: View Move History**
+- As a player, I MUST see a chronological list of all moves made
+- Each move entry MUST show: player/AI indicator, move number, position, timestamp
 
-### Metrics Panel (Available After Game Completion)
+**US-007: View Move Details**
+- As a player, I MUST be able to expand any move to see agent reasoning
+- Agent reasoning MUST show Scout analysis, Strategist strategy, and Executor execution details
 
-The Metrics panel becomes available and displayed after the game is completed (win, loss, or draw). It provides detailed insights into the agent coordination and LLM interactions:
+### User Stories: Agent Insights
 
-**Coordinator-Agent Communication**: JSON payloads showing:
-- Coordinator requests to each agent (Scout, Strategist, Executor)
-- Agent responses and results
-- Input/output data structures for each agent call
-- Request/response flow through the agent pipeline
+**US-008: View Agent Analysis**
+- As a player, I MUST see real-time Scout analysis (threats, opportunities, strategic moves)
+- As a player, I MUST see real-time Strategist strategy (recommended move, reasoning, priority)
+- As a player, I MUST see real-time Executor execution (validation, success status, timing)
 
-**Backend LLM Interactions**: 
-- LLM API calls made by each agent
-- Request prompts sent to LLM
-- LLM responses received
-- Token usage per LLM call
-- Response times for each LLM interaction
-- Model/provider information for each call
+**US-009: View Agent Processing Status**
+- As a player, I MUST see which agent is currently active
+- As a player, I MUST see loading indication while agents are processing
+- As a player, I MUST see estimated time remaining for AI move
 
-**Agent Switch Information**:
-- Agent mode used (local or distributed MCP)
-- LLM framework used (see Section 19: Implementation Choices)
-- Agent initialization details
-- Agent configuration settings
-- Mode switching events (if any occurred during the game)
+**US-010: View Agent Timeout Progress**
+- As a player, I MUST see progressive status updates as processing time increases:
+  - At 0-2s: Basic loading indication
+  - At 2-5s: Processing indication
+  - At 5-10s: Detailed progress with elapsed time
+  - At 10-15s: Warning indication with fallback preparation notice
+  - At 15s+: Automatic fallback execution with explanation
 
-**Performance Summary**:
-- Per-agent execution times (min, max, average)
-- Total LLM calls per agent
-- Total token usage
-- Success/failure rates
-- Error details (if any)
+**US-011: Force Agent Fallback**
+- As a player, I MUST be able to force fallback after 10 seconds of waiting
+- The UI MUST provide a "Force Fallback" action
+- The UI MUST explain what fallback strategy will be used
 
-**Game Metrics**:
-- Total moves
-- Game duration
-- Win/loss/draw outcome
-- Average move time
+**US-012: Retry Failed Agent**
+- As a player, I MUST be able to retry with a different model when agent fails
+- The UI MUST provide retry options on agent timeout/failure
 
-### Configuration Panel
+### User Stories: Post-Game Metrics
 
-**Model Selection**: Dropdown to select LLM provider (OpenAI, Anthropic, Google Gemini, Ollama) and model name. User preferences for LLM settings are automatically saved and restored in future sessions.
+**US-013: View Metrics After Game**
+- As a player, I MUST be able to view detailed metrics after game completion
+- Metrics MUST only be available/displayed when game is over (win, loss, or draw)
 
-**Agent Mode Selection**: Toggle between local mode (LLM framework-based, fast) and distributed MCP mode (protocol-based). LLM framework selection (LangChain, LiteLLM, Instructor, or Direct SDKs) determines which multi-provider abstraction layer is used - see Section 19 for options.
+**US-014: View Agent Communication**
+- As a player, I MUST see coordinator requests to each agent
+- As a player, I MUST see agent responses and results
+- As a player, I MUST see input/output data structures for each agent call
 
-**Game Settings**: Option to reset game, change player symbol, adjust difficulty (if implemented).
+**US-015: View LLM Interactions**
+- As a player, I MUST see LLM API calls made by each agent
+- As a player, I MUST see request prompts sent to LLM
+- As a player, I MUST see LLM responses received
+- As a player, I MUST see token usage per LLM call
+- As a player, I MUST see response times for each LLM interaction
+- As a player, I MUST see model/provider information for each call
 
-### Real-time Updates
+**US-016: View Agent Configuration**
+- As a player, I MUST see agent mode used (local or distributed MCP)
+- As a player, I MUST see LLM framework used
+- As a player, I MUST see agent initialization details
+- As a player, I MUST see mode switching events (if any)
 
-UI updates automatically when:
-- Player makes a move
-- AI makes a move
-- Game state changes
-- Agent metrics update
+**US-017: View Performance Summary**
+- As a player, I MUST see per-agent execution times (min, max, average)
+- As a player, I MUST see total LLM calls per agent
+- As a player, I MUST see total token usage
+- As a player, I MUST see success/failure rates
+- As a player, I MUST see error details (if any)
 
-Implementation must manage UI state to prevent unnecessary re-renders and maintain user context across updates.
+**US-018: View Game Summary**
+- As a player, I MUST see total moves
+- As a player, I MUST see game duration
+- As a player, I MUST see win/loss/draw outcome
+- As a player, I MUST see average move time
+
+### User Stories: Configuration
+
+**US-019: Select LLM Provider and Model**
+- As a player, I MUST be able to select LLM provider (OpenAI, Anthropic, Google Gemini, Ollama)
+- As a player, I MUST be able to select model name
+- My LLM preferences MUST be saved and restored in future sessions
+
+**US-020: Select Agent Mode**
+- As a player, I MUST be able to toggle between local mode and distributed MCP mode
+- As a player, I MUST be able to select LLM framework (LangChain, LiteLLM, Instructor, Direct SDKs)
+
+**US-021: Configure Game Settings**
+- As a player, I MUST be able to reset the game
+- As a player, I MUST be able to change player symbol (X or O)
+- As a player, I SHOULD be able to adjust difficulty (if implemented)
+
+### User Stories: Real-Time Updates
+
+**US-022: Automatic State Updates**
+- As a player, the UI MUST update automatically when I make a move
+- As a player, the UI MUST update automatically when AI makes a move
+- As a player, the UI MUST update automatically when game state changes
+- As a player, the UI MUST update automatically when agent metrics update
+
+**US-023: Performance Requirements**
+- The UI MUST prevent unnecessary re-renders
+- The UI MUST maintain user context across updates
+- Board updates MUST be reflected within 100ms of state change
+- Agent status updates MUST be reflected within 500ms
+
+### User Stories: Error Handling
+
+**US-024: Display Error Messages**
+- As a player, I MUST see clear error messages for invalid moves
+- As a player, I MUST see error messages for agent failures
+- As a player, I MUST see error messages for network issues
+- Error messages MUST follow the Failure Matrix specifications (Section 12)
+
+**US-025: Fallback Indication**
+- As a player, I MUST be notified when fallback strategies are used
+- As a player, I MUST understand why fallback was triggered
+- As a player, I MUST see which fallback strategy was applied
+
+---
+
+## 6.1 UI Visual Design Specification
+
+**Note**: Visual design specifications (colors, animations, layouts, typography, spacing, component styling) are defined separately in Figma designs and are not part of this functional specification. The Figma designs will reference the user story IDs above to maintain traceability between functional requirements and visual design.
+
+Visual elements mentioned in Section 12 (Failure Matrix UI Indications) provide guidance for error state presentation but exact styling will be determined by Figma designs.
 
 ---
 
