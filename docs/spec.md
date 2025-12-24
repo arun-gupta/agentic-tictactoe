@@ -405,6 +405,8 @@ Uses Streamlit's session state to manage game state and prevent unnecessary reru
 
 **MCP Configuration** (if using MCP mode): Port assignments per agent, server URLs for distributed mode, protocol settings, transport type (stdio, HTTP, SSE).
 
+**Port Configuration**: All service ports must be configurable through the configuration file. API server port (default: 8000), Streamlit UI port (default: 8501), MCP agent server ports (if using distributed mode). No hardcoded ports in application code.
+
 **UI Configuration**: Streamlit theme, refresh intervals, metrics display preferences, debug mode.
 
 ### Configuration Sources
