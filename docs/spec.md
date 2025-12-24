@@ -67,11 +67,21 @@ Includes helper methods to get the current player's symbol and the opponent.
 - Game phase (opening/midgame/endgame)
 - Board evaluation score (-1.0 to 1.0)
 
-**Move Recommendation**: Strategist output with position, priority (BLOCK/WIN/STRATEGIC), confidence, reasoning, and expected outcome.
+**Move Priority**: Enum defining priority levels for move recommendations (see Priority System below for details):
+- IMMEDIATE_WIN (priority: 100) - We can win on this move
+- BLOCK_THREAT (priority: 90) - Opponent can win next move, must block
+- FORCE_WIN (priority: 80) - Create unstoppable winning position (fork)
+- PREVENT_FORK (priority: 70) - Block opponent from creating a fork
+- CENTER_CONTROL (priority: 50) - Take center position (opening)
+- CORNER_CONTROL (priority: 40) - Take corner position (strategic)
+- EDGE_PLAY (priority: 30) - Take edge position (less strategic)
+- RANDOM_VALID (priority: 10) - Any valid move (fallback)
+
+**Move Recommendation**: Strategist output with position, priority (MovePriority enum), confidence (0.0-1.0), reasoning, and expected outcome.
 
 **Strategy**: Strategist output containing:
-- Primary move recommendation
-- Alternative move recommendations
+- Primary move recommendation (highest priority)
+- Alternative move recommendations (sorted by priority descending)
 - Overall game plan
 - Risk assessment (low/medium/high)
 
@@ -105,10 +115,10 @@ Provides factory methods for success and error results.
 Uses a fast path for rule-based checks (immediate wins/blocks) and falls back to LLM analysis for strategic decisions.
 
 **Strategist Agent**: Synthesizes Scout analysis into a strategy:
-- Prioritizes moves (BLOCK > WIN > STRATEGIC)
-- Recommends primary move with alternatives
+- Prioritizes moves using the Move Priority System (see below)
+- Recommends primary move with alternatives (all sorted by priority)
 - Provides game plan and risk assessment
-- Considers long-term position
+- Considers long-term position and confidence scoring
 
 **Executor Agent**: Executes the recommended move:
 - Validates move (bounds, empty cell, rules)
@@ -143,6 +153,91 @@ Agents are stateless; all context comes from inputs. Results include execution m
 - Timeout values configurable via config file
 - Different timeouts for local mode (5s/5s/3s) vs distributed MCP mode (10s/10s/5s)
 - Per-provider timeout adjustments (e.g., local Ollama may need longer timeouts)
+
+### Move Priority System
+
+The Move Priority System defines a strict ordering for move selection with numeric priority values and clear decision rules:
+
+**Priority Levels (Descending Order)**:
+
+1. **IMMEDIATE_WIN (100)**: We have two in a row and can complete three
+   - Detection: Check all lines (rows, cols, diagonals) for 2 AI symbols + 1 empty
+   - Action: Always take this move immediately
+   - Confidence: 1.0 (guaranteed win)
+   - Example: AI has X at (0,0) and (0,1), play (0,2) to win
+
+2. **BLOCK_THREAT (90)**: Opponent has two in a row and will win next move
+   - Detection: Check all lines for 2 opponent symbols + 1 empty
+   - Action: Must block immediately (defensive)
+   - Confidence: 1.0 (necessary to continue)
+   - Example: Opponent has O at (1,0) and (1,1), must play (1,2)
+
+3. **FORCE_WIN (80)**: Create a fork (two winning opportunities simultaneously)
+   - Detection: Move creates two unblocked lines with 2 AI symbols each
+   - Action: Opponent cannot block both, guarantees eventual win
+   - Confidence: 0.95 (near-certain advantage)
+   - Example: Play corner to create two diagonal threats
+
+4. **PREVENT_FORK (70)**: Block opponent from creating a fork
+   - Detection: Opponent's move would create two winning threats
+   - Action: Block the setup position or force opponent to defend
+   - Confidence: 0.85 (prevents opponent advantage)
+   - Example: Block opponent's second corner when they hold opposite corner
+
+5. **CENTER_CONTROL (50)**: Take center position (1,1)
+   - Detection: Center is empty and no higher priority moves exist
+   - Action: Center provides most strategic flexibility (4 lines)
+   - Confidence: 0.75 (strong opening/midgame)
+   - Example: First move or early game when center available
+
+6. **CORNER_CONTROL (40)**: Take corner position (0,0 / 0,2 / 2,0 / 2,2)
+   - Detection: Corner is empty and no higher priority moves exist
+   - Action: Corners participate in 3 lines each (row, col, diagonal)
+   - Confidence: 0.60 (solid strategic position)
+   - Example: Opening move or when center taken
+
+7. **EDGE_PLAY (30)**: Take edge position (0,1 / 1,0 / 1,2 / 2,1)
+   - Detection: Edge is empty and no higher priority moves exist
+   - Action: Edges only participate in 2 lines each (less strategic)
+   - Confidence: 0.40 (weaker position)
+   - Example: Most corners and center taken
+
+8. **RANDOM_VALID (10)**: Any valid empty cell
+   - Detection: No strategic patterns detected
+   - Action: Pick any available move (fallback)
+   - Confidence: 0.20 (minimal strategic value)
+   - Example: Backup when analysis fails
+
+**Decision Algorithm**:
+
+```
+1. Scout identifies all opportunities and threats
+2. Strategist evaluates each possible move:
+   a. Check for IMMEDIATE_WIN (priority 100)
+   b. Check for BLOCK_THREAT (priority 90)
+   c. Check for FORCE_WIN (priority 80)
+   d. Check for PREVENT_FORK (priority 70)
+   e. Check for CENTER_CONTROL (priority 50)
+   f. Check for CORNER_CONTROL (priority 40)
+   g. Check for EDGE_PLAY (priority 30)
+   h. Fallback to RANDOM_VALID (priority 10)
+3. Select move with highest priority value
+4. If multiple moves have same priority, use confidence score as tiebreaker
+5. If still tied, prefer moves in this order: center > corners > edges
+```
+
+**Tie-Breaking Rules**:
+1. Higher numeric priority always wins
+2. Same priority → higher confidence score
+3. Same confidence → position preference (center > corner > edge)
+4. Same position type → prefer positions that participate in more open lines
+5. Final tiebreaker → deterministic position ordering (0,0 < 0,1 < 0,2 < 1,0...)
+
+**Validation**:
+- All moves must be validated before recommendation
+- Invalid moves (occupied, out of bounds) are automatically filtered
+- If highest priority move is invalid, try next priority
+- Executor performs final validation before execution
 
 ### Agent Pipeline Flow
 
@@ -327,10 +422,12 @@ Uses Streamlit's session state to manage game state and prevent unnecessary reru
 **schemas/**: Domain models as Pydantic classes:
 - game.py: Core game models (Position, Board, GameState)
 - analysis.py: Scout agent models (Threat, Opportunity, StrategicMove, BoardAnalysis)
-- strategy.py: Strategist agent models (MoveRecommendation, Strategy)
+- strategy.py: Strategist agent models (MovePriority enum, MoveRecommendation, Strategy)
 - execution.py: Executor agent models (ValidationError, MoveExecution)
 - results.py: Result wrapper models (AgentResult)
 - api.py: API request/response models
+
+Note: MovePriority enum defines 8 priority levels (IMMEDIATE_WIN=100, BLOCK_THREAT=90, FORCE_WIN=80, PREVENT_FORK=70, CENTER_CONTROL=50, CORNER_CONTROL=40, EDGE_PLAY=30, RANDOM_VALID=10) - see Section 3 for full priority system specification.
 
 **agents/**: Agent implementations:
 - interfaces.py: Abstract base classes and protocols
