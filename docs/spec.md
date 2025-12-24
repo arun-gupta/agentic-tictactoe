@@ -1547,7 +1547,7 @@ See Section 14 for recommended specific technologies that meet these requirement
 
 **Agent Framework Configuration**: Mode selection (local or distributed_mcp), LLM framework selection for multi-provider support (see Section 19), model selection per agent or shared, timeout settings per agent (Scout: 5s, Strategist: 5s, Executor: 3s in local mode; 10s/10s/5s in distributed mode), retry logic.
 
-**LLM Provider Configuration**: Provider selection (OpenAI, Anthropic, Google Gemini, Ollama), API keys (from environment), model names, temperature and other parameters, token limits. Default models: OpenAI uses GPT-5 mini (fallback: GPT-4.1), Anthropic uses Claude Opus 4.5, Google Gemini uses Gemini 3 Flash (fallback: Gemini 2.5 Flash).
+**LLM Provider Configuration**: Provider selection (OpenAI, Anthropic, Google Gemini, Ollama), API keys (from environment), model name per provider (one model per provider), temperature and other parameters, token limits. Default models: OpenAI uses gpt-5.2, Anthropic uses claude-opus-4.5, Google Gemini uses gemini-3-flash. Model names are configurable in config file.
 
 **Game Configuration**: Default player symbol, AI symbol, game rules (if configurable), move timeout.
 
@@ -2251,13 +2251,15 @@ When choosing alternative technologies, ensure they support:
 
 ### Supported Providers
 
-**OpenAI**: GPT-5 mini (default), GPT-4.1 (fallback), GPT-4o, GPT-4o-mini, GPT-4 Turbo, GPT-4, GPT-3.5 Turbo, o1-preview, o1-mini.
+**OpenAI**: Default model is `gpt-5.2`. Model name is configurable in config file.
 
-**Anthropic**: Claude Opus 4.5 (default), Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus, Claude 3 Sonnet, Claude 3 Haiku.
+**Anthropic**: Default model is `claude-opus-4.5`. Model name is configurable in config file.
 
-**Google Gemini**: Gemini 3 Flash (default), Gemini 2.5 Flash (fallback), Gemini Pro, Gemini Flash, Gemini 1.5 Pro, Gemini 1.5 Flash.
+**Google Gemini**: Default model is `gemini-3-flash`. Model name is configurable in config file.
 
-**Ollama**: Local models (Llama, Mistral, etc.).
+**Ollama**: Local models. Model name must be specified in config file (e.g., `llama3.2`, `mistral`).
+
+**Configuration Constraint**: Only ONE model per provider. Each provider can only have one model configured at a time. To use multiple models from the same provider, switch the configuration and restart.
 
 ### Shared LLM Connection
 
@@ -2265,7 +2267,7 @@ When choosing alternative technologies, ensure they support:
 
 **Implementation**: SharedLLMConnection class manages connection, provides get_connection() method.
 
-**Configuration**: Model selection in config, API keys from environment. Default models: OpenAI uses GPT-5 mini (fallback: GPT-4.1), Anthropic uses Claude Opus 4.5, Google Gemini uses Gemini 3 Flash (fallback: Gemini 2.5 Flash).
+**Configuration**: Model selection in config file (one model per provider), API keys from environment. Default models: OpenAI uses gpt-5.2, Anthropic uses claude-opus-4.5, Google Gemini uses gemini-3-flash.
 
 **Error Handling**: Connection retry logic, fallback to individual connections if shared fails.
 
