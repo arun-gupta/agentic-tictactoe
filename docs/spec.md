@@ -23,7 +23,7 @@ A Tic-Tac-Toe game between a human player and an AI opponent. The AI uses three 
 **Flexibility & Runtime Adaptability:**
 - **Configuration over Code**: Behavior controlled through config files, environment variables, and command-line arguments
 - **Hot-swappability**: LLM providers and models can be changed via configuration without code changes
-- **Mode Interchangeability**: Agents can switch between local (direct LLM integration) and distributed (MCP) modes at runtime
+- **Mode Interchangeability**: Agents can switch between local (LLM framework-based) and distributed (MCP) modes at runtime
 - **Extensibility**: Well-defined interfaces allow adding new agents or features without modifying existing code
 
 **Operational Resilience:**
@@ -263,7 +263,7 @@ The Metrics panel becomes available and displayed after the game is completed (w
 
 **Model Selection**: Dropdown to select LLM provider (OpenAI, Anthropic, Google Gemini, Ollama) and model name. User preferences for LLM settings are automatically saved and restored in future sessions.
 
-**Agent Mode Selection**: Toggle between local mode (direct LLM integration, fast) and distributed MCP mode (protocol-based). LLM framework selection (LangChain, LiteLLM, Instructor, or Direct SDKs) is also configurable - see Section 19 for options.
+**Agent Mode Selection**: Toggle between local mode (LLM framework-based, fast) and distributed MCP mode (protocol-based). LLM framework selection (LangChain, LiteLLM, Instructor, or Direct SDKs) determines which multi-provider abstraction layer is used - see Section 19 for options.
 
 **Game Settings**: Option to reset game, change player symbol, adjust difficulty (if implemented).
 
@@ -293,15 +293,15 @@ Uses Streamlit's session state to manage game state and prevent unnecessary reru
 
 **agents/**: Agent implementations:
 - interfaces.py: Abstract base classes and protocols
-- scout_local.py: Local Scout implementation (framework-agnostic)
-- strategist_local.py: Local Strategist implementation
-- executor_local.py: Local Executor implementation
+- scout_local.py: Local Scout implementation using configured LLM framework
+- strategist_local.py: Local Strategist implementation using configured LLM framework
+- executor_local.py: Local Executor implementation using configured LLM framework
 - scout_mcp.py: Scout with MCP protocol support
 - strategist_mcp.py: Strategist with MCP protocol support
 - executor_mcp.py: Executor with MCP protocol support
 - base_mcp_agent.py: Base class for MCP protocol support
 
-Note: Agent implementations are framework-agnostic. LLM framework choice (LangChain, LiteLLM, Instructor, Direct SDKs) is configured separately - see Section 19.
+Note: Agents use an LLM framework abstraction layer that supports multiple providers. LLM framework choice (LangChain, LiteLLM, Instructor, Direct SDKs) determines the multi-provider abstraction implementation - see Section 19.
 
 **game/**: Game logic:
 - engine.py: Core game rules and state management
@@ -321,8 +321,9 @@ Note: Agent implementations are framework-agnostic. LLM framework choice (LangCh
 - components/insights.py: Agent insights component
 
 **models/**: LLM management:
-- shared_llm.py: Shared LLM connection manager
-- factory.py: LLM factory for different providers
+- shared_llm.py: Shared LLM connection manager with pooling
+- factory.py: LLM provider factory supporting multi-provider frameworks
+- provider_adapter.py: Abstraction layer for different LLM frameworks
 
 **utils/**: Utilities:
 - config.py: Configuration management
@@ -400,7 +401,7 @@ Note: Agent implementations are framework-agnostic. LLM framework choice (LangCh
 
 ### Configuration Structure
 
-**Agent Framework Configuration**: Mode selection (local or distributed_mcp), LLM framework selection (see Section 19), model selection per agent or shared, timeout settings, retry logic.
+**Agent Framework Configuration**: Mode selection (local or distributed_mcp), LLM framework selection for multi-provider support (see Section 19), model selection per agent or shared, timeout settings, retry logic.
 
 **LLM Provider Configuration**: Provider selection (OpenAI, Anthropic, Google Gemini, Ollama), API keys (from environment), model names, temperature and other parameters, token limits. Default models: OpenAI uses GPT-5 mini (fallback: GPT-4.1), Anthropic uses Claude Opus 4.5, Google Gemini uses Gemini 3 Flash (fallback: Gemini 2.5 Flash).
 
@@ -637,16 +638,17 @@ helm/
 
 ### Mode 1: Local (Fast)
 
-**Description**: Direct LLM integration with shared LLM connection. No MCP protocol overhead. Uses chosen LLM framework (see Section 19 for framework options).
+**Description**: In-process agent execution using an LLM framework with shared connection pooling. No MCP protocol overhead. The LLM framework (LangChain, LiteLLM, Instructor, or Direct SDKs - see Section 19) provides multi-provider support, allowing LLM provider switching via configuration.
 
 **Characteristics**:
 - Fast execution (< 1 second per move)
-- Direct Python method calls
+- Direct Python method calls between coordinator and agents
 - Shared LLM connection for efficiency
 - Rule-based pre-checks for immediate wins/blocks
+- LLM provider hot-swapping via configuration
 - Best for production use
 
-**Implementation**: Agents implement interfaces directly using the configured LLM framework. Coordinator calls agents via direct Python methods.
+**Implementation**: Agents implement interfaces using the configured LLM framework. Coordinator calls agents via direct Python methods. The framework handles provider abstraction and connection management.
 
 ### Mode 2: Distributed MCP (Protocol-Based)
 
