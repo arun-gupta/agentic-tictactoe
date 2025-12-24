@@ -648,7 +648,7 @@ helm/
 **Description**: LangChain agents with MCP protocol support for distributed coordination.
 
 **Characteristics**:
-- MCP protocol for inter-agent communication (note: MCP is designed for tool integration and cross-process communication, not optimized for high-frequency agent coordination)
+- MCP protocol for inter-agent communication (note: MCP is designed for tool integration and cross-process communication, not optimized for high-frequency agent coordination; use this mode when agents need to run on separate machines)
 - Can distribute agents across machines
 - Protocol overhead (3-8 seconds per move)
 - Standardized API for external clients
