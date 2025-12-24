@@ -1011,28 +1011,56 @@ helm/
 
 **System Errors**: Network failures, database errors, configuration errors. Log critical errors, provide user-friendly messages, implement circuit breakers if needed.
 
-### Error Handling Matrix
+### Comprehensive Failure Matrix
 
-This table defines standardized handling for all error scenarios:
+This table defines deterministic behavior for all failure scenarios:
 
-| Error Type | Error Code | Retry Policy | Fallback Strategy | User Message | Log Level | Test Coverage |
-|------------|------------|--------------|-------------------|--------------|-----------|---------------|
-| **LLM API Timeout** | `LLM_TIMEOUT` | 3 retries, exponential backoff (1s, 2s, 4s); per-agent timeouts: Scout 5s, Strategist 5s, Executor 3s (local mode) | Use rule-based move selection | "AI is taking longer than expected. Using quick analysis..." | WARNING | Resilience test required |
-| **LLM Parse Error** | `LLM_PARSE_ERROR` | 2 retries with prompt refinement | Use previous successful agent output or rule-based | "AI response unclear. Using backup strategy..." | ERROR | Unit test required |
-| **LLM Rate Limit** | `LLM_RATE_LIMIT` | Wait + retry once after rate limit window | Queue request or use cached response | "AI is busy. Please wait a moment..." | WARNING | Integration test required |
-| **LLM Invalid API Key** | `LLM_AUTH_ERROR` | No retry | Fallback to rule-based moves entirely | "AI configuration error. Using rule-based play." | CRITICAL | Smoke test required |
-| **Scout Agent Failure** | `SCOUT_FAILED` | 1 retry | Use rule-based board analysis (immediate wins/blocks/center) | "AI analysis unavailable. Using standard tactics..." | ERROR | Resilience test required |
-| **Strategist Agent Failure** | `STRATEGIST_FAILED` | 1 retry | Use Scout's highest priority opportunity directly | "AI strategy unavailable. Using tactical move..." | ERROR | Resilience test required |
-| **Executor Agent Failure** | `EXECUTOR_FAILED` | 1 retry | Use Strategist's primary move with basic validation | "AI execution error. Applying recommended move..." | ERROR | Resilience test required |
-| **Invalid Move (Out of Bounds)** | `MOVE_OUT_OF_BOUNDS` | No retry | Return error to user, request new move | "Invalid move: Position out of bounds (0-2 only)" | INFO | Unit test required |
-| **Invalid Move (Cell Occupied)** | `MOVE_OCCUPIED` | No retry | Return error to user, request new move | "Invalid move: Cell already occupied" | INFO | Unit test required |
-| **MCP Connection Failed** | `MCP_CONN_FAILED` | 2 retries with 5s delay | Switch to local mode agents | "Distributed mode unavailable. Using local agents..." | ERROR | Integration test required |
-| **MCP Agent Timeout** | `MCP_TIMEOUT` | 1 retry with 10s timeout | Switch to local mode for that agent | "Agent not responding. Using local fallback..." | WARNING | Resilience test required |
-| **API Request Malformed** | `API_MALFORMED` | No retry | Return 400 Bad Request with validation details | "Invalid request: [specific validation error]" | INFO | Contract test required |
-| **Game State Corrupted** | `STATE_CORRUPTED` | No retry | Reset game state, log incident | "Game state error. Please restart the game." | CRITICAL | Integration test required |
-| **Network Error (API)** | `NETWORK_ERROR` | 3 retries with exponential backoff | Show cached state, allow offline mode | "Connection lost. Retrying..." | WARNING | E2E test required |
-| **Configuration Error** | `CONFIG_ERROR` | No retry | Use default configuration | "Configuration issue. Using defaults..." | ERROR | Smoke test required |
-| **Pydantic Validation Error** | `SCHEMA_VALIDATION_ERROR` | No retry | Log error, return sanitized default | "Data format error. Using safe defaults..." | ERROR | Unit test required |
+| Error Type | Error Code | Retry Policy | Fallback Strategy | User Message | UI Indication | Log Level | Test Coverage |
+|------------|------------|--------------|-------------------|--------------|---------------|-----------|---------------|
+| **LLM API Timeout** | `LLM_TIMEOUT` | 3 retries, exponential backoff (1s, 2s, 4s); per-agent timeouts: Scout 5s, Strategist 5s, Executor 3s (local mode) | Use rule-based move selection | "AI is taking longer than expected. Using quick analysis..." | Orange warning icon, show retry countdown | WARNING | Resilience test required |
+| **LLM Parse Error** | `LLM_PARSE_ERROR` | 2 retries with prompt refinement | Use previous successful agent output or rule-based | "AI response unclear. Using backup strategy..." | Yellow warning badge, show "Using fallback" | ERROR | Unit test required |
+| **LLM Rate Limit** | `LLM_RATE_LIMIT` | Wait + retry once after rate limit window | Queue request or use cached response | "AI is busy. Please wait a moment..." | Blue info icon, show wait timer | WARNING | Integration test required |
+| **LLM Invalid API Key** | `LLM_AUTH_ERROR` | No retry | Fallback to rule-based moves entirely | "AI configuration error. Using rule-based play." | Red error banner, persist for session | CRITICAL | Smoke test required |
+| **Scout Agent Failure** | `SCOUT_FAILED` | 1 retry | Use rule-based board analysis (immediate wins/blocks/center) | "AI analysis unavailable. Using standard tactics..." | Orange agent status icon, show "Rule-based mode" | ERROR | Resilience test required |
+| **Strategist Agent Failure** | `STRATEGIST_FAILED` | 1 retry | Use Scout's highest priority opportunity directly | "AI strategy unavailable. Using tactical move..." | Orange agent status icon, show "Tactical mode" | ERROR | Resilience test required |
+| **Executor Agent Failure** | `EXECUTOR_FAILED` | 1 retry | Use Strategist's primary move with basic validation | "AI execution error. Applying recommended move..." | Orange agent status icon, show "Direct execution" | ERROR | Resilience test required |
+| **Invalid Move (Out of Bounds)** | `MOVE_OUT_OF_BOUNDS` | No retry | Return error to user, request new move | "Invalid move: Position out of bounds (0-2 only)" | Red cell highlight, shake animation | INFO | Unit test required |
+| **Invalid Move (Cell Occupied)** | `MOVE_OCCUPIED` | No retry | Return error to user, request new move | "Invalid move: Cell already occupied" | Red cell highlight, pulse animation | INFO | Unit test required |
+| **MCP Connection Failed** | `MCP_CONN_FAILED` | 2 retries with 5s delay | Switch to local mode agents | "Distributed mode unavailable. Using local agents..." | Yellow mode indicator, show "Local mode active" | ERROR | Integration test required |
+| **MCP Agent Timeout** | `MCP_TIMEOUT` | 1 retry with 10s timeout | Switch to local mode for that agent | "Agent not responding. Using local fallback..." | Orange agent icon, show timeout countdown | WARNING | Resilience test required |
+| **API Request Malformed** | `API_MALFORMED` | No retry | Return 400 Bad Request with validation details | "Invalid request: [specific validation error]" | Red toast notification, 5s auto-dismiss | INFO | Contract test required |
+| **Game State Corrupted** | `STATE_CORRUPTED` | No retry | Reset game state, log incident | "Game state error. Please restart the game." | Red modal dialog, require user acknowledgment | CRITICAL | Integration test required |
+| **Network Error (API)** | `NETWORK_ERROR` | 3 retries with exponential backoff | Show cached state, allow offline mode | "Connection lost. Retrying..." | Gray offline indicator, show retry attempt (1/3) | WARNING | E2E test required |
+| **Configuration Error** | `CONFIG_ERROR` | No retry | Use default configuration | "Configuration issue. Using defaults..." | Yellow banner at top, dismissible | ERROR | Smoke test required |
+| **Schema Validation Error** | `SCHEMA_VALIDATION_ERROR` | No retry | Log error, return sanitized default | "Data format error. Using safe defaults..." | Yellow toast notification, 5s auto-dismiss | ERROR | Unit test required |
+
+### UI Indication Specifications
+
+**Visual Hierarchy**:
+- **CRITICAL errors**: Red modal dialogs (blocking, require acknowledgment)
+- **ERROR level**: Red banners or toast notifications (prominent, persistent until action)
+- **WARNING level**: Orange/Yellow icons or banners (visible, auto-dismiss or user-dismissible)
+- **INFO level**: Blue info icons or brief toast notifications (subtle, auto-dismiss)
+
+**Color Coding**:
+- 🔴 Red: Critical failures, invalid actions, blocking errors
+- 🟠 Orange: Agent failures, fallback modes, degraded operation
+- 🟡 Yellow: Configuration issues, mode changes, non-blocking warnings
+- 🔵 Blue: Informational messages, rate limits, transient states
+- ⚫ Gray: Connectivity issues, offline mode, system states
+
+**Animation Types**:
+- **Shake**: Invalid input (cell already occupied, out of bounds)
+- **Pulse**: Attention needed (occupied cell highlight)
+- **Fade**: Transient notifications (toast auto-dismiss)
+- **Countdown**: Time-based retries (network, timeout, rate limit)
+- **Progress bar**: Multi-step retries with backoff
+
+**Persistence Rules**:
+- Blocking errors (CRITICAL): Persist until user acknowledges
+- Session errors: Persist for entire session (invalid API key)
+- Temporary errors: Auto-dismiss after 5-10 seconds
+- Transient states: Update in real-time (retry countdown)
 
 ### Fallback Strategies
 
