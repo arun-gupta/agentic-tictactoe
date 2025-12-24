@@ -125,6 +125,25 @@ All agents implement a protocol with a single primary method:
 
 Agents are stateless; all context comes from inputs. Results include execution metadata (timing, success/failure).
 
+### Agent Timeout Configuration
+
+**Per-Agent Timeouts**:
+- **Scout Agent**: 5 seconds (rule-based fallback available)
+- **Strategist Agent**: 5 seconds (uses Scout's best opportunity as fallback)
+- **Executor Agent**: 3 seconds (direct move execution, minimal processing)
+- **Total Pipeline Timeout**: 15 seconds (sum of all agents + 2s buffer)
+
+**Timeout Behavior**:
+- At 2 seconds: Show loading spinner with "AI is thinking..."
+- At 5 seconds: Update message to "AI is analyzing carefully..." and show progress bar
+- At 10 seconds: Update message to "Taking longer than usual, preparing fallback..."
+- At timeout: Execute fallback strategy and show completion message
+
+**Configuration**:
+- Timeout values configurable via config file
+- Different timeouts for local mode (5s/5s/3s) vs distributed MCP mode (10s/10s/5s)
+- Per-provider timeout adjustments (e.g., local Ollama may need longer timeouts)
+
 ### Agent Pipeline Flow
 
 The coordinator orchestrates a sequential pipeline:
@@ -218,6 +237,28 @@ The main panel displays the game interface and is visible throughout gameplay:
 - Loading indicators for each agent step showing current agent activity
 - Agent "thinking" animation/progress indicator with visual feedback during LLM processing
 - Estimated time remaining for AI move based on historical agent performance
+
+**AI Processing Status Display**:
+
+Progressive status updates based on elapsed time:
+- **0-2 seconds**: Show subtle loading spinner next to current agent name (e.g., "Scout analyzing...")
+- **2-5 seconds**: Upgrade to animated progress bar with message "AI is thinking..."
+- **5-10 seconds**: Show detailed progress with message "AI is analyzing carefully..." and elapsed time counter
+- **10-15 seconds**: Show warning indicator with message "Taking longer than usual, preparing fallback..." and option to force fallback
+- **15+ seconds**: Automatically trigger fallback, show message "Using quick analysis..." with explanation
+
+**Status Indicators**:
+- Green pulse: Agent actively processing
+- Yellow pulse: Agent taking longer than expected (>5s)
+- Orange pulse: Approaching timeout (>10s)
+- Blue checkmark: Agent completed successfully
+- Red X: Agent failed, using fallback
+- Gray: Agent not yet started or skipped
+
+**Interactive Elements**:
+- "Force Fallback" button appears after 10 seconds, allows user to skip waiting
+- "Show Details" expands to show exact timeout values and fallback strategy
+- "Retry with Different Model" option appears on timeout/failure
 
 **Game Status Display**: Shows current player, move number, game over status, winner (if any), and draw status.
 
@@ -401,7 +442,7 @@ Note: Agents use an LLM framework abstraction layer that supports multiple provi
 
 ### Configuration Structure
 
-**Agent Framework Configuration**: Mode selection (local or distributed_mcp), LLM framework selection for multi-provider support (see Section 19), model selection per agent or shared, timeout settings, retry logic.
+**Agent Framework Configuration**: Mode selection (local or distributed_mcp), LLM framework selection for multi-provider support (see Section 19), model selection per agent or shared, timeout settings per agent (Scout: 5s, Strategist: 5s, Executor: 3s in local mode; 10s/10s/5s in distributed mode), retry logic.
 
 **LLM Provider Configuration**: Provider selection (OpenAI, Anthropic, Google Gemini, Ollama), API keys (from environment), model names, temperature and other parameters, token limits. Default models: OpenAI uses GPT-5 mini (fallback: GPT-4.1), Anthropic uses Claude Opus 4.5, Google Gemini uses Gemini 3 Flash (fallback: Gemini 2.5 Flash).
 
@@ -586,7 +627,7 @@ This table defines standardized handling for all error scenarios:
 
 | Error Type | Error Code | Retry Policy | Fallback Strategy | User Message | Log Level | Test Coverage |
 |------------|------------|--------------|-------------------|--------------|-----------|---------------|
-| **LLM API Timeout** | `LLM_TIMEOUT` | 3 retries, exponential backoff (1s, 2s, 4s) | Use rule-based move selection | "AI is taking longer than expected. Using quick analysis..." | WARNING | Resilience test required |
+| **LLM API Timeout** | `LLM_TIMEOUT` | 3 retries, exponential backoff (1s, 2s, 4s); per-agent timeouts: Scout 5s, Strategist 5s, Executor 3s (local mode) | Use rule-based move selection | "AI is taking longer than expected. Using quick analysis..." | WARNING | Resilience test required |
 | **LLM Parse Error** | `LLM_PARSE_ERROR` | 2 retries with prompt refinement | Use previous successful agent output or rule-based | "AI response unclear. Using backup strategy..." | ERROR | Unit test required |
 | **LLM Rate Limit** | `LLM_RATE_LIMIT` | Wait + retry once after rate limit window | Queue request or use cached response | "AI is busy. Please wait a moment..." | WARNING | Integration test required |
 | **LLM Invalid API Key** | `LLM_AUTH_ERROR` | No retry | Fallback to rule-based moves entirely | "AI configuration error. Using rule-based play." | CRITICAL | Smoke test required |
