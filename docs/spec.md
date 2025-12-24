@@ -256,7 +256,7 @@ The Metrics panel becomes available and displayed after the game is completed (w
 
 ### Configuration Panel
 
-**Model Selection**: Dropdown to select LLM provider (OpenAI, Anthropic, Ollama) and model name.
+**Model Selection**: Dropdown to select LLM provider (OpenAI, Anthropic, Google Gemini, Ollama) and model name.
 
 **Agent Mode Selection**: Toggle between LangChain mode (local, fast) and LangChain+MCP mode (distributed, protocol-based).
 
@@ -385,7 +385,7 @@ Uses Streamlit's session state to manage game state and prevent unnecessary reru
 
 **Installation**: Install from requirements.txt using pip. Separate requirements_streamlit.txt for Streamlit-specific dependencies if needed.
 
-**Environment Variables**: Load from `.env` file in project root. Include API keys for OpenAI, Anthropic, and Ollama configuration.
+**Environment Variables**: Load from `.env` file in project root. Include API keys for OpenAI, Anthropic, Google Gemini, and Ollama configuration.
 
 ---
 
@@ -395,7 +395,7 @@ Uses Streamlit's session state to manage game state and prevent unnecessary reru
 
 **Agent Framework Configuration**: Mode selection (langchain or langchain_mcp), model selection per agent or shared, timeout settings, retry logic.
 
-**LLM Provider Configuration**: Provider selection (OpenAI, Anthropic, Ollama), API keys (from environment), model names, temperature and other parameters, token limits.
+**LLM Provider Configuration**: Provider selection (OpenAI, Anthropic, Google Gemini, Ollama), API keys (from environment), model names, temperature and other parameters, token limits. Default models: OpenAI uses GPT-5 mini (fallback: GPT-4.1), Anthropic uses Claude Opus 4.5, Google Gemini uses Gemini 3 Flash (fallback: Gemini 2.5 Flash).
 
 **Game Configuration**: Default player symbol, AI symbol, game rules (if configurable), move timeout.
 
@@ -585,9 +585,11 @@ Configuration is loaded in priority order: defaults in code, config.json, .env f
 
 ### Supported Providers
 
-**OpenAI**: GPT-4, GPT-3.5, GPT-4 Turbo. Via langchain-openai.
+**OpenAI**: GPT-5 mini (default), GPT-4.1 (fallback), GPT-4o, GPT-4o-mini, GPT-4 Turbo, GPT-4, GPT-3.5 Turbo, o1-preview, o1-mini. Via langchain-openai.
 
-**Anthropic**: Claude 3 Opus, Sonnet, Haiku. Via langchain-anthropic.
+**Anthropic**: Claude Opus 4.5 (default), Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus, Claude 3 Sonnet, Claude 3 Haiku. Via langchain-anthropic.
+
+**Google Gemini**: Gemini 3 Flash (default), Gemini 2.5 Flash (fallback), Gemini Pro, Gemini Flash, Gemini 1.5 Pro, Gemini 1.5 Flash. Via langchain-google-genai.
 
 **Ollama**: Local models (Llama, Mistral, etc.). Via langchain-community.
 
@@ -597,7 +599,7 @@ Configuration is loaded in priority order: defaults in code, config.json, .env f
 
 **Implementation**: SharedLLMConnection class manages connection, provides get_connection() method.
 
-**Configuration**: Model selection in config, API keys from environment.
+**Configuration**: Model selection in config, API keys from environment. Default models: OpenAI uses GPT-5 mini (fallback: GPT-4.1), Anthropic uses Claude Opus 4.5, Google Gemini uses Gemini 3 Flash (fallback: Gemini 2.5 Flash).
 
 **Error Handling**: Connection retry logic, fallback to individual connections if shared fails.
 
