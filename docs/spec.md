@@ -767,17 +767,136 @@ helm/
 
 ---
 
-## Appendix
+## 19. Implementation Choices and Alternatives
 
-### Agent-to-Agent (A2A) Communication
+This section discusses architectural decisions and alternative approaches for key system components.
 
-The core architecture uses coordinator-mediated communication (see Section 3: Agent Architecture, Agent Pipeline Flow). Agent-to-Agent (A2A) communication, where agents communicate directly without coordinator mediation, is an optional enhancement for advanced use cases.
+### Agent Communication Patterns
 
-**Why A2A Is Not Used Here**: This game implements a **sequential pipeline architecture** where agents have strict dependencies (Scout → Strategist → Executor). Each agent requires the previous agent's output as input, and the coordinator manages the authoritative game state. A2A communication is designed for peer-to-peer collaboration scenarios, not sequential pipelines with centralized state management.
+**Coordinator-Mediated (Current Architecture)**:
 
-**Note**: For the Tic-Tac-Toe game, the coordinator pattern is simpler, sufficient, and recommended. A2A introduces additional complexity including multiple communication paths, more complex error handling, increased coupling between agents, and additional configuration requirements. Consider A2A only if specific requirements emerge that justify the added complexity, such as iterative refinement between agents or advanced collaborative workflows.
+The core architecture uses coordinator-mediated communication (see Section 3: Agent Architecture, Agent Pipeline Flow). The coordinator orchestrates a sequential pipeline (Scout → Strategist → Executor) where each agent receives input from the coordinator and returns results.
+
+**Why This Pattern**: This game implements a **sequential pipeline architecture** where agents have strict dependencies. Each agent requires the previous agent's output as input, and the coordinator manages the authoritative game state. This pattern provides centralized error handling, clear data flow, and simplified state management.
+
+**Agent-to-Agent (A2A) Communication**:
+
+Agent-to-Agent (A2A) communication, where agents communicate directly without coordinator mediation, is an optional enhancement for advanced use cases.
+
+**Why A2A Is Not Used Here**: The coordinator pattern is simpler, sufficient, and recommended for this game. A2A introduces additional complexity including multiple communication paths, more complex error handling, increased coupling between agents, and additional configuration requirements. A2A is designed for peer-to-peer collaboration scenarios, not sequential pipelines with centralized state management.
+
+**When to Consider A2A**: Consider A2A only if specific requirements emerge that justify the added complexity, such as iterative refinement between agents (Strategist requests Scout re-analyze), advanced collaborative workflows, or autonomous agent negotiation.
 
 If implementing A2A, it should use the same domain models (GameState, BoardAnalysis, Strategy, etc.) to maintain type safety and consistency. In local mode, agents can use direct method calls via dependency injection. In distributed MCP mode, agents would act as both MCP servers and clients for peer-to-peer communication.
+
+### MCP Protocol Usage
+
+**When MCP Is Useful**:
+
+The MCP (Model Context Protocol) mode is useful in specific scenarios:
+- **Distributed Deployments**: Agents running on separate physical machines for resource isolation or geographic distribution
+- **Microservices Architecture**: Each agent as an independent service with standardized API
+- **External Agent Access**: Exposing agents to external systems or third-party clients
+- **Development/Learning**: Demonstrating protocol-based agent communication patterns
+- **Fault Isolation**: Isolating agent failures to separate processes
+
+**When MCP Is Not Needed**:
+
+For single-machine deployments with co-located agents, the local LangChain mode provides better performance (< 1 second vs 3-8 seconds) without protocol overhead. MCP is a transport layer for cross-process communication, not optimized for high-frequency in-process agent coordination.
+
+### LLM Integration Framework Options
+
+The specification references LangChain as the primary framework, but multiple options exist with different trade-offs:
+
+**Option 1: LangChain**
+
+**Description**: Full-featured LLM application framework with chains, agents, and multi-provider support.
+
+**Pros**:
+- Rich ecosystem and community support
+- Built-in multi-provider support (OpenAI, Anthropic, Google, Ollama)
+- Chain abstractions for agent workflows
+- Prompt management and templates
+- MCP integration available
+
+**Cons**:
+- Heavy framework with abstraction layers
+- Performance overhead from middleware
+- Frequent API changes between versions
+- May be overkill for simple LLM calls
+
+**Best for**: Rapid prototyping, complex agent workflows, projects requiring LangChain ecosystem tools.
+
+**Option 2: LiteLLM**
+
+**Description**: Lightweight unified interface for 100+ LLM providers.
+
+**Pros**:
+- Single interface for all providers
+- Much lighter than LangChain
+- Drop-in replacement pattern
+- Minimal overhead
+- Good for multi-model testing
+
+**Cons**:
+- Fewer features than LangChain
+- Smaller ecosystem
+- Limited agent workflow abstractions
+
+**Best for**: Multi-provider support without framework weight, performance-sensitive applications.
+
+**Option 3: Direct SDK Calls**
+
+**Description**: Use provider SDKs directly (OpenAI SDK, Anthropic SDK, Google GenAI SDK).
+
+**Pros**:
+- Lightweight, minimal overhead
+- Direct control over API calls
+- Better performance (no middleware)
+- Stable provider APIs
+- Easier debugging
+
+**Cons**:
+- Need separate code per provider
+- Manual prompt management
+- More boilerplate code
+- Provider switching requires code changes
+
+**Best for**: Production deployments prioritizing performance, single-provider applications.
+
+**Option 4: Instructor (with Pydantic)**
+
+**Description**: Type-safe structured outputs from LLMs using Pydantic models.
+
+**Pros**:
+- Perfect fit for Pydantic-based architectures (like this project)
+- Type-safe LLM responses validated against domain models
+- Works with multiple providers
+- Automatic retry and validation
+- Clean, minimal API
+
+**Cons**:
+- Focused on structured outputs
+- Needs to be combined with direct SDKs
+- Less comprehensive than LangChain
+
+**Best for**: Projects using Pydantic domain models, type-safe architectures, production deployments requiring validation.
+
+**Recommended Approach**:
+
+For this project, **Instructor + Direct SDKs** is recommended for production use due to:
+- Existing Pydantic domain models (BoardAnalysis, Strategy, MoveExecution)
+- Type-safe validation of agent outputs
+- Lightweight and performant
+- Easy provider switching via configuration
+
+**LangChain** remains a valid choice for rapid prototyping and if ecosystem features are needed.
+
+**Implementation Strategy**: Make the LLM framework selection configurable. Create an abstraction layer (LLMProvider interface) that can be implemented by any framework, allowing runtime selection via configuration.
+
+---
+
+## Appendix
 
 ---
 
