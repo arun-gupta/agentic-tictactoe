@@ -1,4 +1,4 @@
-# Tic-Tac-Toe Multi-Agent Game - Complete Specification
+# Tic-Tac-Toe Multi-Agent Game Specification
 
 ## 1. System Overview
 
