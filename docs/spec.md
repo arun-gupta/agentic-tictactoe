@@ -23,7 +23,7 @@ A Tic-Tac-Toe game between a human player and an AI opponent. The AI uses three 
 **Flexibility & Runtime Adaptability:**
 - **Configuration over Code**: Behavior controlled through config files, environment variables, and command-line arguments
 - **Hot-swappability**: LLM providers and models can be changed via configuration without code changes
-- **Mode Interchangeability**: Agents can switch between local (LangChain) and distributed (MCP) modes at runtime
+- **Mode Interchangeability**: Agents can switch between local (direct LLM integration) and distributed (MCP) modes at runtime
 - **Extensibility**: Well-defined interfaces allow adding new agents or features without modifying existing code
 
 **Operational Resilience:**
@@ -240,7 +240,8 @@ The Metrics panel becomes available and displayed after the game is completed (w
 - Model/provider information for each call
 
 **Agent Switch Information**:
-- Agent mode used (LangChain local or LangChain+MCP distributed)
+- Agent mode used (local or distributed MCP)
+- LLM framework used (see Section 19: Implementation Choices)
 - Agent initialization details
 - Agent configuration settings
 - Mode switching events (if any occurred during the game)
@@ -262,7 +263,7 @@ The Metrics panel becomes available and displayed after the game is completed (w
 
 **Model Selection**: Dropdown to select LLM provider (OpenAI, Anthropic, Google Gemini, Ollama) and model name. User preferences for LLM settings are automatically saved and restored in future sessions.
 
-**Agent Mode Selection**: Toggle between LangChain mode (local, fast) and LangChain+MCP mode (distributed, protocol-based).
+**Agent Mode Selection**: Toggle between local mode (direct LLM integration, fast) and distributed MCP mode (protocol-based). LLM framework selection (LangChain, LiteLLM, Instructor, or Direct SDKs) is also configurable - see Section 19 for options.
 
 **Game Settings**: Option to reset game, change player symbol, adjust difficulty (if implemented).
 
@@ -292,13 +293,15 @@ Uses Streamlit's session state to manage game state and prevent unnecessary reru
 
 **agents/**: Agent implementations:
 - interfaces.py: Abstract base classes and protocols
-- scout_langchain.py: LangChain Scout implementation
-- strategist_langchain.py: LangChain Strategist implementation
-- executor_langchain.py: LangChain Executor implementation
-- scout_langchain_mcp.py: Scout with MCP protocol support
-- strategist_langchain_mcp.py: Strategist with MCP protocol support
-- executor_langchain_mcp.py: Executor with MCP protocol support
+- scout_local.py: Local Scout implementation (framework-agnostic)
+- strategist_local.py: Local Strategist implementation
+- executor_local.py: Local Executor implementation
+- scout_mcp.py: Scout with MCP protocol support
+- strategist_mcp.py: Strategist with MCP protocol support
+- executor_mcp.py: Executor with MCP protocol support
 - base_mcp_agent.py: Base class for MCP protocol support
+
+Note: Agent implementations are framework-agnostic. LLM framework choice (LangChain, LiteLLM, Instructor, Direct SDKs) is configured separately - see Section 19.
 
 **game/**: Game logic:
 - engine.py: Core game rules and state management
@@ -351,7 +354,7 @@ Uses Streamlit's session state to manage game state and prevent unnecessary reru
 
 **Pydantic**: Data validation and settings management. Version 2.x for modern features.
 
-**LangChain**: Framework for LLM applications. Includes langchain-openai, langchain-anthropic, langchain-community for provider support.
+**LLM Integration Framework**: One of LangChain, LiteLLM, Instructor, or Direct SDKs (see Section 19 for comparison and selection guidance). Include appropriate provider packages (OpenAI SDK, Anthropic SDK, Google GenAI SDK) based on framework choice.
 
 **Streamlit**: Web framework for UI. Includes streamlit-agraph for visualizations.
 
@@ -397,7 +400,7 @@ Uses Streamlit's session state to manage game state and prevent unnecessary reru
 
 ### Configuration Structure
 
-**Agent Framework Configuration**: Mode selection (langchain or langchain_mcp), model selection per agent or shared, timeout settings, retry logic.
+**Agent Framework Configuration**: Mode selection (local or distributed_mcp), LLM framework selection (see Section 19), model selection per agent or shared, timeout settings, retry logic.
 
 **LLM Provider Configuration**: Provider selection (OpenAI, Anthropic, Google Gemini, Ollama), API keys (from environment), model names, temperature and other parameters, token limits. Default models: OpenAI uses GPT-5 mini (fallback: GPT-4.1), Anthropic uses Claude Opus 4.5, Google Gemini uses Gemini 3 Flash (fallback: Gemini 2.5 Flash).
 
@@ -632,9 +635,9 @@ helm/
 
 ## 15. Agent Mode Architecture
 
-### Mode 1: LangChain (Local, Fast)
+### Mode 1: Local (Fast)
 
-**Description**: Direct LangChain chains with shared LLM connection. No MCP protocol overhead.
+**Description**: Direct LLM integration with shared LLM connection. No MCP protocol overhead. Uses chosen LLM framework (see Section 19 for framework options).
 
 **Characteristics**:
 - Fast execution (< 1 second per move)
@@ -643,11 +646,11 @@ helm/
 - Rule-based pre-checks for immediate wins/blocks
 - Best for production use
 
-**Implementation**: Agents implement interfaces directly using LangChain chains. Coordinator calls agents via direct Python methods.
+**Implementation**: Agents implement interfaces directly using the configured LLM framework. Coordinator calls agents via direct Python methods.
 
-### Mode 2: LangChain + MCP (Distributed, Protocol-Based)
+### Mode 2: Distributed MCP (Protocol-Based)
 
-**Description**: LangChain agents with MCP protocol support for distributed coordination.
+**Description**: Agents with MCP protocol support for distributed coordination. Can use any LLM framework internally (see Section 19).
 
 **Characteristics**:
 - MCP protocol for inter-agent communication (note: MCP is designed for tool integration and cross-process communication, not optimized for high-frequency agent coordination; use this mode when agents need to run on separate machines)
@@ -660,7 +663,7 @@ helm/
 
 ### Mode Selection
 
-**Configuration**: Selected via config.json or command-line argument.
+**Configuration**: Agent mode and LLM framework selected via config.json or command-line argument. See Section 19 for framework comparison.
 
 **Runtime**: Can switch modes without code changes (different agent implementations).
 
@@ -670,15 +673,17 @@ helm/
 
 ## 16. LLM Integration
 
+**Note**: This section describes LLM provider and model configuration. For LLM framework selection (LangChain, LiteLLM, Instructor, Direct SDKs), see Section 19: Implementation Choices.
+
 ### Supported Providers
 
-**OpenAI**: GPT-5 mini (default), GPT-4.1 (fallback), GPT-4o, GPT-4o-mini, GPT-4 Turbo, GPT-4, GPT-3.5 Turbo, o1-preview, o1-mini. Via langchain-openai.
+**OpenAI**: GPT-5 mini (default), GPT-4.1 (fallback), GPT-4o, GPT-4o-mini, GPT-4 Turbo, GPT-4, GPT-3.5 Turbo, o1-preview, o1-mini.
 
-**Anthropic**: Claude Opus 4.5 (default), Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus, Claude 3 Sonnet, Claude 3 Haiku. Via langchain-anthropic.
+**Anthropic**: Claude Opus 4.5 (default), Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus, Claude 3 Sonnet, Claude 3 Haiku.
 
-**Google Gemini**: Gemini 3 Flash (default), Gemini 2.5 Flash (fallback), Gemini Pro, Gemini Flash, Gemini 1.5 Pro, Gemini 1.5 Flash. Via langchain-google-genai.
+**Google Gemini**: Gemini 3 Flash (default), Gemini 2.5 Flash (fallback), Gemini Pro, Gemini Flash, Gemini 1.5 Pro, Gemini 1.5 Flash.
 
-**Ollama**: Local models (Llama, Mistral, etc.). Via langchain-community.
+**Ollama**: Local models (Llama, Mistral, etc.).
 
 ### Shared LLM Connection
 
@@ -802,11 +807,11 @@ The MCP (Model Context Protocol) mode is useful in specific scenarios:
 
 **When MCP Is Not Needed**:
 
-For single-machine deployments with co-located agents, the local LangChain mode provides better performance (< 1 second vs 3-8 seconds) without protocol overhead. MCP is a transport layer for cross-process communication, not optimized for high-frequency in-process agent coordination.
+For single-machine deployments with co-located agents, the local mode provides better performance (< 1 second vs 3-8 seconds) without protocol overhead. MCP is a transport layer for cross-process communication, not optimized for high-frequency in-process agent coordination.
 
 ### LLM Integration Framework Options
 
-The specification references LangChain as the primary framework, but multiple options exist with different trade-offs:
+Multiple LLM integration framework options exist with different trade-offs:
 
 **Option 1: LangChain**
 
