@@ -192,6 +192,11 @@ This section provides formal JSON Schema (OpenAPI 3.1) definitions for all domai
   "title": "GameState",
   "description": "Complete game state including board, players, and status",
   "properties": {
+    "game_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique game identifier (UUID v4)"
+    },
     "board": {
       "$ref": "#/components/schemas/Board"
     },
@@ -224,16 +229,49 @@ This section provides formal JSON Schema (OpenAPI 3.1) definitions for all domai
       "type": ["string", "null"],
       "enum": ["X", "O", "DRAW", null],
       "description": "Winner symbol, DRAW, or null if game ongoing"
+    },
+    "move_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "move_number": {"type": "integer"},
+          "player": {"type": "string", "enum": ["X", "O"]},
+          "position": {"$ref": "#/components/schemas/Position"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        },
+        "required": ["move_number", "player", "position", "timestamp"]
+      },
+      "description": "Chronological list of all moves"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Game creation timestamp (ISO 8601)"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp (ISO 8601)"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata (agent config, experiment ID, etc.)",
+      "additionalProperties": true
     }
   },
   "required": [
+    "game_id",
     "board",
     "current_player",
     "move_count",
     "player_symbol",
     "ai_symbol",
     "is_game_over",
-    "winner"
+    "winner",
+    "move_history",
+    "created_at",
+    "updated_at"
   ],
   "additionalProperties": false
 }
@@ -927,13 +965,147 @@ Each step validates the previous result before proceeding.
 
 ---
 
-## 4. Game Engine Design
+## 4. Game State Management
+
+### State Model
+
+Game state is a pure data model representing the complete state of a Tic-Tac-Toe game at any point in time. It is independent of the game engine, agents, UI, and transport layers, enabling state persistence, auditing, and concurrent games.
+
+**GameState Properties**:
+- `game_id`: Unique identifier (UUID v4)
+- `board`: Current 3x3 board configuration
+- `current_player`: Whose turn it is (X or O)
+- `move_count`: Number of moves made (0-9)
+- `player_symbol`: Human player's symbol (X or O)
+- `ai_symbol`: AI player's symbol (X or O)
+- `is_game_over`: Boolean indicating if game has ended
+- `winner`: Winner symbol (X, O, DRAW, or null if ongoing)
+- `move_history`: Chronological list of all moves with timestamps
+- `created_at`: Game creation timestamp (ISO 8601)
+- `updated_at`: Last update timestamp (ISO 8601)
+- `metadata`: Optional metadata (agent config, experiment ID, etc.)
+
+**AI Processing State** (transient, not persisted):
+- `active_agent`: Currently active agent (scout, strategist, executor, or null)
+- `processing_start_time`: When current agent started processing
+- `last_error`: Last error encountered (code, message, timestamp)
+- `fallback_active`: Whether fallback strategy is currently active
+
+### Game State Machine
+
+The game progresses through a series of well-defined states:
+
+**State Enumeration**:
+
+| State | Description | Valid Transitions | Entry Condition |
+|-------|-------------|-------------------|-----------------|
+| `NEW` | Game initialized, no moves made | → IN_PROGRESS | Game created, board empty, move_count = 0 |
+| `PLAYER_TURN` | Waiting for player input | → AI_TURN, → ERROR | current_player = player_symbol, !is_game_over |
+| `AI_TURN` | AI processing move | → AI_SCOUT, → ERROR | current_player = ai_symbol, !is_game_over |
+| `AI_SCOUT` | Scout analyzing board | → AI_STRATEGIST, → FALLBACK, → ERROR | AI_TURN entered, Scout invoked |
+| `AI_STRATEGIST` | Strategist planning move | → AI_EXECUTOR, → FALLBACK, → ERROR | Scout completed, Strategist invoked |
+| `AI_EXECUTOR` | Executor making move | → PLAYER_TURN, → COMPLETED, → FALLBACK, → ERROR | Strategist completed, Executor invoked |
+| `FALLBACK` | Using fallback strategy | → PLAYER_TURN, → COMPLETED, → ERROR | Agent timeout/failure occurred |
+| `ERROR` | Recoverable error occurred | → PLAYER_TURN, → AI_TURN, → COMPLETED | Validation error, retryable failure |
+| `COMPLETED` | Game over (win/draw) | (terminal state) | winner ≠ null OR is_game_over = true |
+
+**State Transitions**:
+
+```
+NEW
+ ↓
+PLAYER_TURN ←→ AI_TURN → AI_SCOUT → AI_STRATEGIST → AI_EXECUTOR
+ ↓              ↓          ↓           ↓              ↓
+ERROR ←────────┴──────────┴───────────┴──────────────┘
+ ↓                                                      ↓
+FALLBACK ─────────────────────────────────────────────→ COMPLETED
+```
+
+**State Invariants**:
+
+1. **NEW → PLAYER_TURN**: IF player_symbol = X THEN first transition is to PLAYER_TURN
+2. **NEW → AI_TURN**: IF ai_symbol = X THEN first transition is to AI_TURN
+3. **Turn Alternation**: PLAYER_TURN and AI_TURN must alternate (unless error/fallback)
+4. **Agent Sequence**: AI agent states must execute in order: SCOUT → STRATEGIST → EXECUTOR
+5. **Terminal State**: COMPLETED is terminal; no transitions allowed after entering
+6. **Game Over Condition**: IF winner ≠ null THEN state MUST be COMPLETED
+7. **Move Count**: move_count MUST increment by 1 on each successful move
+8. **Turn Consistency**: current_player MUST match state (PLAYER_TURN → player_symbol, AI_TURN → ai_symbol)
+
+### State Persistence
+
+**Storage Requirements**:
+- Game state MUST be persisted after each move
+- State MUST include complete move history
+- State MUST be recoverable after system restart
+- State MUST support concurrent games (multiple game_id instances)
+
+**Storage Implementations**:
+- **In-Memory**: Dictionary/Map keyed by game_id (development, single game)
+- **File System**: JSON files in `data/games/{game_id}.json` (simple persistence)
+- **Database**: Table with game_id as primary key (production, multiple games)
+
+**State Serialization**:
+- State MUST be serializable to JSON (see Section 2.1 GameState Schema)
+- All timestamps MUST use ISO 8601 format
+- Board MUST serialize as 3x3 array of strings (EMPTY, X, O)
+- Move history MUST preserve chronological order
+
+### State Validation
+
+Before persisting or transitioning state, validate:
+
+1. **Schema Validation**: State conforms to GameState JSON Schema (Section 2.1)
+2. **State Invariants**: All 8 state validation rules satisfied (Section 4.1)
+3. **Transition Validity**: Transition is allowed from current state
+4. **Move History Consistency**: move_count matches move_history length
+5. **Winner Consistency**: winner value matches board configuration
+
+### State Access Patterns
+
+**Single Source of Truth**:
+- Game engine maintains authoritative state
+- All layers (agents, API, UI) read from game engine
+- Only game engine may modify state (via public methods)
+
+**State Queries**:
+```python
+# Read-only state access
+state = game_engine.get_current_state()  # Returns GameState copy
+
+# State checks
+is_player_turn = game_engine.is_player_turn()
+is_game_over = game_engine.is_game_over()
+winner = game_engine.get_winner()
+available_moves = game_engine.get_available_moves()
+```
+
+**State Mutations** (only via game engine):
+```python
+# Mutate state through engine methods
+result = game_engine.make_move(position, player)
+game_engine.reset_game()
+```
+
+### Benefits of State Extraction
+
+1. **Separation of Concerns**: State is independent of game logic, agents, and UI
+2. **Testability**: State can be tested independently; mock states for engine tests
+3. **Persistence**: Easy to save/load/replay games
+4. **Auditing**: Complete history of all state changes
+5. **Concurrent Games**: Multiple independent game instances
+6. **State Migration**: Easy to evolve state schema over time
+7. **Debugging**: Snapshot state at any point for analysis
+
+---
+
+## 4.1 Game Engine Design
 
 ### Core Responsibilities
 
 **Game Rules Enforcement**: Validates moves (bounds, empty cell), checks for wins (rows, columns, diagonals), detects draws, manages turn order.
 
-**State Management**: Maintains board state, tracks move history, manages player turns, updates game over status.
+**State Management**: Maintains game state (Section 4), tracks move history, manages player turns, updates game over status.
 
 **Move Application**: Applies validated moves, updates board, switches players, increments move counter, checks for game end.
 
