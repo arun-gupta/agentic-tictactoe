@@ -320,12 +320,61 @@ A player wins when they have three of their symbols in any of these 8 winning li
 
 **Win Detection Algorithm**: After each move, check all 8 lines for three matching symbols.
 
-#### Draw Condition
+#### Draw Conditions
 
-A draw occurs when:
+A draw can be declared in two scenarios:
+
+**1. Complete Draw (Mandatory Detection)**:
 - All 9 cells are occupied (MoveCount = 9)
 - AND no player has achieved a winning line
-- This is the ONLY draw condition
+- This MUST be detected and enforced
+
+**2. Inevitable Draw (Optional Early Detection)**:
+- MoveCount ≥ 7
+- AND at least one empty cell remains
+- AND no player can achieve a winning line regardless of remaining moves
+- Implementation MAY detect this early for better UX
+
+**Inevitable Draw Detection Algorithm**:
+
+For each empty cell position P:
+1. Temporarily place current player's symbol at P
+2. Check if this creates a winning line
+3. Temporarily place opponent's symbol at P
+4. Check if this creates a winning line
+5. Repeat for all remaining empty cells
+
+If NO empty cell allows either player to win:
+- Declare draw immediately (inevitable draw)
+- Set IsGameOver = true, Winner = DRAW
+
+**Inevitable Draw Examples**:
+
+Example 1 (Move 8 - inevitable draw):
+```
+X | O | X
+---------
+O | X | O
+---------
+O | X | ?
+```
+Last cell (2,2): Placing X or O cannot complete any line → Inevitable draw
+
+Example 2 (Move 7 - game continues):
+```
+X | O | X
+---------
+O | X | ?
+---------
+O | ? | ?
+```
+Cell (1,2): Placing X completes column 2 → Game continues (X can still win)
+
+**Implementation Notes**:
+- Inevitable draw detection is OPTIONAL but RECOMMENDED for better UX
+- If not implemented, use complete draw detection (MoveCount = 9)
+- Inevitable draw typically occurs at MoveCount ∈ {7, 8, 9}
+- More complex to implement but prevents meaningless final moves
 
 #### Illegal Move Conditions
 
@@ -359,7 +408,8 @@ A move at position (row, col) by player P is legal if and only if ALL of the fol
 | In progress | Make legal move | Move is legal (see invariants) | Board updated, CurrentPlayer switches, MoveCount++, check win/draw | Normal gameplay |
 | In progress | Make illegal move | Any illegal condition met | State unchanged, error returned | Game continues |
 | In progress | Win detected | Move completes winning line | IsGameOver = true, Winner = CurrentPlayer | Game ends |
-| In progress | Draw detected | MoveCount = 9 AND no winner | IsGameOver = true, Winner = DRAW | Game ends |
+| In progress | Complete draw detected | MoveCount = 9 AND no winner | IsGameOver = true, Winner = DRAW | Game ends |
+| In progress | Inevitable draw detected | MoveCount ≥ 7 AND no winning moves remain | IsGameOver = true, Winner = DRAW | Early draw (optional) |
 | Game over | Attempt move | IsGameOver = true | State unchanged, error returned | No moves allowed |
 | Any state | Reset game | None | MoveCount = 0, Board = all EMPTY, CurrentPlayer = X, IsGameOver = false, Winner = NULL | Fresh start |
 
@@ -382,15 +432,20 @@ IF MoveCount is odd THEN CurrentPlayer MUST be O
 
 The game terminates when ANY of these conditions become true:
 
-| Condition | Winner Value | IsGameOver | MoveCount Range |
-|-----------|--------------|------------|-----------------|
-| X completes a line | X | true | [3, 9] (min 3 moves for X to win) |
-| O completes a line | O | true | [4, 9] (min 4 moves for O to win) |
-| All cells filled, no winner | DRAW | true | 9 |
+| Condition | Winner Value | IsGameOver | MoveCount Range | Detection |
+|-----------|--------------|------------|-----------------|-----------|
+| X completes a line | X | true | [5, 9] (min 5 moves for X) | Mandatory |
+| O completes a line | O | true | [6, 9] (min 6 moves for O) | Mandatory |
+| All cells filled, no winner | DRAW | true | 9 | Mandatory |
+| Inevitable draw (no winning moves remain) | DRAW | true | [7, 8, 9] | Optional |
 
 **Minimum Moves to Win**:
 - X can win earliest on move 5 (X plays moves 1, 3, 5)
 - O can win earliest on move 6 (O plays moves 2, 4, 6)
+
+**Earliest Possible Draw**:
+- Complete draw: move 9 (guaranteed)
+- Inevitable draw: move 7 (if implemented, rare but possible)
 
 #### State Validation Rules
 
@@ -401,8 +456,9 @@ A valid game state must satisfy ALL of the following:
 3. **Move Consistency**: IF count(X) = count(O) + 1 THEN CurrentPlayer = O
 4. **Win Uniqueness**: At most one player can have a winning line
 5. **Win Finality**: IF winner detected THEN IsGameOver = true
-6. **Draw Finality**: IF MoveCount = 9 AND no winner THEN Winner = DRAW
-7. **No Post-Win Moves**: IF winner on move N THEN no symbols placed after move N
+6. **Draw Finality (Complete)**: IF MoveCount = 9 AND no winner THEN Winner = DRAW
+7. **Draw Finality (Inevitable)**: IF no winning moves remain AND MoveCount ≥ 7 THEN Winner = DRAW (if implemented)
+8. **No Post-Termination Moves**: IF IsGameOver = true on move N THEN no symbols placed after move N
 
 ### Game Engine Interface
 
