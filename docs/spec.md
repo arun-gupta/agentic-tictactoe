@@ -3,11 +3,12 @@
 ## 1. System Overview
 
 ### Purpose
-A Tic-Tac-Toe game between a human player and an AI opponent. The AI uses three specialized agents (Scout, Strategist, Executor) to make moves. Players interact via a Streamlit UI, and the system supports both local execution and distributed MCP-based coordination.
+A Tic-Tac-Toe game between a human player and an AI opponent. The AI uses three specialized agents (Scout, Strategist, Executor) to make moves. The application is built API-first, with all communication API-driven through REST endpoints. Players interact via a Streamlit UI that communicates with the backend through the API layer. The system supports both local execution and distributed MCP-based coordination.
 
 ### Design Principles
 
 **Architectural Foundations:**
+- **API-First Design**: All communication is API-driven; the application is built API-first with REST endpoints as the primary interface. The UI and other clients communicate exclusively through the API layer.
 - **Domain-Driven Design**: Clear domain models separate from infrastructure
 - **Separation of Concerns**: Game logic, agent logic, and UI are independent
 - **Clean Interfaces**: Agents communicate via domain models, not dictionaries
