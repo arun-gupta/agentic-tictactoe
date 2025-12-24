@@ -771,6 +771,8 @@ helm/
 
 The core architecture uses coordinator-mediated communication (see Section 3: Agent Architecture, Agent Pipeline Flow). Agent-to-Agent (A2A) communication, where agents communicate directly without coordinator mediation, is an optional enhancement for advanced use cases.
 
+**Why A2A Is Not Used Here**: This game implements a **sequential pipeline architecture** where agents have strict dependencies (Scout → Strategist → Executor). Each agent requires the previous agent's output as input, and the coordinator manages the authoritative game state. A2A communication is designed for peer-to-peer collaboration scenarios, not sequential pipelines with centralized state management.
+
 **Note**: For the Tic-Tac-Toe game, the coordinator pattern is simpler, sufficient, and recommended. A2A introduces additional complexity including multiple communication paths, more complex error handling, increased coupling between agents, and additional configuration requirements. Consider A2A only if specific requirements emerge that justify the added complexity, such as iterative refinement between agents or advanced collaborative workflows.
 
 If implementing A2A, it should use the same domain models (GameState, BoardAnalysis, Strategy, etc.) to maintain type safety and consistency. In local mode, agents can use direct method calls via dependency injection. In distributed MCP mode, agents would act as both MCP servers and clients for peer-to-peer communication.
