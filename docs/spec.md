@@ -580,6 +580,29 @@ helm/
 
 **System Errors**: Network failures, database errors, configuration errors. Log critical errors, provide user-friendly messages, implement circuit breakers if needed.
 
+### Error Handling Matrix
+
+This table defines standardized handling for all error scenarios:
+
+| Error Type | Error Code | Retry Policy | Fallback Strategy | User Message | Log Level | Test Coverage |
+|------------|------------|--------------|-------------------|--------------|-----------|---------------|
+| **LLM API Timeout** | `LLM_TIMEOUT` | 3 retries, exponential backoff (1s, 2s, 4s) | Use rule-based move selection | "AI is taking longer than expected. Using quick analysis..." | WARNING | Resilience test required |
+| **LLM Parse Error** | `LLM_PARSE_ERROR` | 2 retries with prompt refinement | Use previous successful agent output or rule-based | "AI response unclear. Using backup strategy..." | ERROR | Unit test required |
+| **LLM Rate Limit** | `LLM_RATE_LIMIT` | Wait + retry once after rate limit window | Queue request or use cached response | "AI is busy. Please wait a moment..." | WARNING | Integration test required |
+| **LLM Invalid API Key** | `LLM_AUTH_ERROR` | No retry | Fallback to rule-based moves entirely | "AI configuration error. Using rule-based play." | CRITICAL | Smoke test required |
+| **Scout Agent Failure** | `SCOUT_FAILED` | 1 retry | Use rule-based board analysis (immediate wins/blocks/center) | "AI analysis unavailable. Using standard tactics..." | ERROR | Resilience test required |
+| **Strategist Agent Failure** | `STRATEGIST_FAILED` | 1 retry | Use Scout's highest priority opportunity directly | "AI strategy unavailable. Using tactical move..." | ERROR | Resilience test required |
+| **Executor Agent Failure** | `EXECUTOR_FAILED` | 1 retry | Use Strategist's primary move with basic validation | "AI execution error. Applying recommended move..." | ERROR | Resilience test required |
+| **Invalid Move (Out of Bounds)** | `MOVE_OUT_OF_BOUNDS` | No retry | Return error to user, request new move | "Invalid move: Position out of bounds (0-2 only)" | INFO | Unit test required |
+| **Invalid Move (Cell Occupied)** | `MOVE_OCCUPIED` | No retry | Return error to user, request new move | "Invalid move: Cell already occupied" | INFO | Unit test required |
+| **MCP Connection Failed** | `MCP_CONN_FAILED` | 2 retries with 5s delay | Switch to local mode agents | "Distributed mode unavailable. Using local agents..." | ERROR | Integration test required |
+| **MCP Agent Timeout** | `MCP_TIMEOUT` | 1 retry with 10s timeout | Switch to local mode for that agent | "Agent not responding. Using local fallback..." | WARNING | Resilience test required |
+| **API Request Malformed** | `API_MALFORMED` | No retry | Return 400 Bad Request with validation details | "Invalid request: [specific validation error]" | INFO | Contract test required |
+| **Game State Corrupted** | `STATE_CORRUPTED` | No retry | Reset game state, log incident | "Game state error. Please restart the game." | CRITICAL | Integration test required |
+| **Network Error (API)** | `NETWORK_ERROR` | 3 retries with exponential backoff | Show cached state, allow offline mode | "Connection lost. Retrying..." | WARNING | E2E test required |
+| **Configuration Error** | `CONFIG_ERROR` | No retry | Use default configuration | "Configuration issue. Using defaults..." | ERROR | Smoke test required |
+| **Pydantic Validation Error** | `SCHEMA_VALIDATION_ERROR` | No retry | Log error, return sanitized default | "Data format error. Using safe defaults..." | ERROR | Unit test required |
+
 ### Fallback Strategies
 
 **Agent Fallbacks**: If Scout fails, use rule-based analysis. If Strategist fails, use Scout's best opportunity. If Executor fails, use Strategist's primary move directly.
@@ -587,6 +610,32 @@ helm/
 **Game Continuity**: Game continues even if agent fails. Use last known good state, provide default moves, allow player to continue.
 
 **UI Resilience**: UI handles API failures gracefully, shows error messages, allows retry, maintains local game state.
+
+### Implementation Guidelines
+
+**Retry Logic**:
+- Use exponential backoff for transient errors
+- Include jitter to prevent thundering herd
+- Set maximum retry limits to prevent infinite loops
+- Log each retry attempt with context
+
+**Fallback Execution**:
+- Always validate fallback outputs before applying
+- Track fallback usage in metrics
+- Alert on excessive fallback usage (> 10% of moves)
+- Document fallback behavior for users
+
+**Error Logging**:
+- Include error code, context, and stack trace
+- Track error frequency and patterns
+- Implement alerting for CRITICAL errors
+- Sanitize sensitive data before logging
+
+**User Communication**:
+- Use user-friendly, non-technical language
+- Provide actionable guidance when possible
+- Show progress indicators during retries
+- Allow manual override/retry for failed actions
 
 ---
 
