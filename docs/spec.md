@@ -1,34 +1,55 @@
 # Tic-Tac-Toe Multi-Agent Game Specification
 
+## Document Structure
+
+This specification is organized into two parts:
+
+**Part I: Core Specification (Sections 1-13)** - Normative requirements defining **what** the system must do. These are framework-agnostic functional requirements that serve as a long-lived contract.
+
+**Part II: Implementation Guidance (Sections 14-20)** - Non-normative guidance on **how** to implement the system. These recommendations may evolve as technologies change.
+
+---
+
+# PART I: CORE SPECIFICATION (NORMATIVE)
+
 ## 1. System Overview
 
 ### Purpose
-A Tic-Tac-Toe game between a human player and an AI opponent. The AI uses three specialized agents (Scout, Strategist, Executor) to make moves. The application is built API-first, with all communication API-driven through REST endpoints. Players interact via a Streamlit UI that communicates with the backend through the API layer. The system supports both local execution and distributed MCP-based coordination.
+A Tic-Tac-Toe game between a human player and an AI opponent. The AI uses three specialized agents (Scout, Strategist, Executor) to make moves. The application is built API-first, with all communication API-driven. Players interact via a web-based UI that communicates with the backend through the API layer. The system supports both local execution and distributed coordination.
+
+### Core Requirements
+
+**Functional Requirements:**
+- **Game Rules**: Standard Tic-Tac-Toe rules (3x3 grid, three in a row to win, draw detection)
+- **Multi-Agent AI**: Three specialized agents collaborate to make moves (Scout → Strategist → Executor)
+- **API-First Design**: All operations exposed via API; UI is a client
+- **Move Validation**: All moves validated for bounds, cell availability, and game rules
+- **State Management**: Game state tracked and persisted throughout gameplay
+- **Error Handling**: Graceful degradation when agents or services fail
+
+**Non-Functional Requirements:**
+- **Type Safety**: Strongly-typed domain models with validation
+- **Statelessness**: Agents are stateless; all context provided via inputs
+- **Observability**: Metrics, logging, and monitoring for all operations
+- **Configuration**: Behavior controlled through configuration, not code
+- **Extensibility**: Well-defined interfaces for adding features or agents
+- **Performance**: Agent pipeline completes within 15 seconds per move
+- **Resilience**: System continues operating despite individual component failures
 
 ### Design Principles
 
 **Architectural Foundations:**
-- **API-First Design**: All communication is API-driven; the application is built API-first with REST endpoints as the primary interface. The UI and other clients communicate exclusively through the API layer.
+- **API-First Design**: All communication is API-driven; UI and other clients communicate exclusively through the API layer
 - **Domain-Driven Design**: Clear domain models separate from infrastructure
 - **Separation of Concerns**: Game logic, agent logic, and UI are independent
-- **Clean Interfaces**: Agents communicate via domain models, not dictionaries
-- **Protocol Abstraction**: MCP is a transport layer, not the API design
+- **Clean Interfaces**: Agents communicate via domain models, not raw data structures
+- **Transport Abstraction**: Communication protocols are abstracted from business logic
 
-**Implementation Standards:**
-- **Type Safety**: Pydantic models throughout for validation and IDE support
-- **Statelessness**: Agents are stateless; all context comes from inputs, enabling horizontal scaling
-- **DRY (Don't Repeat Yourself)**: Avoid code duplication through shared utilities, base classes, and reusable components
-- **Convention over Configuration (CoC)**: Sensible defaults reduce configuration burden while allowing overrides when needed
-
-**Flexibility & Runtime Adaptability:**
+**Operational Principles:**
 - **Configuration over Code**: Behavior controlled through config files, environment variables, and command-line arguments
 - **Hot-swappability**: LLM providers and models can be changed via configuration without code changes
-- **Mode Interchangeability**: Agents can switch between local (LLM framework-based) and distributed (MCP) modes at runtime
-- **Extensibility**: Well-defined interfaces allow adding new agents or features without modifying existing code
-
-**Operational Resilience:**
-- **Graceful Degradation**: System continues operating with fallback strategies when agents or LLMs fail
-- **Observability**: Built-in metrics, logging, and monitoring for agents, games, and system performance
+- **Mode Interchangeability**: Agents can switch between local and distributed modes at runtime
+- **Graceful Degradation**: System continues operating with fallback strategies when components fail
 
 ---
 
@@ -375,7 +396,7 @@ class AgentService:
 - GET /api/config/models/available - List available models per provider
 - POST /api/config/models - Update LLM model configuration (requires game reset to take effect)
 
-**Note**: Model configuration is primarily managed through the Streamlit UI Configuration Panel, config files, environment variables, or command-line arguments. Configuration API endpoints are optional and primarily useful for programmatic control, external system integration, or observability. Changing models via API should require a game reset to ensure consistency, as model changes affect agent behavior mid-game.
+**Note**: Model configuration is primarily managed through the UI Configuration Panel, config files, environment variables, or command-line arguments. Configuration API endpoints are optional and primarily useful for programmatic control, external system integration, or observability. Changing models via API should require a game reset to ensure consistency, as model changes affect agent behavior mid-game.
 
 ### Request/Response Models
 
@@ -385,11 +406,11 @@ class AgentService:
 
 **GameStatusResponse**: Contains current GameState, agent status dictionary, and metrics dictionary.
 
-All API responses use Pydantic models for validation and serialization.
+All API requests and responses must use strongly-typed, validated models. Implementation approach (Pydantic, TypeScript interfaces, Java classes, etc.) determined by technology stack choice in Section 14.
 
 ---
 
-## 6. Streamlit UI Requirements
+## 6. Web UI Requirements
 
 ### Main Panel (Active During Game)
 
@@ -483,7 +504,7 @@ UI updates automatically when:
 - Game state changes
 - Agent metrics update
 
-Uses Streamlit's session state to manage game state and prevent unnecessary reruns.
+Implementation must manage UI state to prevent unnecessary re-renders and maintain user context across updates.
 
 ---
 
@@ -491,15 +512,15 @@ Uses Streamlit's session state to manage game state and prevent unnecessary reru
 
 ### Directory Organization
 
-**schemas/**: Domain models as Pydantic classes:
-- game.py: Core game models (Position, Board, GameState)
-- analysis.py: Scout agent models (Threat, Opportunity, StrategicMove, BoardAnalysis)
-- strategy.py: Strategist agent models (MovePriority enum, MoveRecommendation, Strategy)
-- execution.py: Executor agent models (ValidationError, MoveExecution)
-- results.py: Result wrapper models (AgentResult)
-- api.py: API request/response models
+**schemas/**: Domain models (strongly-typed, validated):
+- game: Core game models (Position, Board, GameState)
+- analysis: Scout agent models (Threat, Opportunity, StrategicMove, BoardAnalysis)
+- strategy: Strategist agent models (MovePriority enum, MoveRecommendation, Strategy)
+- execution: Executor agent models (ValidationError, MoveExecution)
+- results: Result wrapper models (AgentResult)
+- api: API request/response models
 
-Note: MovePriority enum defines 8 priority levels (IMMEDIATE_WIN=100, BLOCK_THREAT=90, FORCE_WIN=80, PREVENT_FORK=70, CENTER_CONTROL=50, CORNER_CONTROL=40, EDGE_PLAY=30, RANDOM_VALID=10) - see Section 3 for full priority system specification.
+Note: Domain models must be strongly-typed with runtime validation. Implementation approach (Pydantic, dataclasses, TypeScript, etc.) determined by Section 14. MovePriority enum defines 8 priority levels (IMMEDIATE_WIN=100, BLOCK_THREAT=90, FORCE_WIN=80, PREVENT_FORK=70, CENTER_CONTROL=50, CORNER_CONTROL=40, EDGE_PLAY=30, RANDOM_VALID=10) - see Section 3 for full priority system specification.
 
 **agents/**: Agent implementations:
 - interfaces.py: Abstract base classes and protocols
@@ -523,20 +544,22 @@ Note: Agents use an LLM framework abstraction layer that supports multiple provi
 - agent_service.py: Agent operations (status, metrics)
 - interfaces.py: Service interface definitions
 
-**api/**: FastAPI application (REST transport layer):
-- main.py: FastAPI app setup and routes
+**api/**: REST API transport layer:
+- main.py: API application setup and routes
 - routes/game.py: Game management REST endpoints (wraps game_service)
 - routes/agents.py: Agent status REST endpoints (wraps agent_service)
 - routes/mcp.py: MCP protocol endpoints (optional)
 - adapters/rest_adapter.py: Converts REST requests/responses to/from domain models
 
-Note: REST endpoints are thin wrappers around service layer. Future transports (WebSocket, GraphQL, CLI) would add new directories with their own adapters.
+Note: REST endpoints are thin wrappers around service layer. Implementation framework choice (FastAPI, Flask, Express, etc.) determined by Section 14. Future transports (WebSocket, GraphQL, CLI) would add new directories with their own adapters.
 
-**ui/**: Streamlit application:
-- streamlit_app.py: Main Streamlit app
-- components/board.py: Game board component
-- components/metrics.py: Metrics dashboard component
-- components/insights.py: Agent insights component
+**ui/**: Web-based UI application:
+- main_app: Main UI application entry point
+- components/board: Game board component
+- components/metrics: Metrics dashboard component
+- components/insights: Agent insights component
+
+Note: UI framework choice (Streamlit, React, Vue, etc.) determined by Section 14.
 
 **models/**: LLM management:
 - shared_llm.py: Shared LLM connection manager with pooling
@@ -565,53 +588,67 @@ Note: REST endpoints are thin wrappers around service layer. Future transports (
 
 ---
 
-## 8. Dependencies and Requirements
+## 8. System Dependencies and Environment
 
-### Core Dependencies
+### Required Capabilities
 
-**FastAPI**: Web framework for REST API. Includes uvicorn for ASGI server.
+The implementation must provide:
 
-**Pydantic**: Data validation and settings management. Version 2.x for modern features.
+**API Layer:**
+- REST API support with async operations
+- Request/response validation
+- OpenAPI/Swagger documentation
+- CORS support for web clients
 
-**LLM Integration Framework**: One of LangChain, LiteLLM, Instructor, or Direct SDKs (see Section 19 for comparison and selection guidance). Include appropriate provider packages (OpenAI SDK, Anthropic SDK, Google GenAI SDK) based on framework choice.
+**Data Validation:**
+- Strongly-typed domain models
+- Runtime validation
+- Serialization/deserialization
+- Schema documentation
 
-**Streamlit**: Web framework for UI. Includes streamlit-agraph for visualizations.
+**UI Layer:**
+- Web-based interface
+- API client functionality
+- Real-time updates
+- Component-based architecture
 
-**MCP SDK**: Multi-Context Protocol SDK for distributed agent communication (optional, for MCP mode).
+**LLM Integration:**
+- Multi-provider support (OpenAI, Anthropic, Google, Ollama)
+- Connection pooling and reuse
+- Hot-swappable providers via configuration
+- Async LLM calls
 
-### Supporting Libraries
+**Testing:**
+- Unit testing framework
+- Integration testing support
+- API testing capabilities
+- Async test support
 
-**python-dotenv**: Environment variable management.
+**Development Tools:**
+- Type checking
+- Code formatting
+- Linting
+- Dependency management
 
-**requests**: HTTP client for API calls.
+### Environment Requirements
 
-**psutil**: System and process utilities for metrics.
+**Runtime Environment:**
+- Programming language with async/await support
+- HTTP server capability
+- Environment variable management
+- Configuration file parsing (JSON, YAML, etc.)
 
-**pandas**: Data manipulation for metrics dashboard.
+**External Services:**
+- LLM Provider APIs (at least one of: OpenAI, Anthropic, Google, Ollama)
+- Optional: MCP-compatible agent services (for distributed mode)
 
-### Development Dependencies
+**Development Environment:**
+- Version control (Git)
+- Package manager
+- Virtual environment or containerization
+- CI/CD pipeline support
 
-**pytest**: Testing framework.
-
-**pytest-asyncio**: Async test support.
-
-**black**: Code formatter.
-
-**mypy**: Type checking.
-
-**ruff**: Linting.
-
-### Virtual Environment Setup
-
-**Python Version**: Python 3.11 or higher.
-
-**Virtual Environment**: Use venv module. Create in project root as `venv/` directory.
-
-**Activation**: Source `venv/bin/activate` on Unix/Mac, `venv\Scripts\activate` on Windows.
-
-**Installation**: Install from requirements.txt using pip. Separate requirements_streamlit.txt for Streamlit-specific dependencies if needed.
-
-**Environment Variables**: Load from `.env` file in project root. Include API keys for OpenAI, Anthropic, Google Gemini, and Ollama configuration.
+See Section 14 for recommended specific technologies that meet these requirements.
 
 ---
 
@@ -877,7 +914,56 @@ This table defines standardized handling for all error scenarios:
 
 ---
 
-## 14. Performance Optimization
+# PART II: IMPLEMENTATION GUIDANCE (NON-NORMATIVE)
+
+This section provides recommended approaches for implementing the core specification. These are guidelines, not requirements. Technologies and frameworks may be substituted as long as they satisfy the normative requirements in Part I.
+
+---
+
+## 14. Implementation Technology Stack
+
+### Recommended Technologies
+
+The following technology stack is recommended based on proven effectiveness, but alternatives may be used:
+
+**Backend Framework:**
+- **Recommended**: FastAPI (Python)
+- **Alternatives**: Flask, Django REST Framework, Express.js, Spring Boot
+- **Requirements Met**: REST API support, async operations, OpenAPI documentation
+
+**Data Validation:**
+- **Recommended**: Pydantic (Python)
+- **Alternatives**: Marshmallow, dataclasses + validators, TypeScript interfaces, Java Bean Validation
+- **Requirements Met**: Type safety, runtime validation, serialization/deserialization
+
+**UI Framework:**
+- **Recommended**: Streamlit (Python)
+- **Alternatives**: React, Vue.js, Angular, Svelte, Next.js
+- **Requirements Met**: Web-based interface, API client, interactive components
+
+**LLM Integration:**
+- **Recommended**: See Section 19 (LangChain, LiteLLM, Instructor, or Direct SDKs)
+- **Alternatives**: Any framework supporting multiple LLM providers
+- **Requirements Met**: Multi-provider support, hot-swapping, connection pooling
+
+**Testing Framework:**
+- **Recommended**: pytest (Python)
+- **Alternatives**: unittest, Jest, JUnit, RSpec
+- **Requirements Met**: Unit, integration, and E2E testing capabilities
+
+### Technology Selection Criteria
+
+When choosing alternative technologies, ensure they support:
+1. **Type Safety**: Strong typing or runtime validation
+2. **Async Operations**: Non-blocking I/O for agent operations
+3. **API Standards**: REST, OpenAPI, or equivalent
+4. **Configuration Management**: External configuration files
+5. **Testing**: Comprehensive testing capabilities
+6. **Observability**: Logging, metrics, and monitoring hooks
+
+---
+
+## 15. Performance Optimization
 
 ### Agent Performance
 
