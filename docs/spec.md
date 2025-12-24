@@ -1811,6 +1811,397 @@ This table defines deterministic behavior for all failure scenarios:
 
 ---
 
+## 12.1 LLM Provider Metadata and Experimentation Tracking
+
+### Purpose
+
+Enable A/B testing, cost optimization, and performance analysis by tracking detailed metadata about LLM provider combinations, their characteristics, and performance metrics across games.
+
+### LLM Provider Metadata Registry
+
+**Location**: Store in `config/llm_providers.json` or database table
+
+**Schema**:
+```json
+{
+  "providers": {
+    "openai": {
+      "models": {
+        "gpt-4o": {
+          "cost_per_1k_input_tokens": 0.0025,
+          "cost_per_1k_output_tokens": 0.01,
+          "avg_latency_ms": 1200,
+          "max_tokens": 128000,
+          "context_window": 128000,
+          "supports_streaming": true,
+          "reliability_score": 0.99,
+          "last_updated": "2025-01-15"
+        },
+        "gpt-4o-mini": {
+          "cost_per_1k_input_tokens": 0.00015,
+          "cost_per_1k_output_tokens": 0.0006,
+          "avg_latency_ms": 800,
+          "max_tokens": 128000,
+          "context_window": 128000,
+          "supports_streaming": true,
+          "reliability_score": 0.98,
+          "last_updated": "2025-01-15"
+        }
+      }
+    },
+    "anthropic": {
+      "models": {
+        "claude-opus-4": {
+          "cost_per_1k_input_tokens": 0.015,
+          "cost_per_1k_output_tokens": 0.075,
+          "avg_latency_ms": 2000,
+          "max_tokens": 200000,
+          "context_window": 200000,
+          "supports_streaming": true,
+          "reliability_score": 0.99,
+          "last_updated": "2025-01-15"
+        },
+        "claude-sonnet-4": {
+          "cost_per_1k_input_tokens": 0.003,
+          "cost_per_1k_output_tokens": 0.015,
+          "avg_latency_ms": 1500,
+          "max_tokens": 200000,
+          "context_window": 200000,
+          "supports_streaming": true,
+          "reliability_score": 0.98,
+          "last_updated": "2025-01-15"
+        }
+      }
+    },
+    "google": {
+      "models": {
+        "gemini-2.0-flash-exp": {
+          "cost_per_1k_input_tokens": 0.0,
+          "cost_per_1k_output_tokens": 0.0,
+          "avg_latency_ms": 1000,
+          "max_tokens": 1048576,
+          "context_window": 1048576,
+          "supports_streaming": true,
+          "reliability_score": 0.95,
+          "last_updated": "2025-01-15"
+        }
+      }
+    },
+    "ollama": {
+      "models": {
+        "llama3.2": {
+          "cost_per_1k_input_tokens": 0.0,
+          "cost_per_1k_output_tokens": 0.0,
+          "avg_latency_ms": 3000,
+          "max_tokens": 128000,
+          "context_window": 128000,
+          "supports_streaming": true,
+          "reliability_score": 0.90,
+          "last_updated": "2025-01-15",
+          "requires_local_install": true
+        }
+      }
+    }
+  }
+}
+```
+
+### Game Session Tracking
+
+**Per-Game Metadata** (stored with each game):
+
+```json
+{
+  "game_id": "uuid-v4",
+  "session_id": "uuid-v4",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "game_outcome": "X_WIN|O_WIN|DRAW",
+  "total_moves": 7,
+  "game_duration_ms": 45000,
+
+  "experiment_config": {
+    "experiment_id": "exp_001_scout_model_comparison",
+    "variant": "variant_a",
+    "description": "Testing GPT-4o-mini vs Claude Sonnet for Scout agent"
+  },
+
+  "agent_configurations": {
+    "scout": {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "framework": "langchain",
+      "mode": "local"
+    },
+    "strategist": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4",
+      "framework": "langchain",
+      "mode": "local"
+    },
+    "executor": {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "framework": "langchain",
+      "mode": "local"
+    }
+  },
+
+  "agent_metrics": {
+    "scout": {
+      "total_calls": 7,
+      "total_input_tokens": 1200,
+      "total_output_tokens": 800,
+      "total_cost_usd": 0.00066,
+      "avg_latency_ms": 750,
+      "min_latency_ms": 600,
+      "max_latency_ms": 900,
+      "success_rate": 1.0,
+      "fallback_count": 0,
+      "timeout_count": 0
+    },
+    "strategist": {
+      "total_calls": 7,
+      "total_input_tokens": 2000,
+      "total_output_tokens": 600,
+      "total_cost_usd": 0.015,
+      "avg_latency_ms": 1400,
+      "min_latency_ms": 1200,
+      "max_latency_ms": 1600,
+      "success_rate": 1.0,
+      "fallback_count": 0,
+      "timeout_count": 0
+    },
+    "executor": {
+      "total_calls": 7,
+      "total_input_tokens": 800,
+      "total_output_tokens": 400,
+      "total_cost_usd": 0.00036,
+      "avg_latency_ms": 700,
+      "min_latency_ms": 600,
+      "max_latency_ms": 800,
+      "success_rate": 1.0,
+      "fallback_count": 0,
+      "timeout_count": 0
+    }
+  },
+
+  "total_metrics": {
+    "total_llm_calls": 21,
+    "total_input_tokens": 4000,
+    "total_output_tokens": 1800,
+    "total_cost_usd": 0.01602,
+    "avg_move_latency_ms": 2850,
+    "total_agent_time_ms": 19950
+  }
+}
+```
+
+### Experiment Configuration
+
+**Location**: Store in `config/experiments.json` or database table
+
+**Schema**:
+```json
+{
+  "experiments": [
+    {
+      "experiment_id": "exp_001_scout_model_comparison",
+      "name": "Scout Agent Model Comparison",
+      "description": "Compare GPT-4o-mini vs Claude Sonnet-4 for Scout agent",
+      "status": "active",
+      "start_date": "2025-01-15",
+      "end_date": null,
+      "target_games": 100,
+      "current_games": 42,
+
+      "variants": [
+        {
+          "variant_id": "variant_a",
+          "name": "GPT-4o-mini Scout",
+          "weight": 0.5,
+          "agent_config": {
+            "scout": {
+              "provider": "openai",
+              "model": "gpt-4o-mini"
+            },
+            "strategist": {
+              "provider": "anthropic",
+              "model": "claude-sonnet-4"
+            },
+            "executor": {
+              "provider": "openai",
+              "model": "gpt-4o-mini"
+            }
+          }
+        },
+        {
+          "variant_id": "variant_b",
+          "name": "Claude Sonnet-4 Scout",
+          "weight": 0.5,
+          "agent_config": {
+            "scout": {
+              "provider": "anthropic",
+              "model": "claude-sonnet-4"
+            },
+            "strategist": {
+              "provider": "anthropic",
+              "model": "claude-sonnet-4"
+            },
+            "executor": {
+              "provider": "openai",
+              "model": "gpt-4o-mini"
+            }
+          }
+        }
+      ],
+
+      "success_metrics": [
+        "avg_cost_per_game",
+        "avg_latency_per_move",
+        "win_rate",
+        "fallback_rate"
+      ]
+    }
+  ]
+}
+```
+
+### Analytics and Reporting Requirements
+
+**Aggregate Metrics API** (GET `/api/analytics/aggregate`):
+
+Query parameters:
+- `start_date`, `end_date`: Date range
+- `provider`: Filter by LLM provider
+- `model`: Filter by specific model
+- `agent`: Filter by agent type (scout, strategist, executor)
+- `experiment_id`: Filter by experiment
+- `variant_id`: Filter by variant
+
+Response:
+```json
+{
+  "date_range": {
+    "start": "2025-01-01",
+    "end": "2025-01-15"
+  },
+  "filters": {
+    "provider": "openai",
+    "model": "gpt-4o-mini"
+  },
+  "metrics": {
+    "total_games": 500,
+    "total_cost_usd": 8.50,
+    "avg_cost_per_game_usd": 0.017,
+    "total_tokens": 2500000,
+    "avg_tokens_per_game": 5000,
+    "avg_latency_ms": 850,
+    "p50_latency_ms": 800,
+    "p95_latency_ms": 1200,
+    "p99_latency_ms": 1500,
+    "success_rate": 0.98,
+    "fallback_rate": 0.02,
+    "timeout_rate": 0.01
+  },
+  "breakdown_by_agent": {
+    "scout": { "calls": 500, "cost": 3.20, "avg_latency": 750 },
+    "strategist": { "calls": 500, "cost": 4.00, "avg_latency": 900 },
+    "executor": { "calls": 500, "cost": 1.30, "avg_latency": 700 }
+  }
+}
+```
+
+**Experiment Results API** (GET `/api/analytics/experiments/{experiment_id}`):
+
+Response:
+```json
+{
+  "experiment_id": "exp_001_scout_model_comparison",
+  "status": "active",
+  "games_completed": 100,
+  "variants": [
+    {
+      "variant_id": "variant_a",
+      "games": 50,
+      "metrics": {
+        "avg_cost_per_game": 0.016,
+        "avg_latency_per_move": 2800,
+        "win_rate": 0.85,
+        "fallback_rate": 0.02
+      }
+    },
+    {
+      "variant_id": "variant_b",
+      "games": 50,
+      "metrics": {
+        "avg_cost_per_game": 0.022,
+        "avg_latency_per_move": 3200,
+        "win_rate": 0.88,
+        "fallback_rate": 0.01
+      }
+    }
+  ],
+  "statistical_significance": {
+    "cost": { "p_value": 0.001, "significant": true },
+    "latency": { "p_value": 0.02, "significant": true },
+    "win_rate": { "p_value": 0.15, "significant": false }
+  },
+  "recommendation": "variant_a - Lower cost with comparable performance"
+}
+```
+
+### Storage Requirements
+
+**Database Schema** (recommended):
+
+Tables:
+1. `llm_providers` - Provider metadata registry
+2. `games` - Game session data
+3. `agent_calls` - Individual agent LLM calls with tokens/cost/latency
+4. `experiments` - Experiment configurations
+5. `experiment_assignments` - Game-to-variant mappings
+
+**File Storage** (alternative for simple cases):
+- `logs/games/{date}/{game_id}.json` - Per-game detailed logs
+- `logs/analytics/daily_aggregate_{date}.json` - Daily rollups
+
+### UI Integration
+
+**Metrics Panel** (US-015, US-017, US-018) should display:
+- Per-agent cost breakdown
+- Token usage per agent and total
+- Latency statistics
+- Cost comparison across moves
+- Running total cost for current game
+
+**Analytics Dashboard** (new feature):
+- Cost trends over time
+- Latency trends by provider/model
+- Success rate comparison
+- Experiment results visualization
+- Cost optimization recommendations
+
+### Implementation Guidelines
+
+1. **Automatic Tracking**: All LLM calls MUST be automatically instrumented
+2. **Metadata Enrichment**: Automatically attach provider/model metadata from registry
+3. **Privacy**: Game logs MUST NOT contain PII or sensitive prompts (configurable)
+4. **Retention**: Define retention policy (e.g., detailed logs 30 days, aggregates 1 year)
+5. **Performance**: Use async logging to avoid blocking game flow
+6. **Batching**: Batch writes to database/storage for efficiency
+7. **Sampling**: For high-volume production, support sampling (e.g., log 10% of games)
+
+### Cost Optimization Features
+
+Based on tracked metrics, implement:
+1. **Budget Alerts**: Notify when daily/monthly costs exceed threshold
+2. **Model Recommendations**: Suggest cheaper models with similar performance
+3. **Caching**: Cache identical prompts to reduce redundant LLM calls
+4. **Prompt Optimization**: Track token usage per prompt template, optimize long ones
+5. **Provider Fallback**: Automatically switch to cheaper provider on budget constraints
+
+---
+
 ## 13. Security Considerations
 
 ### API Security
