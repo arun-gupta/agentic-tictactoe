@@ -516,11 +516,13 @@ helm/
 
 ### Unit Tests
 
-**Domain Models**: Test Pydantic model validation, edge cases, helper methods.
+**Domain Models**: Test Pydantic model validation, edge cases, helper methods. Schema validation for all domain models to ensure type safety and data integrity.
 
-**Game Engine**: Test move validation, win detection, draw detection, state management.
+**Game Engine**: Test move validation, win detection, draw detection, state management. Use parameterized tests for multiple scenarios to cover all game states efficiently.
 
-**Agents**: Test each agent in isolation with mocked LLM, validate input/output types, test error handling.
+**Agents**: Test each agent in isolation with mocked LLM, validate input/output types, test error handling. Agent interface contract validation to ensure all agents comply with protocol definitions.
+
+**Test Data Management**: Fixture strategies for common game states (opening, midgame, endgame, win scenarios). Test data generators for board positions to create diverse test cases programmatically.
 
 ### Integration Tests
 
@@ -529,6 +531,10 @@ helm/
 **API Endpoints**: Test API endpoints with test client, validate request/response models, test error cases.
 
 **Game Flow**: Test complete game from start to finish, test win/loss/draw scenarios, test player and AI moves.
+
+**Contract Tests**: API contract tests between UI and backend to ensure interface compatibility and prevent breaking changes.
+
+**MCP Protocol Tests**: Test MCP client/server communication, protocol compliance, and mode switching between local and distributed modes.
 
 ### End-to-End Tests
 
@@ -539,6 +545,22 @@ helm/
 **Agent Response Times**: Measure agent execution times, identify bottlenecks, test with different LLM providers.
 
 **Concurrent Games**: Test multiple simultaneous games, verify no state leakage, test resource usage.
+
+### Resilience Tests
+
+**LLM Failure Scenarios**: Simulate LLM timeouts/failures to verify graceful degradation and fallback strategies work correctly.
+
+**Agent Failure Cascade Testing**: Test system behavior when agents fail in sequence, verify error propagation and recovery mechanisms.
+
+### Test Coverage
+
+**Coverage Targets**: Minimum code coverage targets of 80% for unit tests and 70% for integration tests. Use pytest-cov for coverage reporting.
+
+**Critical Path Testing**: Critical path smoke tests for CI/CD to validate core functionality in automated pipelines.
+
+### CI/CD Integration
+
+**GitHub Actions**: Integration with GitHub Actions for automated testing on pull requests and commits. Run unit tests, integration tests, and smoke tests in CI pipeline. Enforce coverage thresholds before merging.
 
 ---
 
