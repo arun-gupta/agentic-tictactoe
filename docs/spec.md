@@ -209,12 +209,15 @@ All API responses use Pydantic models for validation and serialization.
 
 The main panel displays the game interface and is visible throughout gameplay:
 
-**Game Board Display**: Visual 3x3 grid showing X, O, and empty cells. Clickable cells for player moves. Highlights last move. Shows current player turn. Displays move history directly on the board game interface, showing a chronological list of moves with player/AI indicator, move number, position, and timestamp. Move history entries include expandable details showing agent reasoning.
+**Game Board Display**: Visual 3x3 grid showing X, O, and empty cells. Clickable cells for player moves. Highlights last move with animated transitions. Shows current player turn. Displays move history directly on the board game interface, showing a chronological list of moves with player/AI indicator, move number, position, and timestamp. Move history entries include expandable details showing agent reasoning. Animated moves provide smooth visual transitions when pieces are placed on the board.
 
 **Agent Insights Panel**: Real-time display of:
 - Scout analysis (threats, opportunities, strategic moves)
 - Strategist strategy (recommended move, reasoning, priority)
 - Executor execution (validation, success status, timing)
+- Loading indicators for each agent step showing current agent activity
+- Agent "thinking" animation/progress indicator with visual feedback during LLM processing
+- Estimated time remaining for AI move based on historical agent performance
 
 **Game Status Display**: Shows current player, move number, game over status, winner (if any), and draw status.
 
@@ -257,7 +260,7 @@ The Metrics panel becomes available and displayed after the game is completed (w
 
 ### Configuration Panel
 
-**Model Selection**: Dropdown to select LLM provider (OpenAI, Anthropic, Google Gemini, Ollama) and model name.
+**Model Selection**: Dropdown to select LLM provider (OpenAI, Anthropic, Google Gemini, Ollama) and model name. User preferences for LLM settings are automatically saved and restored in future sessions.
 
 **Agent Mode Selection**: Toggle between LangChain mode (local, fast) and LangChain+MCP mode (distributed, protocol-based).
 
