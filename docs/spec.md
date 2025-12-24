@@ -1908,93 +1908,48 @@ Enable A/B testing, cost optimization, and performance analysis by tracking deta
 
 ### Game Session Tracking
 
-**Per-Game Metadata** (stored with each game):
+**Essential Metrics** (5-7 core metrics to track per game):
 
 ```json
 {
   "game_id": "uuid-v4",
-  "session_id": "uuid-v4",
   "timestamp": "2025-01-15T10:30:00Z",
   "game_outcome": "X_WIN|O_WIN|DRAW",
-  "total_moves": 7,
-  "game_duration_ms": 45000,
 
-  "experiment_config": {
-    "experiment_id": "exp_001_scout_model_comparison",
-    "variant": "variant_a",
-    "description": "Testing GPT-4o-mini vs Claude Sonnet for Scout agent"
+  "agent_config": {
+    "scout_model": "openai/gpt-4o-mini",
+    "strategist_model": "anthropic/claude-sonnet-4",
+    "executor_model": "openai/gpt-4o-mini"
   },
 
-  "agent_configurations": {
-    "scout": {
-      "provider": "openai",
-      "model": "gpt-4o-mini",
-      "framework": "langchain",
-      "mode": "local"
-    },
-    "strategist": {
-      "provider": "anthropic",
-      "model": "claude-sonnet-4",
-      "framework": "langchain",
-      "mode": "local"
-    },
-    "executor": {
-      "provider": "openai",
-      "model": "gpt-4o-mini",
-      "framework": "langchain",
-      "mode": "local"
-    }
-  },
-
-  "agent_metrics": {
-    "scout": {
-      "total_calls": 7,
-      "total_input_tokens": 1200,
-      "total_output_tokens": 800,
-      "total_cost_usd": 0.00066,
-      "avg_latency_ms": 750,
-      "min_latency_ms": 600,
-      "max_latency_ms": 900,
-      "success_rate": 1.0,
-      "fallback_count": 0,
-      "timeout_count": 0
-    },
-    "strategist": {
-      "total_calls": 7,
-      "total_input_tokens": 2000,
-      "total_output_tokens": 600,
-      "total_cost_usd": 0.015,
-      "avg_latency_ms": 1400,
-      "min_latency_ms": 1200,
-      "max_latency_ms": 1600,
-      "success_rate": 1.0,
-      "fallback_count": 0,
-      "timeout_count": 0
-    },
-    "executor": {
-      "total_calls": 7,
-      "total_input_tokens": 800,
-      "total_output_tokens": 400,
-      "total_cost_usd": 0.00036,
-      "avg_latency_ms": 700,
-      "min_latency_ms": 600,
-      "max_latency_ms": 800,
-      "success_rate": 1.0,
-      "fallback_count": 0,
-      "timeout_count": 0
-    }
-  },
-
-  "total_metrics": {
-    "total_llm_calls": 21,
-    "total_input_tokens": 4000,
-    "total_output_tokens": 1800,
-    "total_cost_usd": 0.01602,
-    "avg_move_latency_ms": 2850,
-    "total_agent_time_ms": 19950
+  "metrics": {
+    "1_total_cost_usd": 0.016,
+    "2_total_tokens": 5800,
+    "3_avg_latency_ms": 950,
+    "4_game_duration_ms": 45000,
+    "5_total_moves": 7,
+    "6_fallback_count": 0,
+    "7_error_count": 0
   }
 }
 ```
+
+**Metric Definitions**:
+
+1. **total_cost_usd**: Total cost for all LLM calls in the game (calculated from tokens × provider rates)
+2. **total_tokens**: Sum of input + output tokens across all agents
+3. **avg_latency_ms**: Average time per agent LLM call
+4. **game_duration_ms**: Total time from first move to game end
+5. **total_moves**: Number of moves in the game
+6. **fallback_count**: Number of times fallback strategies were triggered
+7. **error_count**: Number of errors encountered during the game
+
+**Why These 7?**
+- **Cost tracking**: Essential for budget management (#1)
+- **Token usage**: Directly impacts cost and helps identify optimization opportunities (#2)
+- **Performance**: Latency affects user experience (#3)
+- **Game context**: Duration and moves provide context for other metrics (#4, #5)
+- **Reliability**: Fallback and error counts indicate system health (#6, #7)
 
 ### Experiment Configuration
 
@@ -2068,137 +2023,93 @@ Enable A/B testing, cost optimization, and performance analysis by tracking deta
 
 ### Analytics and Reporting Requirements
 
-**Aggregate Metrics API** (GET `/api/analytics/aggregate`):
+**Simple Analytics API** (GET `/api/analytics/summary`):
 
 Query parameters:
-- `start_date`, `end_date`: Date range
-- `provider`: Filter by LLM provider
-- `model`: Filter by specific model
-- `agent`: Filter by agent type (scout, strategist, executor)
-- `experiment_id`: Filter by experiment
-- `variant_id`: Filter by variant
+- `start_date`, `end_date`: Date range (optional, defaults to last 30 days)
+- `model_combo`: Filter by model combination (optional)
 
-Response:
+Response (aggregates the 7 core metrics):
 ```json
 {
   "date_range": {
     "start": "2025-01-01",
     "end": "2025-01-15"
   },
-  "filters": {
-    "provider": "openai",
-    "model": "gpt-4o-mini"
+  "total_games": 500,
+  "summary": {
+    "avg_cost_per_game": 0.017,
+    "avg_tokens_per_game": 5800,
+    "avg_latency": 950,
+    "avg_duration": 45000,
+    "avg_moves": 7.2,
+    "total_fallbacks": 10,
+    "total_errors": 5
   },
-  "metrics": {
-    "total_games": 500,
-    "total_cost_usd": 8.50,
-    "avg_cost_per_game_usd": 0.017,
-    "total_tokens": 2500000,
-    "avg_tokens_per_game": 5000,
-    "avg_latency_ms": 850,
-    "p50_latency_ms": 800,
-    "p95_latency_ms": 1200,
-    "p99_latency_ms": 1500,
-    "success_rate": 0.98,
-    "fallback_rate": 0.02,
-    "timeout_rate": 0.01
-  },
-  "breakdown_by_agent": {
-    "scout": { "calls": 500, "cost": 3.20, "avg_latency": 750 },
-    "strategist": { "calls": 500, "cost": 4.00, "avg_latency": 900 },
-    "executor": { "calls": 500, "cost": 1.30, "avg_latency": 700 }
+  "totals": {
+    "total_cost": 8.50,
+    "total_tokens": 2900000
   }
 }
 ```
 
-**Experiment Results API** (GET `/api/analytics/experiments/{experiment_id}`):
+**Comparison API** (GET `/api/analytics/compare`):
 
-Response:
+Compare two model combinations:
 ```json
 {
-  "experiment_id": "exp_001_scout_model_comparison",
-  "status": "active",
-  "games_completed": 100,
-  "variants": [
-    {
-      "variant_id": "variant_a",
-      "games": 50,
-      "metrics": {
-        "avg_cost_per_game": 0.016,
-        "avg_latency_per_move": 2800,
-        "win_rate": 0.85,
-        "fallback_rate": 0.02
-      }
+  "comparison": {
+    "config_a": "openai/gpt-4o-mini (all agents)",
+    "config_b": "anthropic/claude-sonnet-4 (all agents)",
+    "games_each": 50,
+    "metrics_a": {
+      "avg_cost": 0.015,
+      "avg_latency": 850,
+      "fallback_rate": 0.02
     },
-    {
-      "variant_id": "variant_b",
-      "games": 50,
-      "metrics": {
-        "avg_cost_per_game": 0.022,
-        "avg_latency_per_move": 3200,
-        "win_rate": 0.88,
-        "fallback_rate": 0.01
-      }
-    }
-  ],
-  "statistical_significance": {
-    "cost": { "p_value": 0.001, "significant": true },
-    "latency": { "p_value": 0.02, "significant": true },
-    "win_rate": { "p_value": 0.15, "significant": false }
-  },
-  "recommendation": "variant_a - Lower cost with comparable performance"
+    "metrics_b": {
+      "avg_cost": 0.025,
+      "avg_latency": 1400,
+      "fallback_rate": 0.01
+    },
+    "winner": "config_a (33% cheaper, 39% faster)"
+  }
 }
 ```
 
 ### Storage Requirements
 
-**Database Schema** (recommended):
+**Simple Storage**:
 
-Tables:
-1. `llm_providers` - Provider metadata registry
-2. `games` - Game session data
-3. `agent_calls` - Individual agent LLM calls with tokens/cost/latency
-4. `experiments` - Experiment configurations
-5. `experiment_assignments` - Game-to-variant mappings
+Store one JSON file per game in `logs/games/{game_id}.json` with the 7 core metrics.
 
-**File Storage** (alternative for simple cases):
-- `logs/games/{date}/{game_id}.json` - Per-game detailed logs
-- `logs/analytics/daily_aggregate_{date}.json` - Daily rollups
+For analytics, periodically aggregate into `logs/analytics/summary_{date}.json`.
+
+**Optional Database** (for complex queries):
+- `games` table with the 7 metrics + agent_config + timestamp
+- Simple SELECT queries for aggregation and comparison
 
 ### UI Integration
 
-**Metrics Panel** (US-015, US-017, US-018) should display:
-- Per-agent cost breakdown
-- Token usage per agent and total
-- Latency statistics
-- Cost comparison across moves
-- Running total cost for current game
+**Metrics Panel** (US-015, US-017, US-018) displays the 7 core metrics:
+1. Total cost for current game
+2. Total tokens used
+3. Average latency
+4. Game duration
+5. Move count
+6. Fallback count (if any)
+7. Error count (if any)
 
-**Analytics Dashboard** (new feature):
-- Cost trends over time
-- Latency trends by provider/model
-- Success rate comparison
-- Experiment results visualization
-- Cost optimization recommendations
+**Optional: Simple Analytics View**:
+- Last 10 games: Show the 7 metrics per game in a table
+- Compare button: Select two games to compare their metrics side-by-side
 
 ### Implementation Guidelines
 
-1. **Automatic Tracking**: All LLM calls MUST be automatically instrumented
-2. **Metadata Enrichment**: Automatically attach provider/model metadata from registry
-3. **Privacy**: Game logs MUST NOT contain PII or sensitive prompts (configurable)
-4. **Retention**: Define retention policy (e.g., detailed logs 30 days, aggregates 1 year)
-5. **Performance**: Use async logging to avoid blocking game flow
-6. **Batching**: Batch writes to database/storage for efficiency
-7. **Sampling**: For high-volume production, support sampling (e.g., log 10% of games)
-
-### Cost Optimization Features
-
-Based on tracked metrics, implement:
-1. **Budget Alerts**: Notify when daily/monthly costs exceed threshold
-2. **Model Recommendations**: Suggest cheaper models with similar performance
-3. **Caching**: Cache identical prompts to reduce redundant LLM calls
-4. **Prompt Optimization**: Track token usage per prompt template, optimize long ones
-5. **Provider Fallback**: Automatically switch to cheaper provider on budget constraints
+1. **Automatic Tracking**: All LLM calls MUST be automatically instrumented to capture the 7 metrics
+2. **Calculate from Registry**: Use provider metadata to calculate costs (tokens × rates)
+3. **Async Logging**: Write metrics asynchronously to avoid blocking game flow
+4. **Simple Storage**: JSON files are sufficient; database is optional
 
 ---
 
