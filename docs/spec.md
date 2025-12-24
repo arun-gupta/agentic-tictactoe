@@ -285,14 +285,134 @@ Each step validates the previous result before proceeding.
 
 **Move Application**: Applies validated moves, updates board, switches players, increments move counter, checks for game end.
 
+### Formal Game Rules
+
+#### Board State Definition
+
+**Board Representation**: 3x3 grid with cells indexed (row, col) where both row and col ∈ {0, 1, 2}
+
+**Cell States**: Each cell can be in exactly one of three states:
+- EMPTY: No symbol placed
+- X: Player X's symbol
+- O: Player O's symbol
+
+**Game State**: Tuple (Board, CurrentPlayer, MoveCount, IsGameOver, Winner)
+- Board: 3×3 matrix of cell states
+- CurrentPlayer: X or O
+- MoveCount: Integer ∈ [0, 9]
+- IsGameOver: Boolean
+- Winner: X | O | DRAW | NULL
+
+#### Win Conditions Enumeration
+
+A player wins when they have three of their symbols in any of these 8 winning lines:
+
+| Line Type | Positions | Condition |
+|-----------|-----------|-----------|
+| Row 0 | (0,0), (0,1), (0,2) | All three cells contain same symbol |
+| Row 1 | (1,0), (1,1), (1,2) | All three cells contain same symbol |
+| Row 2 | (2,0), (2,1), (2,2) | All three cells contain same symbol |
+| Col 0 | (0,0), (1,0), (2,0) | All three cells contain same symbol |
+| Col 1 | (0,1), (1,1), (2,1) | All three cells contain same symbol |
+| Col 2 | (0,2), (1,2), (2,2) | All three cells contain same symbol |
+| Diagonal (main) | (0,0), (1,1), (2,2) | All three cells contain same symbol |
+| Diagonal (anti) | (0,2), (1,1), (2,0) | All three cells contain same symbol |
+
+**Win Detection Algorithm**: After each move, check all 8 lines for three matching symbols.
+
+#### Draw Condition
+
+A draw occurs when:
+- All 9 cells are occupied (MoveCount = 9)
+- AND no player has achieved a winning line
+- This is the ONLY draw condition
+
+#### Illegal Move Conditions
+
+A move is illegal if ANY of the following conditions are true:
+
+| Condition | Description | Error Code |
+|-----------|-------------|------------|
+| Out of Bounds | row < 0 OR row > 2 OR col < 0 OR col > 2 | `MOVE_OUT_OF_BOUNDS` |
+| Cell Occupied | Board[row][col] ≠ EMPTY | `MOVE_OCCUPIED` |
+| Game Over | IsGameOver = true | `GAME_ALREADY_OVER` |
+| Invalid Player | Player symbol is not X or O | `INVALID_PLAYER` |
+| Wrong Turn | Player ≠ CurrentPlayer | `WRONG_TURN` |
+
+#### Legal Move Invariants
+
+A move at position (row, col) by player P is legal if and only if ALL of the following are true:
+1. 0 ≤ row ≤ 2
+2. 0 ≤ col ≤ 2
+3. Board[row][col] = EMPTY
+4. IsGameOver = false
+5. P = CurrentPlayer
+6. P ∈ {X, O}
+
+#### Game State Transitions
+
+**Precondition → Action → Postcondition Table**:
+
+| Initial State | Action | Preconditions | Postconditions | Notes |
+|---------------|--------|---------------|----------------|-------|
+| Empty board | Start game | MoveCount = 0 | CurrentPlayer = X, IsGameOver = false | X always starts |
+| In progress | Make legal move | Move is legal (see invariants) | Board updated, CurrentPlayer switches, MoveCount++, check win/draw | Normal gameplay |
+| In progress | Make illegal move | Any illegal condition met | State unchanged, error returned | Game continues |
+| In progress | Win detected | Move completes winning line | IsGameOver = true, Winner = CurrentPlayer | Game ends |
+| In progress | Draw detected | MoveCount = 9 AND no winner | IsGameOver = true, Winner = DRAW | Game ends |
+| Game over | Attempt move | IsGameOver = true | State unchanged, error returned | No moves allowed |
+| Any state | Reset game | None | MoveCount = 0, Board = all EMPTY, CurrentPlayer = X, IsGameOver = false, Winner = NULL | Fresh start |
+
+#### Turn Order Rules
+
+**Strict Alternation**:
+1. X moves first (move 1)
+2. O moves second (move 2)
+3. X moves third (move 3)
+4. Pattern continues: X on odd moves, O on even moves
+5. After each valid move: CurrentPlayer = (CurrentPlayer = X) ? O : X
+
+**Turn Verification**: Before accepting a move, verify:
+```
+IF MoveCount is even THEN CurrentPlayer MUST be X
+IF MoveCount is odd THEN CurrentPlayer MUST be O
+```
+
+#### Game Termination Conditions
+
+The game terminates when ANY of these conditions become true:
+
+| Condition | Winner Value | IsGameOver | MoveCount Range |
+|-----------|--------------|------------|-----------------|
+| X completes a line | X | true | [3, 9] (min 3 moves for X to win) |
+| O completes a line | O | true | [4, 9] (min 4 moves for O to win) |
+| All cells filled, no winner | DRAW | true | 9 |
+
+**Minimum Moves to Win**:
+- X can win earliest on move 5 (X plays moves 1, 3, 5)
+- O can win earliest on move 6 (O plays moves 2, 4, 6)
+
+#### State Validation Rules
+
+A valid game state must satisfy ALL of the following:
+
+1. **Symbol Balance**: |count(X) - count(O)| ≤ 1
+2. **Move Consistency**: IF count(X) = count(O) THEN CurrentPlayer = X
+3. **Move Consistency**: IF count(X) = count(O) + 1 THEN CurrentPlayer = O
+4. **Win Uniqueness**: At most one player can have a winning line
+5. **Win Finality**: IF winner detected THEN IsGameOver = true
+6. **Draw Finality**: IF MoveCount = 9 AND no winner THEN Winner = DRAW
+7. **No Post-Win Moves**: IF winner on move N THEN no symbols placed after move N
+
 ### Game Engine Interface
 
 The engine exposes methods to:
-- Make a move (position and player) - returns success/failure
-- Check for winner - returns player or None
-- Check for draw - returns boolean
-- Get available moves - returns list of positions
-- Reset game - clears state
+- Make a move (position and player) - returns success/failure with error code
+- Check for winner - returns player or None (checks all 8 lines)
+- Check for draw - returns boolean (MoveCount = 9 AND no winner)
+- Get available moves - returns list of empty positions
+- Validate move - returns boolean and error code if invalid
+- Reset game - clears state to initial conditions
 - Get current state - returns GameState domain model
 
 The engine is stateless regarding agent coordination; it only manages game rules and state.
