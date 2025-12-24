@@ -280,6 +280,78 @@ The engine is stateless regarding agent coordination; it only manages game rules
 
 ## 5. API Design
 
+### Transport Abstraction
+
+The application is designed with a layered architecture that separates transport mechanisms from business logic, enabling future extensibility:
+
+**Architecture Layers**:
+1. **Game Engine Layer**: Core game logic, rules, and state management (transport-agnostic)
+2. **Agent Coordination Layer**: Agent pipeline orchestration and LLM integration (transport-agnostic)
+3. **Service Layer**: Business logic orchestration and domain model operations (transport-agnostic)
+4. **Transport Layer**: Protocol-specific implementations (REST, WebSocket, GraphQL, CLI, etc.)
+
+**Current Implementation**:
+- **Primary Transport**: REST API (HTTP/JSON)
+- **Primary Client**: Streamlit Web UI
+
+**Design Principles for Transport Abstraction**:
+- **Domain models** (GameState, BoardAnalysis, Strategy, etc.) are transport-agnostic Pydantic models
+- **Service interfaces** define business operations independent of transport protocol
+- **Transport adapters** translate protocol-specific requests/responses to/from domain models
+- **Client libraries** can be generated from domain models for any transport
+
+**Future Transport Options**:
+
+| Transport Type | Use Case | Implementation Notes |
+|----------------|----------|---------------------|
+| **WebSocket** | Real-time updates, live game streaming | Add WebSocket endpoints wrapping existing service layer; push game state changes via events |
+| **GraphQL** | Flexible queries, mobile clients | GraphQL schema generated from Pydantic models; resolvers call service layer |
+| **gRPC** | High-performance inter-service communication | Protocol buffer definitions from domain models; service stubs wrap business logic |
+| **CLI** | Command-line interface, automation | CLI commands invoke service layer directly; text-based output rendering |
+| **Server-Sent Events (SSE)** | One-way real-time updates | SSE endpoints for game state streaming; lighter than WebSocket |
+| **Message Queue** | Asynchronous game processing | Pub/sub for game events; message handlers invoke service layer |
+
+**Extending for New Transports**:
+
+To add a new transport (e.g., WebSocket):
+
+1. **Create Transport Adapter**: Implement WebSocket handlers that:
+   - Parse incoming messages into domain models (MoveRequest, etc.)
+   - Call existing service layer methods
+   - Serialize domain models (MoveResponse, etc.) into WebSocket messages
+
+2. **Maintain Service Layer**: No changes needed to:
+   - Game engine logic
+   - Agent coordination
+   - Domain models
+   - Business rules
+
+3. **Add Client Support**: Generate client library if needed:
+   - Use domain models for type safety
+   - Implement transport-specific connection logic
+   - Maintain consistent API semantics
+
+**Service Layer Interface** (Transport-Agnostic):
+
+```python
+class GameService:
+    def make_move(game_state: GameState, position: Position) -> MoveResponse
+    def get_status() -> GameStatusResponse
+    def reset_game() -> GameState
+    def get_history() -> List[MoveHistory]
+
+class AgentService:
+    def get_agent_status(agent_id: str) -> AgentStatusResponse
+    def get_agent_metrics(agent_id: str) -> MetricsResponse
+```
+
+**Benefits of Transport Abstraction**:
+- Add new client types without modifying game logic
+- Support multiple concurrent transports (REST + WebSocket + CLI)
+- Consistent behavior across all transport mechanisms
+- Easier testing (test service layer independently of transport)
+- Future-proof architecture for evolving client needs
+
 ### REST API Endpoints
 
 **Game Management**:
@@ -446,11 +518,19 @@ Note: Agents use an LLM framework abstraction layer that supports multiple provi
 - coordinator.py: Orchestrates agent pipeline
 - state.py: Game state management (if separate from engine)
 
-**api/**: FastAPI application:
+**services/**: Service layer (transport-agnostic business logic):
+- game_service.py: Game operations (make_move, get_status, reset, history)
+- agent_service.py: Agent operations (status, metrics)
+- interfaces.py: Service interface definitions
+
+**api/**: FastAPI application (REST transport layer):
 - main.py: FastAPI app setup and routes
-- routes/game.py: Game management endpoints
-- routes/agents.py: Agent status endpoints
+- routes/game.py: Game management REST endpoints (wraps game_service)
+- routes/agents.py: Agent status REST endpoints (wraps agent_service)
 - routes/mcp.py: MCP protocol endpoints (optional)
+- adapters/rest_adapter.py: Converts REST requests/responses to/from domain models
+
+Note: REST endpoints are thin wrappers around service layer. Future transports (WebSocket, GraphQL, CLI) would add new directories with their own adapters.
 
 **ui/**: Streamlit application:
 - streamlit_app.py: Main Streamlit app
