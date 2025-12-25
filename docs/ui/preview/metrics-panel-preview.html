@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metrics Panel - UI Preview</title>
+    <style>
+        :root {
+            /* Primary Colors */
+            --bg-primary: #1a1a2e;
+            --bg-surface: #16213e;
+            --bg-card: #0f3460;
+
+            /* UI Elements */
+            --color-primary: #00adb5;
+            --color-secondary: #533483;
+            --color-success: #06d6a0;
+            --color-error: #e94560;
+            --color-warning: #ffd166;
+            --color-disabled: #6c757d;
+            --grid-lines: #533483;
+
+            /* Text */
+            --text-primary: #eaeaea;
+            --text-secondary: #a8a8a8;
+            --text-heading: #ffffff;
+
+            /* Accents */
+            --accent-agent: #4361ee;
+            --accent-highlight: #f72585;
+
+            /* Spacing */
+            --space-sm: 8px;
+            --space-md: 12px;
+            --space-lg: 16px;
+
+            /* Border Radius */
+            --radius-sm: 6px;
+            --radius-md: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, 'Helvetica Neue', 'Arial', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 20px;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--text-heading);
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .demo-toggle {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .toggle-btn {
+            background: var(--bg-surface);
+            border: 2px solid var(--grid-lines);
+            color: var(--text-primary);
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 8px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-btn.active {
+            background: var(--color-primary);
+            color: var(--bg-primary);
+            border-color: var(--color-primary);
+        }
+
+        .metrics-panel {
+            background: var(--bg-surface);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--grid-lines);
+            padding: 20px;
+        }
+
+        /* Agent Insights Section */
+        .agent-insights {
+            display: none;
+        }
+
+        .agent-insights.active {
+            display: block;
+        }
+
+        .agent-section {
+            background: var(--bg-card);
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 15px;
+            min-height: 120px;
+        }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .agent-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .agent-status.idle {
+            background: var(--color-disabled);
+        }
+
+        .agent-status.running {
+            background: var(--accent-agent);
+            animation: blink 1.5s infinite;
+        }
+
+        .agent-status.success {
+            background: var(--color-success);
+        }
+
+        .agent-status.failed {
+            background: var(--color-error);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .agent-name {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .agent-name.scout { color: #4361ee; }
+        .agent-name.strategist { color: #533483; }
+        .agent-name.executor { color: #00adb5; }
+
+        .agent-output {
+            background: var(--bg-primary);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-top: 10px;
+        }
+
+        .recommended-move {
+            background: rgba(0, 173, 181, 0.15);
+            border-left: 3px solid var(--color-primary);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .confidence {
+            font-size: 0.75rem;
+            font-family: 'SF Mono', monospace;
+            color: var(--text-secondary);
+        }
+
+        /* Post-Game Metrics Section */
+        .post-game-metrics {
+            display: none;
+        }
+
+        .post-game-metrics.active {
+            display: block;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-card);
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            margin: -20px -20px 0 -20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab:hover {
+            background: rgba(0, 173, 181, 0.1);
+        }
+
+        .tab.active {
+            color: var(--text-primary);
+            background: var(--bg-surface);
+            border-bottom-color: var(--color-primary);
+        }
+
+        .tab-content {
+            display: none;
+            padding-top: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Game Outcome */
+        .outcome-display {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+        }
+
+        .outcome-display.win {
+            background: var(--color-success);
+            color: var(--bg-primary);
+        }
+
+        .outcome-display.loss {
+            background: var(--color-error);
+            color: var(--text-heading);
+        }
+
+        .outcome-display.draw {
+            background: var(--color-secondary);
+            color: var(--text-heading);
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            min-height: 120px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .card-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'SF Mono', monospace;
+            color: var(--color-primary);
+        }
+
+        /* Performance Table */
+        .metrics-table {
+            width: 100%;
+            border: 1px solid var(--grid-lines);
+            border-radius: var(--radius-sm);
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: hidden;
+        }
+
+        .metrics-table th {
+            background: var(--bg-card);
+            color: var(--text-heading);
+            font-weight: 600;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid var(--grid-lines);
+        }
+
+        .metrics-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(83, 52, 131, 0.3);
+        }
+
+        .metrics-table tr:nth-child(even) {
+            background: var(--bg-surface);
+        }
+
+        .metrics-table tr:hover {
+            background: rgba(0, 173, 181, 0.1);
+        }
+
+        .metrics-table td:last-child {
+            text-align: right;
+            font-family: 'SF Mono', monospace;
+            color: var(--color-primary);
+        }
+
+        /* LLM Interactions */
+        .interaction-section {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+        }
+
+        .interaction-header {
+            font-weight: 600;
+            margin-bottom: 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chevron {
+            transition: transform 0.2s ease;
+        }
+
+        .chevron.open {
+            transform: rotate(180deg);
+        }
+
+        .prompt-text, .response-text {
+            background: var(--bg-primary);
+            font-family: 'SF Mono', monospace;
+            font-size: 0.875rem;
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+        }
+
+        .prompt-text {
+            border-left: 3px solid var(--accent-agent);
+        }
+
+        .response-text {
+            border-left: 3px solid var(--color-success);
+        }
+
+        .metadata-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge.tokens {
+            background: var(--color-primary);
+            color: var(--bg-primary);
+        }
+
+        .badge.latency {
+            background: var(--color-secondary);
+            color: var(--text-primary);
+        }
+
+        .badge.provider {
+            background: var(--color-disabled);
+            color: var(--text-primary);
+        }
+
+        /* Agent Communication */
+        .comm-section {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+        }
+
+        .json-display {
+            background: var(--bg-primary);
+            font-family: 'SF Mono', monospace;
+            font-size: 0.875rem;
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 8px;
+        }
+
+        .json-key { color: var(--accent-highlight); }
+        .json-string { color: var(--color-success); }
+        .json-number { color: var(--color-primary); }
+        .json-boolean { color: var(--color-warning); }
+        .json-null { color: var(--color-disabled); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Metrics & Insights Panel</h1>
+
+        <div class="demo-toggle">
+            <button class="toggle-btn active" onclick="showInGame()">During Game</button>
+            <button class="toggle-btn" onclick="showPostGame()">Post-Game</button>
+        </div>
+
+        <div class="metrics-panel">
+            <!-- Agent Insights (During Game) -->
+            <div class="agent-insights active">
+                <div class="agent-section">
+                    <div class="agent-header">
+                        <div class="agent-status success"></div>
+                        <div class="agent-name scout">Scout</div>
+                    </div>
+                    <div class="agent-output">
+                        Analyzed board state. Center position is key strategic location. Opponent threatens row 1.
+                    </div>
+                    <div class="recommended-move">
+                        <span>Recommended: Position (1, 1)</span>
+                        <span class="confidence">95% confidence</span>
+                    </div>
+                </div>
+
+                <div class="agent-section">
+                    <div class="agent-header">
+                        <div class="agent-status running"></div>
+                        <div class="agent-name strategist">Strategist</div>
+                    </div>
+                    <div class="agent-output">
+                        Processing Scout analysis and determining optimal strategy...
+                    </div>
+                </div>
+
+                <div class="agent-section">
+                    <div class="agent-header">
+                        <div class="agent-status idle"></div>
+                        <div class="agent-name executor">Executor</div>
+                    </div>
+                    <div class="agent-output">
+                        Waiting for strategy recommendation...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Post-Game Metrics -->
+            <div class="post-game-metrics">
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('summary')">Game Summary</button>
+                    <button class="tab" onclick="showTab('performance')">Performance</button>
+                    <button class="tab" onclick="showTab('llm')">LLM Interactions</button>
+                    <button class="tab" onclick="showTab('communication')">Agent Communication</button>
+                </div>
+
+                <!-- Game Summary Tab -->
+                <div id="summary" class="tab-content active">
+                    <div class="outcome-display win">
+                        🎉 Victory!
+                    </div>
+
+                    <div class="summary-grid">
+                        <div class="summary-card">
+                            <div class="card-icon">🎯</div>
+                            <div class="card-label">Total Moves</div>
+                            <div class="card-value">9</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="card-icon">⚡</div>
+                            <div class="card-label">Avg Move Time</div>
+                            <div class="card-value">2.3s</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="card-icon">💰</div>
+                            <div class="card-label">Total Cost</div>
+                            <div class="card-value">$0.04</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="card-icon">🔢</div>
+                            <div class="card-label">Tokens Used</div>
+                            <div class="card-value">4,523</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Tab -->
+                <div id="performance" class="tab-content">
+                    <table class="metrics-table">
+                        <thead>
+                            <tr>
+                                <th>Agent</th>
+                                <th>Avg Latency</th>
+                                <th>Total Calls</th>
+                                <th>Tokens</th>
+                                <th>Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Scout</td>
+                                <td>1.2s</td>
+                                <td>5</td>
+                                <td>1,234</td>
+                                <td>$0.01</td>
+                            </tr>
+                            <tr>
+                                <td>Strategist</td>
+                                <td>2.8s</td>
+                                <td>5</td>
+                                <td>2,345</td>
+                                <td>$0.02</td>
+                            </tr>
+                            <tr>
+                                <td>Executor</td>
+                                <td>0.9s</td>
+                                <td>5</td>
+                                <td>944</td>
+                                <td>$0.01</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- LLM Interactions Tab -->
+                <div id="llm" class="tab-content">
+                    <div class="interaction-section">
+                        <div class="interaction-header">
+                            <span>Scout - Move 1</span>
+                            <span class="chevron">▼</span>
+                        </div>
+                        <div class="prompt-text">
+Analyze the following tic-tac-toe board state:
+Board: [" ", " ", " ", " ", " ", " ", " ", " ", " "]
+Identify threats, opportunities, and strategic positions.
+                        </div>
+                        <div class="response-text">
+Center position (1,1) offers maximum strategic flexibility.
+No immediate threats. Control of center enables fork opportunities.
+Recommend center as opening move with 95% confidence.
+                        </div>
+                        <div class="metadata-badges">
+                            <span class="badge tokens">1,234 tokens</span>
+                            <span class="badge latency">1.2s</span>
+                            <span class="badge provider">OpenAI gpt-5.2</span>
+                        </div>
+                    </div>
+
+                    <div class="interaction-section">
+                        <div class="interaction-header">
+                            <span>Strategist - Move 1</span>
+                            <span class="chevron">▼</span>
+                        </div>
+                        <div class="prompt-text">
+Based on Scout analysis: "Center position offers maximum strategic flexibility"
+Synthesize strategy and recommend move.
+                        </div>
+                        <div class="response-text">
+Agree with center control strategy. Opening with (1,1) maximizes
+win probability. Creates 4 potential winning lines and fork opportunities.
+                        </div>
+                        <div class="metadata-badges">
+                            <span class="badge tokens">2,345 tokens</span>
+                            <span class="badge latency">2.8s</span>
+                            <span class="badge provider">Anthropic claude-opus-4.5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agent Communication Tab -->
+                <div id="communication" class="tab-content">
+                    <div class="comm-section">
+                        <div class="interaction-header">
+                            <span>Scout → Strategist (Move 1)</span>
+                            <span class="chevron">▼</span>
+                        </div>
+                        <div class="json-display">
+<span class="json-key">"type"</span>: <span class="json-string">"analysis"</span>,
+<span class="json-key">"move_number"</span>: <span class="json-number">1</span>,
+<span class="json-key">"threats"</span>: [],
+<span class="json-key">"opportunities"</span>: [
+  <span class="json-string">"center_control"</span>,
+  <span class="json-string">"fork_setup"</span>
+],
+<span class="json-key">"recommended_position"</span>: [<span class="json-number">1</span>, <span class="json-number">1</span>],
+<span class="json-key">"confidence"</span>: <span class="json-number">0.95</span>
+                        </div>
+                    </div>
+
+                    <div class="comm-section">
+                        <div class="interaction-header">
+                            <span>Strategist → Executor (Move 1)</span>
+                            <span class="chevron">▼</span>
+                        </div>
+                        <div class="json-display">
+<span class="json-key">"type"</span>: <span class="json-string">"strategy"</span>,
+<span class="json-key">"move_number"</span>: <span class="json-number">1</span>,
+<span class="json-key">"strategy"</span>: <span class="json-string">"center_control"</span>,
+<span class="json-key">"move"</span>: [<span class="json-number">1</span>, <span class="json-number">1</span>],
+<span class="json-key">"reasoning"</span>: <span class="json-string">"Maximum strategic flexibility"</span>,
+<span class="json-key">"approved"</span>: <span class="json-boolean">true</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showInGame() {
+            document.querySelector('.agent-insights').classList.add('active');
+            document.querySelector('.post-game-metrics').classList.remove('active');
+            document.querySelectorAll('.toggle-btn')[0].classList.add('active');
+            document.querySelectorAll('.toggle-btn')[1].classList.remove('active');
+        }
+
+        function showPostGame() {
+            document.querySelector('.agent-insights').classList.remove('active');
+            document.querySelector('.post-game-metrics').classList.add('active');
+            document.querySelectorAll('.toggle-btn')[0].classList.remove('active');
+            document.querySelectorAll('.toggle-btn')[1].classList.add('active');
+        }
+
+        function showTab(tabName) {
+            // Remove active from all tabs and tab contents
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Add active to clicked tab and corresponding content
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Toggle collapsible sections
+        document.querySelectorAll('.interaction-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const chevron = this.querySelector('.chevron');
+                chevron.classList.toggle('open');
+            });
+        });
+    </script>
+</body>
+</html>
