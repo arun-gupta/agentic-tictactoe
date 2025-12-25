@@ -1640,15 +1640,123 @@ Compare two model combinations:
 
 ### Storage Requirements
 
-**Simple Storage**:
+**Phase 1: JSON File Storage (Initial Implementation)**
 
-Store one JSON file per game in `logs/games/{game_id}.json` with the 7 core metrics.
+Start with file-based storage for simplicity and rapid development:
 
-For analytics, periodically aggregate into `logs/analytics/summary_{date}.json`.
+```
+logs/
+├── games/
+│   ├── {game_id}.json          # Individual game results
+│   ├── {game_id}.json
+│   └── ...
+├── analytics/
+│   ├── summary_2025-01.json    # Monthly aggregates
+│   └── summary_2025-02.json
+└── experiments/
+    └── exp_001_results.json     # Experiment-specific results
+```
 
-**Optional Database** (for complex queries):
-- `games` table with the 7 metrics + agent_config + timestamp
-- Simple SELECT queries for aggregation and comparison
+**Benefits**:
+- No database setup required
+- Human-readable and debuggable
+- Easy to version control and backup
+- Perfect for prototyping and small-scale experiments (< 1000 games)
+- Simple to implement and maintain
+
+**Limitations**:
+- Limited query capabilities (must read and filter files)
+- Manual aggregation required
+- Slower performance for large datasets
+- No concurrent write protection
+
+**When to Use**: Initial development, prototyping, small-scale experiments, single-machine deployments
+
+**Phase 2: SQLite Database (Production Scale)**
+
+Migrate to SQLite when you need better query performance and analytics:
+
+```sql
+CREATE TABLE games (
+    game_id TEXT PRIMARY KEY,
+    timestamp TEXT NOT NULL,
+    game_outcome TEXT NOT NULL,
+    scout_model TEXT NOT NULL,
+    strategist_model TEXT NOT NULL,
+    executor_model TEXT NOT NULL,
+    total_cost_usd REAL,
+    total_tokens INTEGER,
+    avg_latency_ms INTEGER,
+    game_duration_ms INTEGER,
+    total_moves INTEGER,
+    fallback_count INTEGER,
+    error_count INTEGER
+);
+
+CREATE INDEX idx_timestamp ON games(timestamp);
+CREATE INDEX idx_models ON games(scout_model, strategist_model, executor_model);
+CREATE INDEX idx_outcome ON games(game_outcome);
+```
+
+**Benefits**:
+- Fast queries with SQL
+- Built-in aggregation functions
+- Indexed searches
+- ACID compliance
+- No external database server needed
+
+**Limitations**:
+- Binary format (not human-readable)
+- Requires SQL knowledge
+- Single-file database (potential bottleneck)
+
+**When to Use**: Production deployments, complex analytics, > 1000 games, multi-user scenarios
+
+**Phase 3: Parquet Files (Data Science & ML)**
+
+Use columnar format for advanced analytics and machine learning:
+
+```python
+import pandas as pd
+
+# Load all games
+df = pd.DataFrame(game_results)
+
+# Save as Parquet
+df.to_parquet('logs/experiments/exp_001.parquet',
+              compression='snappy',
+              index=False)
+
+# Query with DuckDB
+import duckdb
+results = duckdb.query("""
+    SELECT scout_model, AVG(total_cost_usd) as avg_cost
+    FROM read_parquet('logs/experiments/*.parquet')
+    GROUP BY scout_model
+""").df()
+```
+
+**Benefits**:
+- Excellent compression (10-100x smaller than JSON)
+- Columnar storage (fast analytics)
+- Works with pandas, polars, DuckDB, Spark
+- Easy export to data warehouses
+- Supports complex nested data
+
+**Limitations**:
+- Binary format (not human-readable)
+- Requires Python data science stack
+- More complex tooling
+
+**When to Use**: Data analysis workflows, ML experiments, large datasets (> 10,000 games), data warehouse integration
+
+**Migration Path**:
+
+1. **Start**: Use JSON files for initial development
+2. **Growth**: Migrate to SQLite when query performance becomes an issue
+3. **Scale**: Export to Parquet for data science and ML workflows
+
+**Implementation Note**: Design the storage layer with an abstraction (e.g., `ExperimentStorage` interface) that can be swapped between JSON, SQLite, and Parquet without changing application code.
 
 ### UI Integration
 
