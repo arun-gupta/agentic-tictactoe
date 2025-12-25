@@ -1563,9 +1563,11 @@ This section defines **what** the UI must do (functional requirements). Visual d
 
 ## 6.1 UI Visual Design Specification
 
-**Note**: Visual design specifications (colors, animations, layouts, typography, spacing, component styling) are defined separately in Figma designs and are not part of this functional specification. The Figma designs will reference the user story IDs above to maintain traceability between functional requirements and visual design.
+**Note**: Visual design specifications (colors, animations, layouts, typography, spacing, component styling) are defined separately in [docs/ui-spec.md](./ui-spec.md) with exported Figma frames. The visual designs reference the user story IDs above (US-001 through US-025) to maintain traceability between functional requirements and visual design.
 
-Visual elements mentioned in Section 12 (Failure Matrix UI Indications) provide guidance for error state presentation but exact styling will be determined by Figma designs.
+Visual elements mentioned in Section 12 (Failure Matrix UI Indications) provide guidance for error state presentation but exact styling is documented in ui-spec.md.
+
+**Figma Frames Location**: Exported PNG frames should be placed in `docs/ui/frames/` directory.
 
 ---
 
