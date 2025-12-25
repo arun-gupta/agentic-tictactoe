@@ -124,6 +124,53 @@ Visual designs are provided as exported PNG frames from Figma, located in `docs/
 - **Error glow**: `0 0 12px rgba(233, 69, 96, 0.4)` (Error color)
 - **Success glow**: `0 0 12px rgba(6, 214, 160, 0.4)` (Success color)
 
+## Application Layout
+
+The UI is organized into three main tabs at the top level:
+
+### Main Tab Navigation
+
+**Three-Tab Structure:**
+
+1. **Play Tab** (Default view)
+   - Game Board (primary focus)
+   - Move History panel
+   - Agent Insights (real-time agent status and analysis during gameplay)
+   - This is the active gameplay view where users spend most time
+
+2. **Metrics Tab**
+   - Post-game metrics and analysis (visible only after game completion)
+   - Sub-tabs: Game Summary, Performance, LLM Interactions, Agent Communication
+   - Full-width layout for detailed data display
+   - Disabled/empty state until game completes
+
+3. **Config Tab**
+   - Configuration panel for game setup
+   - LLM provider selection
+   - API key management
+   - Game settings (player symbol, etc.)
+   - Accessed before starting games or between games
+
+**Tab Bar Specifications:**
+- Position: Top of application, below page title
+- Background: `#16213e` (Surface)
+- Height: `56px`
+- Border-bottom: `2px solid #533483` (Grid Lines)
+- Tab button padding: `16px 32px`
+- Tab font-size: `1rem` (16px)
+- Tab font-weight: `600` (Semibold)
+- Inactive tab color: `#a8a8a8` (Secondary Text)
+- Active tab color: `#eaeaea` (Primary Text)
+- Active tab border-bottom: `3px solid #00adb5` (Primary)
+- Tab hover: Background `rgba(0, 173, 181, 0.1)`
+- Tab transition: `all 0.2s ease`
+
+**Layout Behavior:**
+- Play tab shows game board on left/center with agent insights on right
+- Metrics tab uses full width with its own sub-tab navigation
+- Config tab centers the configuration panel
+- Switching tabs preserves game state
+
 ## Component Specifications
 
 ### Game Board Panel
