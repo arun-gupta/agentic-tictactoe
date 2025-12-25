@@ -1840,53 +1840,87 @@ helm/
 
 ## 11. Testing Strategy
 
+### Test-Driven Development Requirement
+
+**MANDATORY**: Every functionality MUST be accompanied by a test. No code should be merged without corresponding tests.
+
+**Test Coverage Policy**:
+- **New Features**: MUST include unit tests before implementation (TDD approach preferred)
+- **Bug Fixes**: MUST include a regression test demonstrating the bug and its fix
+- **Refactoring**: Existing tests MUST pass; new tests MUST be added for any new code paths
+- **API Endpoints**: MUST have integration tests covering success and error cases
+- **Domain Logic**: MUST have unit tests covering all business rules and edge cases
+- **Agent Behavior**: MUST have tests with mocked LLM responses covering all code paths
+
+**Enforcement**:
+- CI/CD pipeline MUST fail if tests are missing for modified code
+- Code coverage MUST not decrease with new changes
+- Pull requests MUST include tests for all functionality changes
+
 ### Unit Tests
 
-**Domain Models**: Test model validation, edge cases, helper methods. Schema validation for all domain models to ensure type safety and data integrity.
+**Domain Models**: Test model validation, edge cases, helper methods. Schema validation for all domain models to ensure type safety and data integrity. **REQUIRED**: Every domain model MUST have a corresponding test file.
 
-**Game Engine**: Test move validation, win detection, draw detection, state management. Use parameterized tests for multiple scenarios to cover all game states efficiently.
+**Game Engine**: Test move validation, win detection, draw detection, state management. Use parameterized tests for multiple scenarios to cover all game states efficiently. **REQUIRED**: Every game engine method MUST have corresponding tests.
 
-**Agents**: Test each agent in isolation with mocked LLM, validate input/output types, test error handling. Agent interface contract validation to ensure all agents comply with protocol definitions.
+**Agents**: Test each agent in isolation with mocked LLM, validate input/output types, test error handling. Agent interface contract validation to ensure all agents comply with protocol definitions. **REQUIRED**: Every agent implementation MUST have a test suite with mocked LLM responses.
 
-**Test Data Management**: Fixture strategies for common game states (opening, midgame, endgame, win scenarios). Test data generators for board positions to create diverse test cases programmatically.
+**Test Data Management**: Fixture strategies for common game states (opening, midgame, endgame, win scenarios). Test data generators for board positions to create diverse test cases programmatically. **REQUIRED**: Reusable fixtures MUST be created for common test scenarios.
 
 ### Integration Tests
 
-**Agent Pipeline**: Test full pipeline (Scout → Strategist → Executor) with real or mocked LLM.
+**Agent Pipeline**: Test full pipeline (Scout → Strategist → Executor) with real or mocked LLM. **REQUIRED**: Complete pipeline integration test MUST exist.
 
-**API Endpoints**: Test API endpoints with test client, validate request/response models, test error cases.
+**API Endpoints**: Test API endpoints with test client, validate request/response models, test error cases. **REQUIRED**: Every API endpoint MUST have integration tests covering at least success path and primary error cases.
 
-**Game Flow**: Test complete game from start to finish, test win/loss/draw scenarios, test player and AI moves.
+**Game Flow**: Test complete game from start to finish, test win/loss/draw scenarios, test player and AI moves. **REQUIRED**: End-to-end game flow tests MUST cover all winning conditions and draw scenarios.
 
-**Contract Tests**: API contract tests between UI and backend to ensure interface compatibility and prevent breaking changes.
+**Contract Tests**: API contract tests between UI and backend to ensure interface compatibility and prevent breaking changes. **REQUIRED**: Contract tests MUST be maintained for all API endpoints consumed by UI.
 
-**MCP Protocol Tests**: Test MCP client/server communication, protocol compliance, and mode switching between local and distributed modes.
+**MCP Protocol Tests**: Test MCP client/server communication, protocol compliance, and mode switching between local and distributed modes. **REQUIRED**: If MCP mode is implemented, corresponding integration tests MUST exist.
 
 ### End-to-End Tests
 
-**Full System**: Test with complete UI, API backend, and real agents. Test user interactions, verify game state persistence, test metrics collection.
+**Full System**: Test with complete UI, API backend, and real agents. Test user interactions, verify game state persistence, test metrics collection. **REQUIRED**: At least one full E2E test MUST exist for critical user journey (start game → make move → complete game).
 
 ### Performance Tests
 
-**Agent Response Times**: Measure agent execution times, identify bottlenecks, test with different LLM providers.
+**Agent Response Times**: Measure agent execution times, identify bottlenecks, test with different LLM providers. **REQUIRED**: Performance baseline tests MUST be established and monitored.
 
-**Concurrent Games**: Test multiple simultaneous games, verify no state leakage, test resource usage.
+**Concurrent Games**: Test multiple simultaneous games, verify no state leakage, test resource usage. **REQUIRED**: If concurrent games are supported, stress tests MUST verify isolation.
 
 ### Resilience Tests
 
-**LLM Failure Scenarios**: Simulate LLM timeouts/failures to verify graceful degradation and fallback strategies work correctly.
+**LLM Failure Scenarios**: Simulate LLM timeouts/failures to verify graceful degradation and fallback strategies work correctly. **REQUIRED**: Tests MUST verify each error scenario in the Failure Matrix (Section 12).
 
-**Agent Failure Cascade Testing**: Test system behavior when agents fail in sequence, verify error propagation and recovery mechanisms.
+**Agent Failure Cascade Testing**: Test system behavior when agents fail in sequence, verify error propagation and recovery mechanisms. **REQUIRED**: Tests MUST verify fallback strategies work as specified.
 
 ### Test Coverage
 
-**Coverage Targets**: Minimum code coverage targets of 80% for unit tests and 70% for integration tests. Use language-appropriate coverage tools for reporting.
+**Coverage Targets**:
+- **MANDATORY MINIMUM**: 80% code coverage for unit tests
+- **MANDATORY MINIMUM**: 70% code coverage for integration tests
+- Use language-appropriate coverage tools for reporting
+- **NO EXCEPTIONS**: New code MUST maintain or improve coverage percentages
 
-**Critical Path Testing**: Critical path smoke tests for CI/CD to validate core functionality in automated pipelines.
+**Critical Path Testing**: Critical path smoke tests for CI/CD to validate core functionality in automated pipelines. **REQUIRED**: Smoke tests MUST run on every commit.
 
 ### CI/CD Integration
 
 **GitHub Actions**: Integration with GitHub Actions for automated testing on pull requests and commits. Run unit tests, integration tests, and smoke tests in CI pipeline. Enforce coverage thresholds before merging.
+
+**REQUIRED CI/CD Checks**:
+- All tests MUST pass before merge
+- Code coverage MUST meet minimum thresholds (80% unit, 70% integration)
+- No new code without corresponding tests
+- Smoke tests MUST pass on every commit
+- Pull requests MUST include test evidence for all changes
+
+**Test Reporting**:
+- Test results MUST be visible in pull request status
+- Coverage reports MUST be generated and tracked over time
+- Failed tests MUST block deployment
+- Test execution time MUST be monitored to prevent slow tests
 
 ---
 
