@@ -419,22 +419,7 @@
 
             <!-- Right Column -->
             <div class="section">
-                <h2 class="section-header">Agent Mode</h2>
-
-                <div class="radio-group">
-                    <label class="radio-option">
-                        <input type="radio" name="mode" value="local" checked>
-                        <span class="radio-label">Local Mode</span>
-                    </label>
-
-                    <label class="radio-option">
-                        <input type="radio" name="mode" value="distributed">
-                        <span class="radio-label">Distributed MCP</span>
-                    </label>
-                </div>
-                <div class="help-text">Select how agents communicate</div>
-
-                <h2 class="section-header" style="margin-top: 16px;">Game Settings</h2>
+                <h2 class="section-header">Game Settings</h2>
 
                 <div class="form-group">
                     <label>Player Symbol</label>
@@ -459,8 +444,6 @@
     </div>
 
     <script>
-        // Mode selection (no additional logic needed)
-
         // Symbol toggle
         const toggleOptions = document.querySelectorAll('.toggle-option');
         toggleOptions.forEach(option => {
