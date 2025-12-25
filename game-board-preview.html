@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe Multi-Agent Game - UI Preview</title>
+    <style>
+        :root {
+            /* Primary Colors */
+            --bg-primary: #1a1a2e;
+            --bg-surface: #16213e;
+            --bg-card: #0f3460;
+
+            /* Game Colors */
+            --player-x: #e94560;
+            --player-o: #00adb5;
+            --cell-empty: #eaeaea;
+            --grid-lines: #533483;
+
+            /* UI Elements */
+            --color-primary: #00adb5;
+            --color-secondary: #533483;
+            --color-success: #06d6a0;
+            --color-warning: #ffd166;
+            --color-error: #e94560;
+            --color-disabled: #6c757d;
+
+            /* Text */
+            --text-primary: #eaeaea;
+            --text-secondary: #a8a8a8;
+            --text-heading: #ffffff;
+
+            /* Accents */
+            --accent-highlight: #f72585;
+            --accent-agent: #4361ee;
+            --accent-win: #06d6a0;
+
+            /* Spacing */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-xxl: 48px;
+
+            /* Border Radius */
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, 'Helvetica Neue', 'Arial', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 40px 20px;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--text-heading);
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px 1fr;
+            gap: var(--space-lg);
+            align-items: start;
+        }
+
+        .panel {
+            background: var(--bg-surface);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            border: 1px solid var(--grid-lines);
+        }
+
+        .panel h2 {
+            color: var(--text-heading);
+            margin-bottom: var(--space-md);
+            font-size: 1.5rem;
+            font-weight: 600;
+            line-height: 1.2;
+            border-bottom: 2px solid var(--grid-lines);
+            padding-bottom: var(--space-sm);
+        }
+
+        /* Game Board */
+        .board-container {
+            text-align: center;
+        }
+
+        .game-board {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .status-bar {
+            background: var(--bg-surface);
+            border-radius: var(--radius-sm);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .current-player {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .player-x-turn {
+            color: var(--player-x);
+        }
+
+        .player-o-turn {
+            color: var(--player-o);
+        }
+
+        .move-count {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            min-height: 100px;
+            background: var(--bg-surface);
+            border: 3px solid var(--grid-lines);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cell:hover:not(.cell-x):not(.cell-o) {
+            background: var(--bg-card);
+            border-color: var(--color-primary);
+            transform: scale(1.05);
+        }
+
+        .cell-x {
+            color: var(--player-x);
+            cursor: default;
+            animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .cell-o {
+            color: var(--player-o);
+            cursor: default;
+            animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .cell.last-move {
+            border-color: var(--accent-highlight);
+            box-shadow: 0 0 12px rgba(247, 37, 133, 0.4);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .cell.winning {
+            background: var(--accent-win);
+            border-color: var(--accent-win);
+            color: var(--bg-primary);
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.02);
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            background: #00c4cf;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 173, 181, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--color-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #6847a0;
+            transform: translateY(-2px);
+        }
+
+        /* Agent Panel */
+        .agent-info {
+            margin-bottom: var(--space-md);
+            background: var(--bg-card);
+            padding: var(--space-md);
+            border-radius: var(--radius-sm);
+            min-height: 120px;
+        }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--space-sm);
+        }
+
+        .agent-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-left: var(--space-sm);
+        }
+
+        .agent-name.scout {
+            color: var(--accent-agent);
+        }
+
+        .agent-name.strategist {
+            color: var(--color-secondary);
+        }
+
+        .agent-name.executor {
+            color: var(--color-primary);
+        }
+
+        .agent-status {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: var(--space-xs);
+        }
+
+        .agent-active {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--color-success);
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+
+        .agent-idle {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--color-disabled);
+            border-radius: 50%;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .agent-output {
+            background: rgba(0, 173, 181, 0.15);
+            border-left: 3px solid var(--color-primary);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            margin-top: var(--space-sm);
+        }
+
+        .confidence-score {
+            float: right;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+        }
+
+        /* Move History */
+        .move-history {
+            list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .move-item {
+            padding: 10px;
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-sm);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .move-item:hover {
+            background: var(--bg-surface);
+        }
+
+        .move-x {
+            border-left: 3px solid var(--player-x);
+        }
+
+        .move-o {
+            border-left: 3px solid var(--player-o);
+        }
+
+        .move-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .move-position {
+            font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+            color: var(--text-primary);
+        }
+
+        .move-timestamp {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .move-details {
+            margin-top: var(--space-sm);
+            padding-left: var(--space-md);
+            border-left: 2px solid var(--grid-lines);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: none;
+        }
+
+        .move-item.expanded .move-details {
+            display: block;
+        }
+
+        .chevron {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            color: var(--text-secondary);
+            transition: transform 0.2s ease;
+        }
+
+        .move-item.expanded .chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: var(--space-lg);
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Scrollbar styling */
+        .move-history::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .move-history::-webkit-scrollbar-track {
+            background: var(--bg-card);
+            border-radius: 4px;
+        }
+
+        .move-history::-webkit-scrollbar-thumb {
+            background: var(--grid-lines);
+            border-radius: 4px;
+        }
+
+        .move-history::-webkit-scrollbar-thumb:hover {
+            background: #6847a0;
+        }
+
+        /* Spinner animation */
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(67, 97, 238, 0.3);
+            border-top-color: var(--accent-agent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tic-Tac-Toe: Multi-Agent Game</h1>
+
+        <div class="game-layout">
+            <!-- Left Panel: Agent Status -->
+            <div class="panel">
+                <h2>AI Agent Pipeline</h2>
+
+                <div class="agent-info">
+                    <div class="agent-header">
+                        <span class="agent-active"></span>
+                        <div class="agent-name scout">Scout Agent</div>
+                    </div>
+                    <div class="agent-status">Analyzing board state...</div>
+                    <div class="agent-output">
+                        Found 2 threats, 1 opportunity
+                        <span class="confidence-score">95%</span>
+                    </div>
+                </div>
+
+                <div class="agent-info">
+                    <div class="agent-header">
+                        <div class="spinner"></div>
+                        <div class="agent-name strategist">Strategist Agent</div>
+                    </div>
+                    <div class="agent-status">Planning optimal move strategy...</div>
+                </div>
+
+                <div class="agent-info">
+                    <div class="agent-header">
+                        <span class="agent-idle"></span>
+                        <div class="agent-name executor">Executor Agent</div>
+                    </div>
+                    <div class="agent-status">Ready to execute move</div>
+                </div>
+            </div>
+
+            <!-- Center: Game Board -->
+            <div class="board-container">
+                <div class="game-board">
+                    <div class="status-bar">
+                        <div class="current-player player-x-turn">Player X's Turn</div>
+                        <div class="move-count">Move #5</div>
+                    </div>
+
+                    <div class="grid">
+                        <div class="cell cell-x">X</div>
+                        <div class="cell cell-o">O</div>
+                        <div class="cell cell-x last-move">X</div>
+                        <div class="cell"></div>
+                        <div class="cell cell-o">O</div>
+                        <div class="cell"></div>
+                        <div class="cell"></div>
+                        <div class="cell"></div>
+                        <div class="cell"></div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn btn-primary">New Game</button>
+                        <button class="btn btn-secondary">Undo Move</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Move History & Stats -->
+            <div class="panel">
+                <h2>Move History</h2>
+                <ul class="move-history">
+                    <li class="move-item move-x">
+                        <div class="move-header">
+                            <span><strong>X:</strong> <span class="move-position">(0,2)</span></span>
+                            <span>
+                                <span class="move-timestamp">2.3s ago</span>
+                                <span class="chevron">▼</span>
+                            </span>
+                        </div>
+                        <div class="move-details">
+                            <strong>Scout:</strong> Identified corner control opportunity<br>
+                            <strong>Strategist:</strong> Priority: IMMEDIATE_THREAT_BLOCK<br>
+                            <strong>Executor:</strong> Move validated and executed
+                        </div>
+                    </li>
+                    <li class="move-item move-o">
+                        <div class="move-header">
+                            <span><strong>O:</strong> <span class="move-position">(1,1)</span></span>
+                            <span>
+                                <span class="move-timestamp">4.7s ago</span>
+                                <span class="chevron">▼</span>
+                            </span>
+                        </div>
+                        <div class="move-details">
+                            <strong>Scout:</strong> Center position control<br>
+                            <strong>Strategist:</strong> Priority: CENTER_CONTROL<br>
+                            <strong>Executor:</strong> Move validated and executed
+                        </div>
+                    </li>
+                    <li class="move-item move-x">
+                        <div class="move-header">
+                            <span><strong>X:</strong> <span class="move-position">(1,0)</span></span>
+                            <span>
+                                <span class="move-timestamp">7.1s ago</span>
+                                <span class="chevron">▼</span>
+                            </span>
+                        </div>
+                        <div class="move-details">
+                            <strong>Scout:</strong> Building vertical threat<br>
+                            <strong>Strategist:</strong> Priority: BUILD_THREAT<br>
+                            <strong>Executor:</strong> Move validated and executed
+                        </div>
+                    </li>
+                    <li class="move-item move-o">
+                        <div class="move-header">
+                            <span><strong>O:</strong> <span class="move-position">(0,1)</span></span>
+                            <span>
+                                <span class="move-timestamp">9.5s ago</span>
+                                <span class="chevron">▼</span>
+                            </span>
+                        </div>
+                    </li>
+                    <li class="move-item move-x">
+                        <div class="move-header">
+                            <span><strong>X:</strong> <span class="move-position">(0,0)</span></span>
+                            <span>
+                                <span class="move-timestamp">12.0s ago</span>
+                                <span class="chevron">▼</span>
+                            </span>
+                        </div>
+                    </li>
+                </ul>
+
+                <h2 style="margin-top: 25px;">Game Stats</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">347ms</div>
+                        <div class="stat-label">Avg Response</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">Total Moves</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">92%</div>
+                        <div class="stat-label">AI Confidence</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">GPT-4</div>
+                        <div class="stat-label">Active Model</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Interactive cell clicks
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.addEventListener('click', function() {
+                if (!this.classList.contains('cell-x') && !this.classList.contains('cell-o')) {
+                    // Remove last-move from all cells
+                    document.querySelectorAll('.cell').forEach(c => c.classList.remove('last-move'));
+
+                    const isXTurn = document.querySelector('.current-player').classList.contains('player-x-turn');
+                    if (isXTurn) {
+                        this.textContent = 'X';
+                        this.classList.add('cell-x', 'last-move');
+                        document.querySelector('.current-player').textContent = "Player O's Turn";
+                        document.querySelector('.current-player').classList.remove('player-x-turn');
+                        document.querySelector('.current-player').classList.add('player-o-turn');
+                    } else {
+                        this.textContent = 'O';
+                        this.classList.add('cell-o', 'last-move');
+                        document.querySelector('.current-player').textContent = "Player X's Turn";
+                        document.querySelector('.current-player').classList.remove('player-o-turn');
+                        document.querySelector('.current-player').classList.add('player-x-turn');
+                    }
+
+                    // Update move count
+                    const moveCountEl = document.querySelector('.move-count');
+                    const currentMove = parseInt(moveCountEl.textContent.match(/\d+/)[0]);
+                    moveCountEl.textContent = `Move #${currentMove + 1}`;
+                }
+            });
+        });
+
+        // New game button
+        document.querySelector('.btn-primary').addEventListener('click', function() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('cell-x', 'cell-o', 'winning', 'last-move');
+            });
+            document.querySelector('.current-player').textContent = "Player X's Turn";
+            document.querySelector('.current-player').classList.add('player-x-turn');
+            document.querySelector('.current-player').classList.remove('player-o-turn');
+            document.querySelector('.move-count').textContent = "Move #1";
+        });
+
+        // Expandable move history
+        document.querySelectorAll('.move-item').forEach(item => {
+            item.addEventListener('click', function() {
+                this.classList.toggle('expanded');
+            });
+        });
+    </script>
+</body>
+</html>
