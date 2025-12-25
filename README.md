@@ -6,4 +6,5 @@ A multi-agent AI system for playing Tic-Tac-Toe, featuring specialized agents (S
 
 - [Full Specification](docs/spec.md) - Complete system architecture and design
 - [JSON Schemas](docs/schemas.md) - Formal schema definitions for all domain models
-- [UI Specification](docs/ui-spec.md) - User interface requirements and design
+- [UI Specification](docs/ui/ui-spec.md) - User interface requirements and design
+- [UI Preview](docs/ui/game-board-preview.html) - Interactive design preview

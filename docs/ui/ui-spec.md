@@ -1067,12 +1067,23 @@ Visual designs are provided as exported PNG frames from Figma, located in `docs/
 - BEM naming convention recommended: `.component__element--modifier`
 - Component-scoped styles preferred over global styles
 
-## Frame Files
+## Design Reference
 
-The following PNG frames should be exported from Figma and placed in `docs/ui/frames/`:
+An interactive HTML preview demonstrating the complete design system is available at [game-board-preview.html](./game-board-preview.html).
+
+**Preview Features:**
+- Complete color palette application
+- Typography hierarchy with SF Pro Display
+- Component layouts and interactions
+- Hover states and animations
+- Agent status indicators with live states
+- Expandable move history
+- Interactive game board
+
+This preview serves as the visual design reference for implementation and can be opened directly in any browser.
+
+**Optional PNG Frames:**
+If static design frames are needed, they can be exported from Figma and placed in `docs/ui/frames/`:
 - ⬜ `game-board.png` - Game board and move history panel
 - ⬜ `metrics-panel.png` - Agent insights and post-game metrics panel
 - ⬜ `config-panel.png` - Configuration panel
-
-**Status:**
-All design specifications have been defined with reasonable defaults based on the established color palette and design system. Frames can be created using these specifications or updated if design refinements are needed.
