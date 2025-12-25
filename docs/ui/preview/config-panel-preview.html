@@ -111,10 +111,13 @@
 
         .agent-config {
             display: grid;
-            grid-template-columns: auto 1fr;
-            gap: var(--space-sm);
+            grid-template-columns: 120px 1fr 1fr;
+            gap: 12px;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
         }
 
         .agent-label {
@@ -122,7 +125,7 @@
             align-items: center;
             gap: var(--space-sm);
             font-size: 0.875rem;
-            min-width: 120px;
+            font-weight: 600;
         }
 
         .agent-label.scout::before {
@@ -171,9 +174,10 @@
             font-family: 'SF Mono', 'Monaco', monospace;
             font-size: 0.75rem;
             color: var(--text-secondary);
-            padding: 4px 8px;
+            padding: 8px 12px;
             background: var(--bg-primary);
             border-radius: var(--radius-sm);
+            border: 1px solid var(--grid-lines);
         }
 
         input[type="password"] {
@@ -202,15 +206,18 @@
         .api-key-row {
             display: grid;
             grid-template-columns: 100px 1fr auto;
-            gap: var(--space-sm);
+            gap: 12px;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
         }
 
         .provider-label {
-            font-size: 0.75rem;
+            font-size: 0.875rem;
             font-weight: 600;
-            color: var(--text-secondary);
+            color: var(--text-primary);
         }
 
         .btn-icon {
@@ -323,9 +330,9 @@
         }
 
         .help-text {
-            font-size: 0.65rem;
+            font-size: 0.75rem;
             color: var(--text-secondary);
-            margin-top: var(--space-xs);
+            margin-top: 8px;
             font-style: italic;
         }
 
@@ -383,9 +390,7 @@
                     <div class="model-display">gpt-5.2</div>
                 </div>
 
-                <div class="help-text">Model names loaded from config file</div>
-
-                <h2 class="section-header" style="margin-top: 24px;">API Keys</h2>
+                <h2 class="section-header" style="margin-top: 32px;">API Keys</h2>
 
                 <div class="api-key-row">
                     <span class="provider-label">OpenAI</span>
@@ -404,13 +409,12 @@
                     <input type="password" id="googleKey" value="AIzaSy123..." placeholder="AIzaSy...">
                     <button class="btn-icon" title="Update">💾</button>
                 </div>
-
-                <div class="help-text">Keys loaded from config. Click save to update.</div>
             </div>
 
             <!-- Right Column -->
             <div class="section">
                 <h2 class="section-header">Game Settings</h2>
+                <div class="help-text" style="margin-top: 0; margin-bottom: 20px;">Configure your game preferences</div>
 
                 <div class="form-group">
                     <label>Player Symbol</label>
