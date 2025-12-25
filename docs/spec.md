@@ -2370,6 +2370,251 @@ When choosing alternative technologies, ensure they support:
 
 ---
 
+## 14.1 Recommended Python Stack
+
+This section provides a complete, opinionated Python technology stack for rapid development. This is one of many possible implementations.
+
+### Core Stack
+
+**Language**: Python 3.11+
+
+**Backend Framework**: FastAPI
+- Async support for agent operations
+- Automatic OpenAPI documentation
+- Built-in data validation with Pydantic
+- High performance with ASGI server (uvicorn)
+
+**Data Validation**: Pydantic v2
+- Type-safe domain models
+- Runtime validation
+- JSON serialization/deserialization
+- Automatic OpenAPI schema generation
+
+**UI Framework**: Streamlit
+- Rapid prototyping
+- Real-time updates with minimal code
+- Built-in components for metrics and charts
+- Easy integration with FastAPI backend
+
+**LLM Integration**: Instructor + Direct SDKs
+- Type-safe LLM responses using Pydantic models
+- Works with OpenAI, Anthropic, Google SDKs
+- Automatic retry and validation
+- See Section 19 for details
+
+**Testing**: pytest + pytest-asyncio + pytest-cov
+- Async test support
+- Fixtures for common test scenarios
+- Code coverage reporting
+- Parameterized tests
+
+**Type Checking**: mypy
+- Static type checking
+- Ensures type safety across codebase
+
+**Code Quality**: ruff (linting + formatting)
+- Fast Python linter and formatter
+- Replaces black, isort, flake8
+
+### Project Structure (Python)
+
+```
+project/
+├── pyproject.toml              # Project metadata and dependencies
+├── README.md
+├── .env.example
+├── config/
+│   ├── config.json            # Main configuration
+│   └── llm_providers.json     # LLM provider metadata
+├── src/
+│   ├── schemas/               # Pydantic domain models
+│   │   ├── __init__.py
+│   │   ├── game.py           # Position, Board, GameState
+│   │   ├── analysis.py       # Threat, Opportunity, BoardAnalysis
+│   │   ├── strategy.py       # MovePriority, Strategy
+│   │   ├── execution.py      # MoveExecution
+│   │   └── api.py            # API request/response models
+│   ├── agents/               # Agent implementations
+│   │   ├── __init__.py
+│   │   ├── interfaces.py     # ABC protocols
+│   │   ├── scout_local.py
+│   │   ├── strategist_local.py
+│   │   ├── executor_local.py
+│   │   └── mcp/              # MCP implementations
+│   ├── game/                 # Game logic
+│   │   ├── __init__.py
+│   │   ├── engine.py         # Core game engine
+│   │   ├── coordinator.py    # Agent coordinator
+│   │   └── state.py          # State management
+│   ├── services/             # Service layer
+│   │   ├── __init__.py
+│   │   ├── game_service.py
+│   │   └── agent_service.py
+│   ├── api/                  # FastAPI REST layer
+│   │   ├── __init__.py
+│   │   ├── main.py           # FastAPI app
+│   │   └── routes/
+│   │       ├── __init__.py
+│   │       ├── game.py
+│   │       └── agents.py
+│   ├── ui/                   # Streamlit UI
+│   │   ├── __init__.py
+│   │   ├── app.py            # Main Streamlit app
+│   │   └── components/
+│   │       ├── board.py
+│   │       ├── metrics.py
+│   │       └── config.py
+│   ├── models/               # LLM management
+│   │   ├── __init__.py
+│   │   ├── shared_llm.py     # Connection pooling
+│   │   └── factory.py        # Provider factory
+│   └── utils/
+│       ├── __init__.py
+│       ├── config.py
+│       └── validators.py
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py           # pytest fixtures
+│   ├── test_game_engine.py
+│   ├── test_agents.py
+│   ├── test_api.py
+│   └── integration/
+│       └── test_full_game.py
+└── docs/                     # Documentation
+```
+
+### Dependencies (pyproject.toml)
+
+```toml
+[project]
+name = "tictactoe-agents"
+version = "0.1.0"
+description = "Multi-Agent Tic-Tac-Toe Game"
+requires-python = ">=3.11"
+
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "streamlit>=1.28.0",
+    "instructor>=0.4.0",
+    "openai>=1.3.0",
+    "anthropic>=0.7.0",
+    "google-generativeai>=0.3.0",
+    "httpx>=0.25.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.7.0",
+    "ruff>=0.1.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+```
+
+### Running the Application (Python)
+
+**Development:**
+```bash
+# Install dependencies
+pip install -e ".[dev]"
+
+# Run API server (with auto-reload)
+uvicorn src.api.main:app --reload --port 8000
+
+# Run Streamlit UI (in separate terminal)
+streamlit run src/ui/app.py --server.port 8501
+
+# Run tests
+pytest
+
+# Run with coverage
+pytest --cov=src --cov-report=html
+
+# Type checking
+mypy src/
+
+# Linting and formatting
+ruff check src/
+ruff format src/
+```
+
+**Production:**
+```bash
+# API server (with production ASGI server)
+uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+# Streamlit UI
+streamlit run src/ui/app.py --server.port 8501 --server.address 0.0.0.0
+```
+
+### Docker (Python)
+
+**Dockerfile:**
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir -e .
+
+# Copy application
+COPY . .
+
+# Expose ports
+EXPOSE 8000 8501
+
+# Default: run both API and UI
+CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & streamlit run src.ui.app.py --server.port 8501 --server.address 0.0.0.0"]
+```
+
+### Why Python?
+
+**Advantages:**
+- **Rapid Development**: Streamlit enables quick UI prototyping
+- **LLM Ecosystem**: Best-in-class LLM libraries (LangChain, Instructor, SDKs)
+- **Type Safety**: Pydantic provides runtime validation + type hints
+- **Async Support**: Native async/await for agent coordination
+- **Data Science**: Excellent for metrics and analytics
+- **Community**: Large ecosystem for AI/ML development
+
+**Trade-offs:**
+- **Performance**: Slower than compiled languages (Go, Java, C#)
+- **Concurrency**: GIL limits true parallelism (use async for I/O-bound tasks)
+- **Deployment**: Requires Python runtime (vs. single binary)
+
+**When to Use Python:**
+- Rapid prototyping and iteration
+- Strong emphasis on LLM integration
+- Team familiar with Python ecosystem
+- Metrics and analytics are important
+
+**When to Consider Alternatives:**
+- Need maximum performance (consider Go, Rust)
+- Large-scale deployment (consider Java, C#)
+- Team expertise in other languages
+- Single binary deployment preferred
+
+---
+
 ## 15. Performance Optimization
 
 ### Agent Performance
