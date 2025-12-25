@@ -800,9 +800,9 @@ This section provides formal JSON Schema (OpenAPI 3.1) definitions for all domai
 4. Implementations SHOULD generate types/classes from these schemas
 
 **Code Generation**:
-- JSON Schema can generate: TypeScript interfaces, Python Pydantic models, Java classes, Go structs
+- JSON Schema can generate: TypeScript interfaces, Java classes, Go structs, C# classes, Python models
 - OpenAPI generators: Swagger Codegen, OpenAPI Generator, Postman
-- Validation libraries: AJV (JavaScript), jsonschema (Python), go-playground/validator (Go)
+- Validation libraries: AJV (JavaScript), go-playground/validator (Go), jsonschema (Python), System.Text.Json (C#)
 
 **Schema Evolution**:
 - Backward-compatible changes: Add optional fields, relax constraints
@@ -1069,11 +1069,11 @@ Before persisting or transitioning state, validate:
 - Only game engine may modify state (via public methods)
 
 **State Queries**:
-```python
-# Read-only state access
-state = game_engine.get_current_state()  # Returns GameState copy
+```
+// Read-only state access
+state = game_engine.get_current_state()  // Returns GameState copy
 
-# State checks
+// State checks
 is_player_turn = game_engine.is_player_turn()
 is_game_over = game_engine.is_game_over()
 winner = game_engine.get_winner()
@@ -1081,8 +1081,8 @@ available_moves = game_engine.get_available_moves()
 ```
 
 **State Mutations** (only via game engine):
-```python
-# Mutate state through engine methods
+```
+// Mutate state through engine methods
 result = game_engine.make_move(position, player)
 game_engine.reset_game()
 ```
@@ -1316,7 +1316,7 @@ The application is designed with a layered architecture that separates transport
 - **Primary Client**: Streamlit Web UI
 
 **Design Principles for Transport Abstraction**:
-- **Domain models** (GameState, BoardAnalysis, Strategy, etc.) are transport-agnostic Pydantic models
+- **Domain models** (GameState, BoardAnalysis, Strategy, etc.) are transport-agnostic strongly-typed models
 - **Service interfaces** define business operations independent of transport protocol
 - **Transport adapters** translate protocol-specific requests/responses to/from domain models
 - **Client libraries** can be generated from domain models for any transport
@@ -1326,7 +1326,7 @@ The application is designed with a layered architecture that separates transport
 | Transport Type | Use Case | Implementation Notes |
 |----------------|----------|---------------------|
 | **WebSocket** | Real-time updates, live game streaming | Add WebSocket endpoints wrapping existing service layer; push game state changes via events |
-| **GraphQL** | Flexible queries, mobile clients | GraphQL schema generated from Pydantic models; resolvers call service layer |
+| **GraphQL** | Flexible queries, mobile clients | GraphQL schema generated from domain models; resolvers call service layer |
 | **gRPC** | High-performance inter-service communication | Protocol buffer definitions from domain models; service stubs wrap business logic |
 | **CLI** | Command-line interface, automation | CLI commands invoke service layer directly; text-based output rendering |
 | **Server-Sent Events (SSE)** | One-way real-time updates | SSE endpoints for game state streaming; lighter than WebSocket |
@@ -1354,16 +1354,18 @@ To add a new transport (e.g., WebSocket):
 
 **Service Layer Interface** (Transport-Agnostic):
 
-```python
-class GameService:
-    def make_move(game_state: GameState, position: Position) -> MoveResponse
-    def get_status() -> GameStatusResponse
-    def reset_game() -> GameState
-    def get_history() -> List[MoveHistory]
+```
+interface GameService {
+    make_move(game_state: GameState, position: Position) -> MoveResponse
+    get_status() -> GameStatusResponse
+    reset_game() -> GameState
+    get_history() -> List<MoveHistory>
+}
 
-class AgentService:
-    def get_agent_status(agent_id: str) -> AgentStatusResponse
-    def get_agent_metrics(agent_id: str) -> MetricsResponse
+interface AgentService {
+    get_agent_status(agent_id: string) -> AgentStatusResponse
+    get_agent_metrics(agent_id: string) -> MetricsResponse
+}
 ```
 
 **Benefits of Transport Abstraction**:
@@ -1406,7 +1408,7 @@ class AgentService:
 
 **GameStatusResponse**: Contains current GameState, agent status dictionary, and metrics dictionary.
 
-All API requests and responses must use strongly-typed, validated models. Implementation approach (Pydantic, TypeScript interfaces, Java classes, etc.) determined by technology stack choice in Section 14.
+All API requests and responses must use strongly-typed, validated models. Implementation approach (typed classes, interfaces, records, etc.) determined by technology stack choice in Section 14.
 
 ---
 
@@ -1583,38 +1585,38 @@ Visual elements mentioned in Section 12 (Failure Matrix UI Indications) provide 
 - results: Result wrapper models (AgentResult)
 - api: API request/response models
 
-Note: Domain models must be strongly-typed with runtime validation. Implementation approach (Pydantic, dataclasses, TypeScript, etc.) determined by Section 14. MovePriority enum defines 8 priority levels (IMMEDIATE_WIN=100, BLOCK_THREAT=90, FORCE_WIN=80, PREVENT_FORK=70, CENTER_CONTROL=50, CORNER_CONTROL=40, EDGE_PLAY=30, RANDOM_VALID=10) - see Section 3 for full priority system specification.
+Note: Domain models must be strongly-typed with runtime validation. Implementation approach (typed classes, interfaces, records, structs, etc.) determined by Section 14. MovePriority enum defines 8 priority levels (IMMEDIATE_WIN=100, BLOCK_THREAT=90, FORCE_WIN=80, PREVENT_FORK=70, CENTER_CONTROL=50, CORNER_CONTROL=40, EDGE_PLAY=30, RANDOM_VALID=10) - see Section 3 for full priority system specification.
 
 **agents/**: Agent implementations:
-- interfaces.py: Abstract base classes and protocols
-- scout_local.py: Local Scout implementation using configured LLM framework
-- strategist_local.py: Local Strategist implementation using configured LLM framework
-- executor_local.py: Local Executor implementation using configured LLM framework
-- scout_mcp.py: Scout with MCP protocol support
-- strategist_mcp.py: Strategist with MCP protocol support
-- executor_mcp.py: Executor with MCP protocol support
-- base_mcp_agent.py: Base class for MCP protocol support
+- interfaces: Abstract base classes and protocols
+- scout_local: Local Scout implementation using configured LLM framework
+- strategist_local: Local Strategist implementation using configured LLM framework
+- executor_local: Local Executor implementation using configured LLM framework
+- scout_mcp: Scout with MCP protocol support
+- strategist_mcp: Strategist with MCP protocol support
+- executor_mcp: Executor with MCP protocol support
+- base_mcp_agent: Base class for MCP protocol support
 
 Note: Agents use an LLM framework abstraction layer that supports multiple providers. LLM framework choice (LangChain, LiteLLM, Instructor, Direct SDKs) determines the multi-provider abstraction implementation - see Section 19.
 
 **game/**: Game logic:
-- engine.py: Core game rules and state management
-- coordinator.py: Orchestrates agent pipeline
-- state.py: Game state management (if separate from engine)
+- engine: Core game rules and state management
+- coordinator: Orchestrates agent pipeline
+- state: Game state management (if separate from engine)
 
 **services/**: Service layer (transport-agnostic business logic):
-- game_service.py: Game operations (make_move, get_status, reset, history)
-- agent_service.py: Agent operations (status, metrics)
-- interfaces.py: Service interface definitions
+- game_service: Game operations (make_move, get_status, reset, history)
+- agent_service: Agent operations (status, metrics)
+- interfaces: Service interface definitions
 
 **api/**: REST API transport layer:
-- main.py: API application setup and routes
-- routes/game.py: Game management REST endpoints (wraps game_service)
-- routes/agents.py: Agent status REST endpoints (wraps agent_service)
-- routes/mcp.py: MCP protocol endpoints (optional)
-- adapters/rest_adapter.py: Converts REST requests/responses to/from domain models
+- main: API application setup and routes
+- routes/game: Game management REST endpoints (wraps game_service)
+- routes/agents: Agent status REST endpoints (wraps agent_service)
+- routes/mcp: MCP protocol endpoints (optional)
+- adapters/rest_adapter: Converts REST requests/responses to/from domain models
 
-Note: REST endpoints are thin wrappers around service layer. Implementation framework choice (FastAPI, Flask, Express, etc.) determined by Section 14. Future transports (WebSocket, GraphQL, CLI) would add new directories with their own adapters.
+Note: REST endpoints are thin wrappers around service layer. Implementation framework choice determined by Section 14. Future transports (WebSocket, GraphQL, CLI) would add new directories with their own adapters.
 
 **ui/**: Web-based UI application:
 - main_app: Main UI application entry point
@@ -1622,22 +1624,22 @@ Note: REST endpoints are thin wrappers around service layer. Implementation fram
 - components/metrics: Metrics dashboard component
 - components/insights: Agent insights component
 
-Note: UI framework choice (Streamlit, React, Vue, etc.) determined by Section 14.
+Note: UI framework choice determined by Section 14.
 
 **models/**: LLM management:
-- shared_llm.py: Shared LLM connection manager with pooling
-- factory.py: LLM provider factory supporting multi-provider frameworks
-- provider_adapter.py: Abstraction layer for different LLM frameworks
+- shared_llm: Shared LLM connection manager with pooling
+- factory: LLM provider factory supporting multi-provider frameworks
+- provider_adapter: Abstraction layer for different LLM frameworks
 
 **utils/**: Utilities:
-- config.py: Configuration management
-- validators.py: Validation helpers
+- config: Configuration management
+- validators: Validation helpers
 
 **tests/**: Test suite:
-- test_game_engine.py: Game logic tests
-- test_agents.py: Agent tests
-- test_api.py: API endpoint tests
-- test_integration.py: End-to-end tests
+- test_game_engine: Game logic tests
+- test_agents: Agent tests
+- test_api: API endpoint tests
+- test_integration: End-to-end tests
 
 **docs/**: Documentation:
 - ARCHITECTURE.md: System architecture
@@ -1727,9 +1729,9 @@ See Section 14 for recommended specific technologies that meet these requirement
 
 **MCP Configuration** (if using MCP mode): Port assignments per agent, server URLs for distributed mode, protocol settings, transport type (stdio, HTTP, SSE).
 
-**Port Configuration**: All service ports must be configurable through the configuration file. API server port (default: 8000), Streamlit UI port (default: 8501), MCP agent server ports (if using distributed mode). No hardcoded ports in application code.
+**Port Configuration**: All service ports must be configurable through the configuration file. API server port (default: 8000), UI port (default: 8501), MCP agent server ports (if using distributed mode). No hardcoded ports in application code.
 
-**UI Configuration**: Streamlit theme, refresh intervals, metrics display preferences, debug mode.
+**UI Configuration**: Theme, refresh intervals, metrics display preferences, debug mode.
 
 ### Configuration Sources
 
@@ -1749,15 +1751,15 @@ Configuration is loaded in priority order: defaults in code, config.json, .env f
 
 ### Local Development
 
-**Single Process**: All components (API, agents, UI) run in one process. FastAPI and Streamlit can run in same process or separate processes on different ports.
+**Single Process**: All components (API, agents, UI) run in one process or separate processes on different ports.
 
-**Development Server**: Use uvicorn reload mode for API, Streamlit auto-reload for UI.
+**Development Server**: Use framework-specific development mode with auto-reload for API and UI.
 
 **Debug Mode**: Enable verbose logging, detailed error messages, agent reasoning display.
 
 ### Production Deployment
 
-**Separate Services**: API server, Streamlit UI, and agent services (if distributed) as separate processes or containers.
+**Separate Services**: API server, UI, and agent services (if distributed) as separate processes or containers.
 
 **Process Management**: Use systemd, supervisor, or container orchestration (Docker Compose, Kubernetes).
 
@@ -1782,8 +1784,8 @@ Configuration is loaded in priority order: defaults in code, config.json, .env f
 The project should include simple, functional Dockerfiles:
 
 **Dockerfile**: Single Dockerfile for the application
-- Base image: Python 3.11+
-- Install dependencies from requirements.txt
+- Base image: Language runtime (e.g., Node, Python, Java, Go)
+- Install dependencies from package manifest
 - Copy application code
 - Expose ports: 8000 (API) and 8501 (UI)
 - Default command to run the application
@@ -1791,7 +1793,7 @@ The project should include simple, functional Dockerfiles:
 **Docker Compose**:
 
 **docker-compose.yml**: Simple compose file for local development
-- Services: api (FastAPI) and ui (Streamlit)
+- Services: api and ui
 - Network for service communication
 - Environment variables from .env file
 - Volume mounts for code (development only)
@@ -1840,7 +1842,7 @@ helm/
 
 ### Unit Tests
 
-**Domain Models**: Test Pydantic model validation, edge cases, helper methods. Schema validation for all domain models to ensure type safety and data integrity.
+**Domain Models**: Test model validation, edge cases, helper methods. Schema validation for all domain models to ensure type safety and data integrity.
 
 **Game Engine**: Test move validation, win detection, draw detection, state management. Use parameterized tests for multiple scenarios to cover all game states efficiently.
 
@@ -1862,7 +1864,7 @@ helm/
 
 ### End-to-End Tests
 
-**Full System**: Test with Streamlit UI, FastAPI backend, and real agents. Test user interactions, verify game state persistence, test metrics collection.
+**Full System**: Test with complete UI, API backend, and real agents. Test user interactions, verify game state persistence, test metrics collection.
 
 ### Performance Tests
 
@@ -1878,7 +1880,7 @@ helm/
 
 ### Test Coverage
 
-**Coverage Targets**: Minimum code coverage targets of 80% for unit tests and 70% for integration tests. Use pytest-cov for coverage reporting.
+**Coverage Targets**: Minimum code coverage targets of 80% for unit tests and 70% for integration tests. Use language-appropriate coverage tools for reporting.
 
 **Critical Path Testing**: Critical path smoke tests for CI/CD to validate core functionality in automated pipelines.
 
@@ -2291,7 +2293,7 @@ For analytics, periodically aggregate into `logs/analytics/summary_{date}.json`.
 
 ### API Security
 
-**Input Validation**: All inputs validated via Pydantic models, sanitize user inputs, prevent injection attacks.
+**Input Validation**: All inputs validated via type-safe models, sanitize user inputs, prevent injection attacks.
 
 **Rate Limiting**: Limit API request rates, prevent abuse, implement per-user limits if multi-user.
 
@@ -2315,33 +2317,45 @@ This section provides recommended approaches for implementing the core specifica
 
 ## 14. Implementation Technology Stack
 
-### Recommended Technologies
+### Technology Stack Options
 
-The following technology stack is recommended based on proven effectiveness, but alternatives may be used:
+The following are example technology stacks. Any stack meeting the requirements is acceptable:
 
-**Backend Framework:**
-- **Recommended**: FastAPI (Python)
-- **Alternatives**: Flask, Django REST Framework, Express.js, Spring Boot
+**Backend Framework Options:**
+- **Node.js**: Express.js, Fastify, NestJS
+- **Python**: FastAPI, Flask, Django REST Framework
+- **Java**: Spring Boot, Quarkus, Micronaut
+- **Go**: Gin, Echo, Fiber
+- **C#**: ASP.NET Core
 - **Requirements Met**: REST API support, async operations, OpenAPI documentation
 
-**Data Validation:**
-- **Recommended**: Pydantic (Python)
-- **Alternatives**: Marshmallow, dataclasses + validators, TypeScript interfaces, Java Bean Validation
+**Data Validation Options:**
+- **TypeScript**: Zod, io-ts, class-validator
+- **Python**: Pydantic, Marshmallow, dataclasses
+- **Java**: Bean Validation, Hibernate Validator
+- **Go**: go-playground/validator, ozzo-validation
+- **C#**: FluentValidation, DataAnnotations
 - **Requirements Met**: Type safety, runtime validation, serialization/deserialization
 
-**UI Framework:**
-- **Recommended**: Streamlit (Python)
-- **Alternatives**: React, Vue.js, Angular, Svelte, Next.js
+**UI Framework Options:**
+- **React**: Next.js, Create React App, Vite
+- **Vue.js**: Nuxt, Vite
+- **Angular**: Angular CLI
+- **Svelte**: SvelteKit
+- **Python**: Streamlit, Dash
 - **Requirements Met**: Web-based interface, API client, interactive components
 
 **LLM Integration:**
-- **Recommended**: See Section 19 (LangChain, LiteLLM, Instructor, or Direct SDKs)
-- **Alternatives**: Any framework supporting multiple LLM providers
+- See Section 19 for framework options (LangChain, LiteLLM, Direct SDKs, etc.)
+- Any framework supporting multiple LLM providers
 - **Requirements Met**: Multi-provider support, hot-swapping, connection pooling
 
-**Testing Framework:**
-- **Recommended**: pytest (Python)
-- **Alternatives**: unittest, Jest, JUnit, RSpec
+**Testing Framework Options:**
+- **JavaScript/TypeScript**: Jest, Vitest, Mocha
+- **Python**: pytest, unittest
+- **Java**: JUnit, TestNG
+- **Go**: testing package, Testify
+- **C#**: xUnit, NUnit, MSTest
 - **Requirements Met**: Unit, integration, and E2E testing capabilities
 
 ### Technology Selection Criteria
@@ -2370,7 +2384,7 @@ When choosing alternative technologies, ensure they support:
 
 **State Management**: Efficient board representation, minimize state copies, lazy evaluation where possible.
 
-**UI Performance**: Efficient Streamlit reruns, minimize data transfer, use caching for expensive operations.
+**UI Performance**: Minimize unnecessary re-renders, efficient data transfer, use caching for expensive operations.
 
 ### Scalability
 
@@ -2388,13 +2402,13 @@ When choosing alternative technologies, ensure they support:
 
 **Characteristics**:
 - Fast execution (< 1 second per move)
-- Direct Python method calls between coordinator and agents
+- Direct in-process method calls between coordinator and agents
 - Shared LLM connection for efficiency
 - Rule-based pre-checks for immediate wins/blocks
 - LLM provider hot-swapping via configuration
 - Best for production use
 
-**Implementation**: Agents implement interfaces using the configured LLM framework. Coordinator calls agents via direct Python methods. The framework handles provider abstraction and connection management.
+**Implementation**: Agents implement interfaces using the configured LLM framework. Coordinator calls agents via direct in-process method calls. The framework handles provider abstraction and connection management.
 
 ### Mode 2: Distributed MCP (Protocol-Based)
 
@@ -2488,7 +2502,7 @@ When choosing alternative technologies, ensure they support:
 
 ### Metrics Display
 
-**Streamlit Dashboard**: Real-time metrics display with charts and tables.
+**Metrics Dashboard**: Real-time metrics display with charts and tables.
 
 **API Endpoints**: Metrics available via REST API for external monitoring.
 
@@ -2619,12 +2633,12 @@ Multiple LLM integration framework options exist with different trade-offs:
 
 **Best for**: Production deployments prioritizing performance, single-provider applications.
 
-**Option 4: Instructor (with Pydantic)**
+**Option 4: Instructor (Type-Safe Structured Outputs)**
 
-**Description**: Type-safe structured outputs from LLMs using Pydantic models.
+**Description**: Type-safe structured outputs from LLMs using strongly-typed domain models.
 
 **Pros**:
-- Perfect fit for Pydantic-based architectures (like this project)
+- Perfect fit for strongly-typed architectures
 - Type-safe LLM responses validated against domain models
 - Works with multiple providers
 - Automatic retry and validation
@@ -2635,17 +2649,15 @@ Multiple LLM integration framework options exist with different trade-offs:
 - Needs to be combined with direct SDKs
 - Less comprehensive than LangChain
 
-**Best for**: Projects using Pydantic domain models, type-safe architectures, production deployments requiring validation.
+**Best for**: Projects using strongly-typed domain models, type-safe architectures, production deployments requiring validation.
 
 **Recommended Approach**:
 
-For this project, **Instructor + Direct SDKs** is recommended for production use due to:
-- Existing Pydantic domain models (BoardAnalysis, Strategy, MoveExecution)
-- Type-safe validation of agent outputs
-- Lightweight and performant
-- Easy provider switching via configuration
-
-**LangChain** remains a valid choice for rapid prototyping and if ecosystem features are needed.
+Choose based on your stack and requirements:
+- **Rapid Prototyping**: LangChain (rich ecosystem, quick setup)
+- **Multi-Provider with Minimal Weight**: LiteLLM (lightweight, broad provider support)
+- **Type-Safe Production**: Instructor + Direct SDKs (strongly-typed, validated outputs)
+- **Performance-Critical**: Direct SDKs (minimal overhead, full control)
 
 **Implementation Strategy**: Make the LLM framework selection configurable. Create an abstraction layer (LLMProvider interface) that can be implemented by any framework, allowing runtime selection via configuration.
 
