@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Panel - UI Preview</title>
+    <style>
+        :root {
+            /* Primary Colors */
+            --bg-primary: #1a1a2e;
+            --bg-surface: #16213e;
+            --bg-card: #0f3460;
+
+            /* UI Elements */
+            --color-primary: #00adb5;
+            --color-secondary: #533483;
+            --color-success: #06d6a0;
+            --color-error: #e94560;
+            --color-disabled: #6c757d;
+            --grid-lines: #533483;
+
+            /* Text */
+            --text-primary: #eaeaea;
+            --text-secondary: #a8a8a8;
+            --text-heading: #ffffff;
+
+            /* Accents */
+            --accent-agent: #4361ee;
+
+            /* Spacing */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 12px;
+            --space-lg: 16px;
+
+            /* Border Radius */
+            --radius-sm: 6px;
+            --radius-md: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, 'Helvetica Neue', 'Arial', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 20px;
+            min-height: 100vh;
+            line-height: 1.5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        h1 {
+            color: var(--text-heading);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .config-panel {
+            background: var(--bg-surface);
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            border: 1px solid var(--grid-lines);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-lg);
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-header {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-heading);
+            margin-bottom: var(--space-md);
+            border-bottom: 2px solid var(--grid-lines);
+            padding-bottom: var(--space-sm);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-md);
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-sm);
+        }
+
+        .agent-config {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: var(--space-sm);
+            align-items: center;
+            margin-bottom: var(--space-sm);
+        }
+
+        .agent-label {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-size: 0.875rem;
+            min-width: 120px;
+        }
+
+        .agent-label.scout::before {
+            content: "●";
+            color: var(--accent-agent);
+            font-size: 1rem;
+        }
+
+        .agent-label.strategist::before {
+            content: "●";
+            color: var(--color-secondary);
+            font-size: 1rem;
+        }
+
+        .agent-label.executor::before {
+            content: "●";
+            color: var(--color-primary);
+            font-size: 1rem;
+        }
+
+        select {
+            width: 100%;
+            height: 36px;
+            background: var(--bg-card);
+            border: 2px solid var(--grid-lines);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            font-family: inherit;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23eaeaea' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.2);
+        }
+
+        .model-display {
+            font-family: 'SF Mono', 'Monaco', monospace;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+        }
+
+        input[type="password"] {
+            width: 100%;
+            height: 36px;
+            background: var(--bg-card);
+            border: 2px solid var(--grid-lines);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Monaco', monospace;
+            transition: all 0.2s ease;
+        }
+
+        input[type="password"]::placeholder {
+            color: var(--color-disabled);
+        }
+
+        input[type="password"]:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.2);
+        }
+
+        .api-key-row {
+            display: grid;
+            grid-template-columns: 100px 1fr auto;
+            gap: var(--space-sm);
+            align-items: center;
+            margin-bottom: var(--space-sm);
+        }
+
+        .provider-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+        }
+
+        .btn-icon:hover {
+            background: var(--color-primary);
+            color: var(--bg-primary);
+        }
+
+        .btn-icon:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: var(--space-lg);
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            margin: 0 8px 0 0;
+            cursor: pointer;
+            accent-color: var(--color-primary);
+        }
+
+        .radio-label {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .toggle-group {
+            display: inline-flex;
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        .toggle-option {
+            width: 60px;
+            height: 36px;
+            border: none;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-option.active {
+            background: var(--color-primary);
+            color: var(--bg-primary);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            background: #00c4cf;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: var(--color-error);
+            color: var(--text-heading);
+        }
+
+        .btn-danger:hover {
+            background: #ff5a75;
+            transform: translateY(-2px);
+        }
+
+        .help-text {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            margin-top: var(--space-xs);
+            font-style: italic;
+        }
+
+        .success-message {
+            background: rgba(6, 214, 160, 0.15);
+            border-left: 3px solid var(--color-success);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            margin-top: var(--space-sm);
+            display: none;
+        }
+
+        .success-message.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Game Configuration</h1>
+
+        <div class="config-panel">
+            <!-- Left Column -->
+            <div class="section">
+                <h2 class="section-header">Agent LLM Configuration</h2>
+
+                <div class="agent-config">
+                    <span class="agent-label scout">Scout</span>
+                    <select id="scoutProvider">
+                        <option value="openai" selected>OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="google">Google Gemini</option>
+                        <option value="ollama">Ollama</option>
+                    </select>
+                    <div class="model-display">gpt-5.2</div>
+                </div>
+
+                <div class="agent-config">
+                    <span class="agent-label strategist">Strategist</span>
+                    <select id="strategistProvider">
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic" selected>Anthropic</option>
+                        <option value="google">Google Gemini</option>
+                        <option value="ollama">Ollama</option>
+                    </select>
+                    <div class="model-display">claude-opus-4.5</div>
+                </div>
+
+                <div class="agent-config">
+                    <span class="agent-label executor">Executor</span>
+                    <select id="executorProvider">
+                        <option value="openai" selected>OpenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                        <option value="google">Google Gemini</option>
+                        <option value="ollama">Ollama</option>
+                    </select>
+                    <div class="model-display">gpt-5.2</div>
+                </div>
+
+                <div class="help-text">Model names loaded from config file</div>
+
+                <h2 class="section-header" style="margin-top: 16px;">API Keys</h2>
+
+                <div class="api-key-row">
+                    <span class="provider-label">OpenAI</span>
+                    <input type="password" id="openaiKey" value="sk-proj-abc123..." placeholder="sk-proj-...">
+                    <button class="btn-icon" title="Update">💾</button>
+                </div>
+
+                <div class="api-key-row">
+                    <span class="provider-label">Anthropic</span>
+                    <input type="password" id="anthropicKey" value="sk-ant-xyz789..." placeholder="sk-ant-...">
+                    <button class="btn-icon" title="Update">💾</button>
+                </div>
+
+                <div class="api-key-row">
+                    <span class="provider-label">Google</span>
+                    <input type="password" id="googleKey" value="AIzaSy123..." placeholder="AIzaSy...">
+                    <button class="btn-icon" title="Update">💾</button>
+                </div>
+
+                <div class="api-key-row">
+                    <span class="provider-label">Ollama</span>
+                    <input type="password" id="ollamaKey" value="(not required)" placeholder="Optional" disabled>
+                    <button class="btn-icon" title="Update" disabled>💾</button>
+                </div>
+
+                <div class="help-text">Keys loaded from config. Click save to update.</div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="section">
+                <h2 class="section-header">Agent Mode</h2>
+
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="mode" value="local" checked>
+                        <span class="radio-label">Local Mode</span>
+                    </label>
+
+                    <label class="radio-option">
+                        <input type="radio" name="mode" value="distributed">
+                        <span class="radio-label">Distributed MCP</span>
+                    </label>
+                </div>
+                <div class="help-text">Select how agents communicate</div>
+
+                <h2 class="section-header" style="margin-top: 16px;">Game Settings</h2>
+
+                <div class="form-group">
+                    <label>Player Symbol</label>
+                    <div class="toggle-group">
+                        <button class="toggle-option active" data-symbol="X">X</button>
+                        <button class="toggle-option" data-symbol="O">O</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button class="btn btn-primary" id="saveBtn">Save Configuration</button>
+                    <div class="success-message" id="successMessage">
+                        ✓ Configuration saved
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button class="btn btn-danger" id="resetBtn">Reset Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mode selection (no additional logic needed)
+
+        // Symbol toggle
+        const toggleOptions = document.querySelectorAll('.toggle-option');
+        toggleOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                toggleOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Model display update based on provider selection
+        const providerSelects = {
+            scout: document.getElementById('scoutProvider'),
+            strategist: document.getElementById('strategistProvider'),
+            executor: document.getElementById('executorProvider')
+        };
+
+        const modelMap = {
+            openai: 'gpt-5.2',
+            anthropic: 'claude-opus-4.5',
+            google: 'gemini-3-flash',
+            ollama: 'llama2'
+        };
+
+        Object.entries(providerSelects).forEach(([agent, select]) => {
+            select.addEventListener('change', function() {
+                const modelDisplay = this.parentElement.querySelector('.model-display');
+                modelDisplay.textContent = modelMap[this.value];
+            });
+        });
+
+        // Save button
+        const saveBtn = document.getElementById('saveBtn');
+        const successMessage = document.getElementById('successMessage');
+
+        saveBtn.addEventListener('click', function() {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            setTimeout(() => {
+                successMessage.classList.add('visible');
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Configuration';
+
+                setTimeout(() => {
+                    successMessage.classList.remove('visible');
+                }, 2000);
+            }, 300);
+        });
+
+        // Reset button
+        const resetBtn = document.getElementById('resetBtn');
+        resetBtn.addEventListener('click', function() {
+            if (confirm('Reset game and clear all progress?')) {
+                alert('Game reset!');
+            }
+        });
+
+        // API key save buttons
+        document.querySelectorAll('.api-key-row .btn-icon:not([disabled])').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                if (input.value && input.value.length > 10) {
+                    successMessage.textContent = '✓ API key updated';
+                    successMessage.classList.add('visible');
+                    setTimeout(() => successMessage.classList.remove('visible'), 2000);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
