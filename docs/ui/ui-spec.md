@@ -617,7 +617,7 @@ Visual designs are provided as exported PNG frames from Figma, located in `docs/
   - Color: `#eaeaea` (Primary Text)
   - Cursor: `pointer`
   - Focus: Border-color `#00adb5` (Primary)
-  - Options: OpenAI, Anthropic, Google Gemini, Ollama
+  - Options: OpenAI, Anthropic, Google Gemini
 
 - **Model name input**:
   - Height: `44px`

@@ -230,7 +230,6 @@ Agents are stateless; all context comes from inputs. Results include execution m
 **Configuration**:
 - Timeout values configurable via config file
 - Different timeouts for local mode (5s/5s/3s) vs distributed MCP mode (10s/10s/5s)
-- Per-provider timeout adjustments (e.g., local Ollama may need longer timeouts)
 
 ### Move Priority System
 
@@ -888,7 +887,7 @@ This section defines **what** the UI must do (functional requirements). Visual d
 ### User Stories: Configuration
 
 **US-019: Select LLM Provider and Model**
-- As a player, I MUST be able to select LLM provider (OpenAI, Anthropic, Google Gemini, Ollama)
+- As a player, I MUST be able to select LLM provider (OpenAI, Anthropic, Google Gemini)
 - As a player, I MUST be able to select model name
 - My LLM preferences MUST be saved and restored in future sessions
 
@@ -1045,7 +1044,7 @@ The implementation must provide:
 - Component-based architecture
 
 **LLM Integration:**
-- Multi-provider support (OpenAI, Anthropic, Google, Ollama)
+- Multi-provider support (OpenAI, Anthropic, Google Gemini)
 - Connection pooling and reuse
 - Hot-swappable providers via configuration
 - Async LLM calls
@@ -1071,7 +1070,7 @@ The implementation must provide:
 - Configuration file parsing (JSON, YAML, etc.)
 
 **External Services:**
-- LLM Provider APIs (at least one of: OpenAI, Anthropic, Google, Ollama)
+- LLM Provider APIs (at least one of: OpenAI, Anthropic, Google Gemini)
 - Optional: MCP-compatible agent services (for distributed mode)
 
 **Development Environment:**
@@ -1090,7 +1089,7 @@ See Section 14 for recommended specific technologies that meet these requirement
 
 **Agent Framework Configuration**: Mode selection (local or distributed_mcp), LLM framework selection for multi-provider support (see Section 19), model selection per agent or shared, timeout settings per agent (Scout: 5s, Strategist: 5s, Executor: 3s in local mode; 10s/10s/5s in distributed mode), retry logic.
 
-**LLM Provider Configuration**: Provider selection (OpenAI, Anthropic, Google Gemini, Ollama), API keys (from environment), model name per provider (one model per provider), temperature and other parameters, token limits. Default models: OpenAI uses gpt-5.2, Anthropic uses claude-opus-4.5, Google Gemini uses gemini-3-flash. Model names are configurable in config file.
+**LLM Provider Configuration**: Provider selection (OpenAI, Anthropic, Google Gemini), API keys (from environment), model name per provider (one model per provider), temperature and other parameters, token limits. Default models: OpenAI uses gpt-5.2, Anthropic uses claude-opus-4.5, Google Gemini uses gemini-3-flash. Model names are configurable in config file.
 
 **Game Configuration**: Default player symbol, AI symbol, game rules (if configurable), move timeout.
 
@@ -1461,21 +1460,6 @@ Enable A/B testing, cost optimization, and performance analysis by tracking deta
           "supports_streaming": true,
           "reliability_score": 0.95,
           "last_updated": "2025-01-15"
-        }
-      }
-    },
-    "ollama": {
-      "models": {
-        "llama3.2": {
-          "cost_per_1k_input_tokens": 0.0,
-          "cost_per_1k_output_tokens": 0.0,
-          "avg_latency_ms": 3000,
-          "max_tokens": 128000,
-          "context_window": 128000,
-          "supports_streaming": true,
-          "reliability_score": 0.90,
-          "last_updated": "2025-01-15",
-          "requires_local_install": true
         }
       }
     }
@@ -2091,8 +2075,6 @@ CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & streamli
 
 **Google Gemini**: Default model is `gemini-3-flash`. Model name is configurable in config file.
 
-**Ollama**: Local models. Model name must be specified in config file (e.g., `llama3.2`, `mistral`).
-
 **Configuration Constraint**: Only ONE model per provider. Each provider can only have one model configured at a time. To use multiple models from the same provider, switch the configuration and restart.
 
 ### Shared LLM Connection
@@ -2229,7 +2211,7 @@ Multiple LLM integration framework options exist with different trade-offs:
 
 **Pros**:
 - Rich ecosystem and community support
-- Built-in multi-provider support (OpenAI, Anthropic, Google, Ollama)
+- Built-in multi-provider support (OpenAI, Anthropic, Google Gemini)
 - Chain abstractions for agent workflows
 - Prompt management and templates
 - MCP integration available
