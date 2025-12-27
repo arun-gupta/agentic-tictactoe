@@ -1002,6 +1002,104 @@ This section defines **what** the UI must do (functional requirements). Visual d
 - As a player, I MUST understand why fallback was triggered
 - As a player, I MUST see which fallback strategy was applied
 
+### Definition of Done
+
+All user stories (US-001 through US-025) are considered complete when they meet the following criteria:
+
+**Functional Requirements:**
+- ✅ Feature works as described in the user story
+- ✅ All edge cases handled per error handling specification (Section 12)
+- ✅ API integration tested and working
+- ✅ Unit tests written and passing
+- ✅ Integration tests cover user workflows
+
+**Visual Requirements:**
+- ✅ Implementation matches ui-spec.md specifications exactly
+  - Colors from design system (Section: Color Palette)
+  - Typography follows specified font families, sizes, and weights
+  - Spacing uses 8px grid system (Section: Spacing)
+  - Border radius matches specifications (6px, 12px, 16px)
+  - Shadows follow elevation system (Section: Shadows)
+  - Animations match specified keyframes and timing
+- ✅ Component states properly styled (hover, active, disabled, error, success)
+- ✅ Visual regression tests pass (if implemented)
+- ✅ Designer approval obtained (code review or sign-off)
+
+**Quality Requirements:**
+- ✅ Code review completed and approved
+- ✅ No console errors or warnings in browser
+- ✅ No accessibility violations (WCAG 2.1 Level AA guidelines)
+- ✅ Performance requirements met (Section 6, US-023)
+  - Board updates within 100ms
+  - Agent status updates within 500ms
+- ✅ Cross-browser testing completed (Chrome, Firefox, Safari)
+
+**Documentation Requirements:**
+- ✅ Code comments added for complex logic
+- ✅ API endpoints documented (if new endpoints added)
+- ✅ Configuration changes documented (if applicable)
+
+**Verification Methods:**
+
+1. **Manual Testing:**
+   - Test user story acceptance criteria
+   - Visual comparison with ui-spec.md and preview files
+   - Test all interactive states (hover, click, focus)
+   - Test error scenarios from Failure Matrix (Section 12)
+
+2. **Automated Testing:**
+   - Unit tests for component logic
+   - Integration tests for API interactions
+   - Visual regression tests (recommended: Percy, Chromatic, or Playwright screenshots)
+   - Accessibility tests (recommended: axe-core, pa11y)
+
+3. **Code Review Checklist:**
+   - [ ] Functional requirements from user story implemented
+   - [ ] UI matches ui-spec.md (colors, typography, spacing, animations)
+   - [ ] Error handling follows Section 12 Failure Matrix
+   - [ ] Performance meets requirements (US-023)
+   - [ ] No hard-coded values (use CSS variables from design system)
+   - [ ] Responsive behavior tested (if applicable)
+   - [ ] Accessibility attributes present (ARIA labels, roles, keyboard navigation)
+
+4. **Designer QA:**
+   - Visual inspection against ui-spec.md
+   - Interaction behavior matches specifications
+   - Animation timing and easing correct
+   - Color accuracy verified
+   - Typography rendering correct
+
+**Example Acceptance Criteria for US-001 (Display Game Board):**
+
+Functional:
+- [ ] 3x3 grid rendered correctly
+- [ ] Cell states (EMPTY, X, O) displayed
+- [ ] Board updates when game state changes
+
+Visual (per ui-spec.md):
+- [ ] Cell dimensions: 100px × 100px
+- [ ] Gap between cells: 12px
+- [ ] Board background: #0f3460 (Card color)
+- [ ] Board border-radius: 16px
+- [ ] X symbol color: #e94560 (Player X)
+- [ ] O symbol color: #00adb5 (Player O)
+- [ ] Cell border: 2px solid #533483 (Grid Lines)
+- [ ] Cell border-radius: 6px
+- [ ] Empty cell background: #16213e (Surface)
+- [ ] X/O font-size: 2.5rem
+- [ ] X/O font-weight: 700 (Bold)
+
+Quality:
+- [ ] No layout shift on state changes
+- [ ] Smooth transitions (0.2s ease)
+- [ ] Keyboard accessible
+- [ ] Screen reader announces cell states
+
+**Non-Functional Acceptance:**
+- Tests do not need 100% code coverage, but critical paths must be tested
+- Visual design can have minor deviations (±2px, slight color variance) if approved by designer
+- Performance targets are goals; reasonable variance acceptable with justification
+
 ---
 
 ## 6.1 UI Visual Design Specification
