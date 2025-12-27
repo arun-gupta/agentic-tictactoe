@@ -51,6 +51,81 @@ A Tic-Tac-Toe game between a human player and an AI opponent. The AI uses three 
 - **Mode Interchangeability**: Agents can switch between local and distributed modes at runtime
 - **Graceful Degradation**: System continues operating with fallback strategies when components fail
 
+### Non-Goals
+
+This section explicitly defines what is **out of scope** for this project to prevent scope creep and maintain focus:
+
+**Game Variants:**
+- ❌ Different board sizes (4x4, 5x5, etc.)
+- ❌ Alternative game rules (Connect Four, Gomoku, etc.)
+- ❌ 3D Tic-Tac-Toe or other variants
+- ❌ Multiple simultaneous games
+
+**Multiplayer Features:**
+- ❌ Human vs Human mode
+- ❌ AI vs AI tournaments (except for experimentation/testing)
+- ❌ Multiplayer lobbies or matchmaking
+- ❌ Real-time spectator mode
+- ❌ Chat or social features
+
+**User Management:**
+- ❌ User authentication and accounts
+- ❌ User profiles and avatars
+- ❌ Friend lists or social connections
+- ❌ Leaderboards or rankings
+- ❌ Achievement systems
+
+**Advanced AI Features:**
+- ❌ Machine learning model training (use pre-trained LLMs only)
+- ❌ Reinforcement learning or self-play
+- ❌ Neural network visualization
+- ❌ AI difficulty levels (agents always play optimally)
+- ❌ Personalized AI behavior based on player patterns
+
+**Mobile & Desktop Apps:**
+- ❌ Native mobile applications (iOS/Android)
+- ❌ Desktop applications (Electron, etc.)
+- ❌ Mobile-optimized responsive design (web UI is desktop-first)
+- ❌ Offline play capability
+
+**Enterprise Features:**
+- ❌ Multi-tenancy support
+- ❌ Role-based access control (RBAC)
+- ❌ Audit logging for compliance
+- ❌ SLA guarantees or uptime requirements
+- ❌ High availability / disaster recovery
+
+**Monetization:**
+- ❌ Payment processing
+- ❌ Subscription models
+- ❌ In-app purchases
+- ❌ Advertising integration
+
+**Internationalization:**
+- ❌ Multi-language support (English only)
+- ❌ Localization for different regions
+- ❌ Right-to-left (RTL) language support
+
+**Advanced Analytics:**
+- ❌ Real-time analytics dashboards
+- ❌ Predictive analytics or forecasting
+- ❌ Business intelligence integrations
+- ❌ Data warehouse integration (beyond basic export)
+
+**Scope Boundaries:**
+
+While the system supports experimentation and metrics tracking, the focus is on:
+- ✅ Single-player human vs AI gameplay
+- ✅ Standard 3x3 Tic-Tac-Toe rules only
+- ✅ Web-based UI for desktop browsers
+- ✅ Demonstrating multi-agent LLM coordination
+- ✅ Basic experiment tracking for cost/performance optimization
+- ✅ API-first architecture for extensibility
+
+**Future Consideration:**
+
+Features marked as non-goals may be reconsidered in future versions if there is clear demand and they align with the project's educational and demonstration purposes. However, they are explicitly out of scope for the initial release.
+
 ---
 
 ## 2. Domain Model Design
