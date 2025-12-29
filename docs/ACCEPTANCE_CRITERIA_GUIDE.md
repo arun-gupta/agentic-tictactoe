@@ -67,7 +67,7 @@ This is not testable because:
 
 The following sections already have formal acceptance criteria:
 
-1. **Section 2: Domain Model Design**
+1. **Section 2: Domain Model Design** ✅ COMPLETE (84 criteria total)
    - Position (5 criteria)
    - Board (10 criteria)
    - Game State (10 criteria)
@@ -75,123 +75,41 @@ The following sections already have formal acceptance criteria:
    - Opportunity (4 criteria)
    - Strategic Move (5 criteria)
    - Board Analysis (9 criteria)
+   - Move Priority (9 criteria)
+   - Move Recommendation (6 criteria)
+   - Strategy (7 criteria)
+   - Move Execution (7 criteria)
+   - Agent Result (8 criteria)
+
+2. **Section 3: Agent Architecture** ✅ COMPLETE (60 criteria total)
+   - Scout Agent (10 criteria)
+   - Strategist Agent (8 criteria)
+   - Executor Agent (7 criteria)
+   - Agent Interface Contract (5 criteria)
+   - Move Priority System (15 criteria)
+   - Agent Pipeline Flow (15 criteria)
+
+3. **Section 4: Game State Management** ✅ COMPLETE (71 criteria total)
+   - Win Conditions (10 criteria - all 8 winning lines)
+   - Draw Conditions (6 criteria - complete and inevitable draw)
+   - Legal Move Invariants (10 criteria - all validation rules)
+   - Turn Order Rules (9 criteria - strict alternation)
+   - State Validation Rules (10 criteria - all 8 validation rules)
+   - Game Engine Interface (13 criteria - all methods)
+   - Game State Transitions (13 criteria - all state transitions)
+
+4. **Section 5: API Design** ✅ COMPLETE (37 criteria total)
+   - POST /api/game/move (8 criteria)
+   - GET /api/game/status (4 criteria)
+   - POST /api/game/reset (3 criteria)
+   - GET /api/game/history (3 criteria)
+   - Agent Status Endpoints (5 criteria)
+   - Configuration Endpoints (7 criteria)
+   - MCP Protocol Endpoints (7 criteria)
 
 ### 🔶 Sections Needing Acceptance Criteria
 
 The following sections need formal acceptance criteria added:
-
-#### **Section 2: Domain Model Design** (Remaining)
-
-**Move Priority** (enum):
-- Verify each priority level has correct numeric value (IMMEDIATE_WIN=100, BLOCK_THREAT=90, etc.)
-- Verify priority ordering for decision logic
-
-**Move Recommendation**:
-- Valid creation with position, priority, confidence, reasoning
-- Confidence range validation (0.0-1.0)
-- Priority enum validation
-
-**Strategy**:
-- Primary move is highest priority
-- Alternatives sorted by priority descending
-- Risk assessment validation (low/medium/high)
-
-**Move Execution**:
-- Success status tracking
-- Validation error collection
-- Execution time measurement
-- Priority used matches recommendation
-
-**Agent Result** (wrapper):
-- Success result creation with data
-- Error result creation with message
-- Execution time tracking
-- Metadata attachment
-
-#### **Section 3: Agent Architecture**
-
-**Scout Agent**:
-- Given board state, when Scout.analyze() is called, then returns BoardAnalysis
-- Given empty board, when analyzed, then identifies center as strategic position
-- Given opponent two-in-a-row, when analyzed, then identifies threat
-- Given AI two-in-a-row, when analyzed, then identifies opportunity
-- Given LLM timeout, when analyzing, then returns rule-based fallback analysis
-- Given invalid board, when analyzing, then returns error with code `ERR_INVALID_BOARD`
-
-**Strategist Agent**:
-- Given BoardAnalysis with threats, when strategy created, then primary move blocks threat (priority=BLOCK_THREAT)
-- Given BoardAnalysis with opportunity to win, when strategy created, then primary move takes win (priority=IMMEDIATE_WIN)
-- Given BoardAnalysis with multiple moves, when strategy created, then alternatives sorted by priority
-- Given no clear moves, when strategy created, then recommends center/corner with reasoning
-- Given LLM timeout, when strategizing, then returns rule-based strategy
-
-**Executor Agent**:
-- Given Strategy with valid move, when executed, then validates move and returns success
-- Given Strategy with invalid move (occupied cell), when executed, then returns validation error `ERR_CELL_OCCUPIED`
-- Given Strategy with out-of-bounds move, when executed, then returns validation error `ERR_POSITION_OUT_OF_BOUNDS`
-- Given move execution time, when completing, then records execution_time_ms
-- Given validation errors, when executing, then collects all errors in validation_errors list
-
-**Coordinator**:
-- Given game state, when orchestrating move, then calls Scout → Strategist → Executor in sequence
-- Given Scout failure, when orchestrating, then uses rule-based Scout fallback
-- Given Strategist failure, when orchestrating, then uses Scout's top opportunity
-- Given Executor failure, when orchestrating, then uses Strategist's primary move directly
-- Given all agents succeed, when orchestrating, then returns final move with full reasoning chain
-- Given timeout after 15 seconds, when orchestrating, then triggers fallback and completes
-
-#### **Section 4: Game State Management**
-
-**Win Detection**:
-- Given three X's in row 0, when checking win, then returns winner='X'
-- Given three O's in column 1, when checking win, then returns winner='O'
-- Given three X's on main diagonal (0,0)→(1,1)→(2,2), when checking win, then returns winner='X'
-- Given three O's on anti-diagonal (0,2)→(1,1)→(2,0), when checking win, then returns winner='O'
-- Given no three-in-a-row, when checking win, then returns winner=None
-
-**Draw Detection**:
-- Given all 9 cells occupied and no winner, when checking draw, then returns is_draw=True
-- Given 8 cells occupied and no winner, when checking draw, then returns is_draw=False
-
-**Move Validation**:
-- Given empty cell (1,1), when validating move to (1,1), then validation passes
-- Given occupied cell (1,1) with 'X', when validating move to (1,1), then validation fails with `ERR_CELL_OCCUPIED`
-- Given position (3,3), when validating move, then validation fails with `ERR_POSITION_OUT_OF_BOUNDS`
-- Given game already over, when validating move, then validation fails with `ERR_GAME_OVER`
-
-**Game Engine**:
-- Given valid move, when make_move() called, then updates board, increments move_number, switches current_player
-- Given invalid move, when make_move() called, then returns error, does not modify state
-- Given new game, when reset() called, then clears board, resets move_number to 0, sets current_player to player
-
-#### **Section 5: API Design**
-
-For each endpoint, define:
-- Valid request → expected 200 response
-- Invalid request → expected 400/422 response with error code
-- Missing auth → expected 401 response
-- Server error → expected 500 response
-
-**Example for POST /api/game/move**:
-
-```markdown
-**Acceptance Criteria:**
-- Given valid move request `{"position": {"row": 1, "col": 1}}`, when POST /api/game/move, then returns 200 with updated game_state
-- Given invalid position `{"position": {"row": 3, "col": 3}}`, when POST /api/game/move, then returns 422 with error code `ERR_POSITION_OUT_OF_BOUNDS`
-- Given occupied cell `{"position": {"row": 0, "col": 0}}` where (0,0) has 'X', when POST /api/game/move, then returns 422 with error code `ERR_CELL_OCCUPIED`
-- Given game over state, when POST /api/game/move, then returns 422 with error code `ERR_GAME_OVER`
-- Given malformed JSON, when POST /api/game/move, then returns 400 with error code `ERR_INVALID_REQUEST`
-- Given missing position field, when POST /api/game/move, then returns 422 with error code `ERR_MISSING_FIELD`
-```
-
-**Apply to all endpoints:**
-- POST /api/game/new
-- POST /api/game/move
-- GET /api/game/status
-- POST /api/game/reset
-- GET /api/game/history
-- GET /api/metrics/game/{game_id}
-- WebSocket /ws/game
 
 #### **Section 6: Web UI Functional Requirements**
 
