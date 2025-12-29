@@ -141,7 +141,7 @@ Features marked as non-goals may be reconsidered in future versions if there is 
 - Given Position(row=1, col=2), when hashed, then produces consistent hash value for use in dictionaries/sets
 - Given Position(row=1, col=2) and Position(row=1, col=2), when compared, then positions are equal
 
-**Board**: A 3x3 grid of symbols (X, O, or empty). Provides methods to get/set cells, check emptiness, and list empty positions. Validates size.
+**Board**: A 3x3 grid of symbols (X, O, or empty). Board MUST provide methods: `get_cell(position)` returns symbol at position, `set_cell(position, symbol)` sets symbol at position, `is_empty(position)` returns boolean, `get_empty_positions()` returns list of Position objects. Board MUST validate size is exactly 3x3.
 
 **Acceptance Criteria:**
 - Given a 3x3 board structure, when Board is created, then board is valid
@@ -164,7 +164,7 @@ Features marked as non-goals may be reconsidered in future versions if there is 
 - Winner (if any)
 - Draw status
 
-Includes helper methods to get the current player's symbol and the opponent.
+GameState MUST provide helper methods: `get_current_player()` returns player symbol (X or O) based on move_number (even=player, odd=AI), `get_opponent()` returns the opposite symbol.
 
 **Acceptance Criteria:**
 - Given valid Board, player='X', AI='O', when GameState is created, then game state is valid with move_number=0
@@ -180,7 +180,7 @@ Includes helper methods to get the current player's symbol and the opponent.
 
 ### Agent Domain Models
 
-**Threat**: Represents an immediate threat where the opponent can win. Includes position, line type (row/column/diagonal), line index, and severity (always critical for Tic-Tac-Toe).
+**Threat**: Represents an immediate threat where the opponent will win on next move if not blocked. Threat MUST contain: position (Position object), line_type (string: 'row', 'column', or 'diagonal'), line_index (integer 0-2), severity (string: always 'critical' for Tic-Tac-Toe).
 
 **Acceptance Criteria:**
 - Given opponent has two O's in row 0 with position (0,2) empty, when Threat is created, then `position=(0,2)`, `line_type='row'`, `line_index=0`, `severity='critical'`
@@ -188,7 +188,7 @@ Includes helper methods to get the current player's symbol and the opponent.
 - Given opponent has two O's on main diagonal, when Threat is created, then `line_type='diagonal'` and `line_index=0`
 - Given threat with invalid position (3, 3), when Threat is created, then validation error `ERR_POSITION_OUT_OF_BOUNDS` is raised
 
-**Opportunity**: Represents a winning opportunity. Includes position, line type, line index, and confidence (0.0 to 1.0).
+**Opportunity**: Represents a winning opportunity where AI can win on this move. Opportunity MUST contain: position (Position object), line_type (string: 'row', 'column', or 'diagonal'), line_index (integer 0-2), confidence (float 0.0 to 1.0).
 
 **Acceptance Criteria:**
 - Given AI has two X's in row 1 with position (1,2) empty, when Opportunity is created, then `position=(1,2)`, `line_type='row'`, `line_index=1`, `confidence=1.0`
@@ -196,7 +196,7 @@ Includes helper methods to get the current player's symbol and the opponent.
 - Given confidence value 1.5, when Opportunity is created, then validation error `ERR_INVALID_CONFIDENCE` is raised (must be 0.0-1.0)
 - Given confidence value -0.1, when Opportunity is created, then validation error `ERR_INVALID_CONFIDENCE` is raised
 
-**Strategic Move**: A strategic position recommendation with position, move type (center/corner/edge/fork/block_fork), priority (1-10), and reasoning.
+**Strategic Move**: A position recommendation with position, move type (center/corner/edge/fork/block_fork), priority (1-10 numeric value), and reasoning (required string explanation).
 
 **Acceptance Criteria:**
 - Given empty board, when StrategicMove for center is created, then `position=(1,1)`, `move_type='center'`, `priority >= 8`
@@ -224,15 +224,15 @@ Includes helper methods to get the current player's symbol and the opponent.
 - Given favorable board for opponent, when BoardAnalysis is created, then `board_evaluation_score < 0.0`
 - Given balanced board, when BoardAnalysis is created, then `board_evaluation_score ≈ 0.0` (within ±0.2)
 
-**Move Priority**: Enum defining priority levels for move recommendations (see Priority System below for details):
-- IMMEDIATE_WIN (priority: 100) - We can win on this move
-- BLOCK_THREAT (priority: 90) - Opponent can win next move, must block
-- FORCE_WIN (priority: 80) - Create unstoppable winning position (fork)
-- PREVENT_FORK (priority: 70) - Block opponent from creating a fork
-- CENTER_CONTROL (priority: 50) - Take center position (opening)
-- CORNER_CONTROL (priority: 40) - Take corner position (strategic)
-- EDGE_PLAY (priority: 30) - Take edge position (less strategic)
-- RANDOM_VALID (priority: 10) - Any valid move (fallback)
+**Move Priority**: Enum defining priority levels for move recommendations with numeric values (see Priority System below for details):
+- IMMEDIATE_WIN (priority: 100) - AI has exactly 2 symbols in a line with exactly 1 empty cell (will win on this move)
+- BLOCK_THREAT (priority: 90) - Opponent has exactly 2 symbols in a line with exactly 1 empty cell (must block to prevent opponent win)
+- FORCE_WIN (priority: 80) - Move creates exactly 2 unblocked lines each containing 2 AI symbols (fork that guarantees eventual win)
+- PREVENT_FORK (priority: 70) - Move blocks opponent from creating exactly 2 unblocked lines each containing 2 opponent symbols (prevents opponent fork)
+- CENTER_CONTROL (priority: 50) - Take center position (1,1) when available and no moves with priority >50 exist
+- CORNER_CONTROL (priority: 40) - Take corner position (0,0/0,2/2,0/2,2) when available and no moves with priority >40 exist
+- EDGE_PLAY (priority: 30) - Take edge position (0,1/1,0/1,2/2,1) when available and no moves with priority >30 exist
+- RANDOM_VALID (priority: 10) - Any valid empty cell when no strategic patterns detected (fallback)
 
 **Acceptance Criteria:**
 - Given MovePriority.IMMEDIATE_WIN, when accessed, then numeric value equals 100
@@ -245,7 +245,7 @@ Includes helper methods to get the current player's symbol and the opponent.
 - Given MovePriority.RANDOM_VALID, when accessed, then numeric value equals 10
 - Given two moves with IMMEDIATE_WIN (100) and BLOCK_THREAT (90), when comparing priorities, then IMMEDIATE_WIN > BLOCK_THREAT
 
-**Move Recommendation**: Strategist output with position, priority (MovePriority enum), confidence (0.0-1.0), reasoning, and expected outcome.
+**Move Recommendation**: Strategist output with position (required Position), priority (required MovePriority enum), confidence (required 0.0-1.0), reasoning (required string), and outcome_description (optional string describing what this move achieves).
 
 **Acceptance Criteria:**
 - Given position (1,1), priority IMMEDIATE_WIN, confidence 1.0, when MoveRecommendation is created, then recommendation is valid
@@ -291,7 +291,7 @@ Includes helper methods to get the current player's symbol and the opponent.
 - Timestamp
 - Optional metadata dictionary
 
-Provides factory methods for success and error results.
+AgentResult MUST provide factory methods: `AgentResult.success(data, execution_time_ms, metadata)` returns AgentResult with success=True, `AgentResult.error(error_message, execution_time_ms, metadata)` returns AgentResult with success=False.
 
 **Acceptance Criteria:**
 - Given successful agent output with data, when AgentResult.success() is called, then success=True, error_message=None, data is populated
@@ -367,13 +367,17 @@ The following domain models have formal JSON Schema (OpenAPI 3.1) definitions fo
 ### Agent Responsibilities
 
 **Scout Agent**: Analyzes the board to identify:
-- Immediate threats (opponent can win)
-- Winning opportunities (we can win)
-- Strategic positions (center, corners, edges)
-- Game phase assessment
-- Board evaluation score
+- Immediate threats (opponent has exactly 2 symbols in a line with exactly 1 empty cell - will win next move if not blocked)
+- Winning opportunities (AI has exactly 2 symbols in a line with exactly 1 empty cell - will win on this move)
+- Strategic positions (center position (1,1), corner positions (0,0/0,2/2,0/2,2), edge positions (0,1/1,0/1,2/2,1))
+- Game phase assessment (opening: 0-2 moves, midgame: 3-6 moves, endgame: 7-9 moves)
+- Board evaluation score (float -1.0 to 1.0, where >0 favors AI, <0 favors opponent, ≈0 is balanced)
 
-Uses a fast path for rule-based checks (immediate wins/blocks) and falls back to LLM analysis for strategic decisions.
+**Implementation Requirements**:
+- Scout MUST first check for immediate wins/blocks using rule-based logic (checking all lines for 2 symbols + 1 empty)
+- When rule-based checks find immediate win or block, Scout MUST list it in opportunities/threats with confidence ≥ 0.9 without calling LLM
+- When rule-based checks find no immediate win/block, Scout MUST call LLM for strategic analysis
+- Scout MUST always return BoardAnalysis containing at minimum: threats list, opportunities list, strategic_moves list (may be empty), game_phase, board_evaluation_score
 
 **Acceptance Criteria:**
 - Given board with opponent two-in-a-row, when Scout.analyze() is called, then BoardAnalysis contains Threat with blocking position
@@ -387,11 +391,19 @@ Uses a fast path for rule-based checks (immediate wins/blocks) and falls back to
 - Given favorable AI board position, when Scout.analyze() is called, then board_evaluation_score > 0.0
 - Given execution time, when Scout.analyze() completes, then AgentResult.execution_time_ms is recorded
 
-**Strategist Agent**: Synthesizes Scout analysis into a strategy:
-- Prioritizes moves using the Move Priority System (see below)
-- Recommends primary move with alternatives (all sorted by priority)
-- Provides game plan and risk assessment
-- Considers long-term position and confidence scoring
+**Strategist Agent**: Converts Scout analysis into a strategy:
+- Strategist MUST select moves in this priority order (highest to lowest):
+  1. Winning moves (IMMEDIATE_WIN, priority 100)
+  2. Blocking opponent win (BLOCK_THREAT, priority 90)
+  3. Creating fork (FORCE_WIN, priority 80)
+  4. Blocking fork (PREVENT_FORK, priority 70)
+  5. Center position (CENTER_CONTROL, priority 50)
+  6. Corner position (CORNER_CONTROL, priority 40)
+  7. Edge position (EDGE_PLAY, priority 30)
+  8. Any valid move (RANDOM_VALID, priority 10)
+- Strategist MUST output exactly one primary move (highest priority) and at least two alternative moves (next highest priorities), all sorted by priority descending
+- Strategist MUST assign confidence scores (0.0-1.0) to each move based on Move Priority System confidence values
+- Strategist MUST provide game_plan (string) and risk_assessment (low/medium/high) for the strategy
 
 **Acceptance Criteria:**
 - Given BoardAnalysis with Threat, when Strategist.plan() is called, then primary_move blocks threat with priority=BLOCK_THREAT (90)
@@ -404,10 +416,10 @@ Uses a fast path for rule-based checks (immediate wins/blocks) and falls back to
 - Given execution time, when Strategist.plan() completes, then AgentResult.execution_time_ms is recorded
 
 **Executor Agent**: Executes the recommended move:
-- Validates move (bounds, empty cell, rules)
-- Executes if valid
-- Provides alternative if invalid
-- Returns execution result with timing
+- Executor MUST validate move (bounds check: row/col in range 0-2, empty cell check, game rules: game not over)
+- Executor MUST execute move if validation passes
+- Executor MUST return MoveExecution with success=False and validation_errors list if validation fails
+- Executor MUST return MoveExecution with execution_time_ms (milliseconds) and actual_priority_used (MovePriority enum value)
 
 **Acceptance Criteria:**
 - Given Strategy with valid move (empty cell, in bounds), when Executor.execute() is called, then returns MoveExecution with success=True
@@ -429,7 +441,7 @@ Agents are stateless; all context comes from inputs. Results include execution m
 
 **Acceptance Criteria:**
 - Given GameState input, when any agent method is called, then agent does not modify GameState (stateless)
-- Given repeated calls with same GameState, when agent method is called, then returns consistent results (deterministic for rule-based, may vary for LLM-based)
+- Given repeated calls with same GameState, when agent method is called, then returns consistent results (deterministic for rule-based checks, LLM-based responses may vary but MUST follow same priority rules)
 - Given AgentResult output, when method completes, then AgentResult contains execution_time_ms, timestamp, success status
 - Given agent method failure, when error occurs, then returns AgentResult.error() with error message and code
 - Given agent method success, when completed, then returns AgentResult.success() with typed domain data (BoardAnalysis/Strategy/MoveExecution)
@@ -458,51 +470,51 @@ The Move Priority System defines a strict ordering for move selection with numer
 
 **Priority Levels (Descending Order)**:
 
-1. **IMMEDIATE_WIN (100)**: We have two in a row and can complete three
-   - Detection: Check all lines (rows, cols, diagonals) for 2 AI symbols + 1 empty
-   - Action: Always take this move immediately
-   - Confidence: 1.0 (guaranteed win)
-   - Example: AI has X at (0,0) and (0,1), play (0,2) to win
+1. **IMMEDIATE_WIN (100)**: AI has exactly 2 symbols in a line with exactly 1 empty cell remaining in that line
+   - Detection: MUST check all 8 lines (3 rows, 3 columns, 2 diagonals) for pattern: 2 AI symbols + 1 empty cell
+   - Action: MUST select this move (highest priority)
+   - Confidence: 1.0 (guaranteed win if move is made)
+   - Example: AI has X at (0,0) and (0,1), MUST play (0,2) to win
 
-2. **BLOCK_THREAT (90)**: Opponent has two in a row and will win next move
-   - Detection: Check all lines for 2 opponent symbols + 1 empty
-   - Action: Must block immediately (defensive)
-   - Confidence: 1.0 (necessary to continue)
-   - Example: Opponent has O at (1,0) and (1,1), must play (1,2)
+2. **BLOCK_THREAT (90)**: Opponent has exactly 2 symbols in a line with exactly 1 empty cell remaining in that line
+   - Detection: MUST check all 8 lines for pattern: 2 opponent symbols + 1 empty cell
+   - Action: MUST block this position (defensive, prevents opponent win)
+   - Confidence: 1.0 (necessary move to prevent immediate loss)
+   - Example: Opponent has O at (1,0) and (1,1), MUST play (1,2) to block
 
-3. **FORCE_WIN (80)**: Create a fork (two winning opportunities simultaneously)
-   - Detection: Move creates two unblocked lines with 2 AI symbols each
-   - Action: Opponent cannot block both, guarantees eventual win
-   - Confidence: 0.95 (near-certain advantage)
-   - Example: Play corner to create two diagonal threats
+3. **FORCE_WIN (80)**: Move creates a fork (exactly 2 unblocked lines each containing 2 AI symbols after the move)
+   - Detection: MUST check if move results in 2 distinct lines each with 2 AI symbols + 1 empty (after move)
+   - Action: MUST select this move (opponent can block only 1 line, AI will win on next move)
+   - Confidence: 0.95 (guarantees win within 2 moves)
+   - Example: Play corner (0,0) when it creates diagonal threats on both main diagonal and anti-diagonal
 
-4. **PREVENT_FORK (70)**: Block opponent from creating a fork
-   - Detection: Opponent's move would create two winning threats
-   - Action: Block the setup position or force opponent to defend
+4. **PREVENT_FORK (70)**: Move blocks opponent from creating a fork (exactly 2 unblocked lines each containing 2 opponent symbols simultaneously)
+   - Detection: MUST check if opponent's potential next move would create exactly 2 distinct lines each with 2 opponent symbols + 1 empty
+   - Action: MUST block the position that would allow opponent fork, or force opponent to defend instead of attacking
    - Confidence: 0.85 (prevents opponent advantage)
    - Example: Block opponent's second corner when they hold opposite corner
 
 5. **CENTER_CONTROL (50)**: Take center position (1,1)
-   - Detection: Center is empty and no higher priority moves exist
-   - Action: Center provides most strategic flexibility (4 lines)
+   - Detection: MUST check if center (1,1) is empty and no moves with priority >50 exist
+   - Action: MUST select center position (1,1) which participates in 4 lines (row 1, column 1, main diagonal, anti-diagonal)
    - Confidence: 0.75 (strong opening/midgame)
    - Example: First move or early game when center available
 
 6. **CORNER_CONTROL (40)**: Take corner position (0,0 / 0,2 / 2,0 / 2,2)
-   - Detection: Corner is empty and no higher priority moves exist
-   - Action: Corners participate in 3 lines each (row, col, diagonal)
+   - Detection: MUST check if any corner is empty and no moves with priority >40 exist
+   - Action: MUST select corner position which participates in 3 lines each (1 row, 1 column, 1 diagonal)
    - Confidence: 0.60 (solid strategic position)
    - Example: Opening move or when center taken
 
 7. **EDGE_PLAY (30)**: Take edge position (0,1 / 1,0 / 1,2 / 2,1)
-   - Detection: Edge is empty and no higher priority moves exist
-   - Action: Edges only participate in 2 lines each (less strategic)
+   - Detection: MUST check if any edge is empty and no moves with priority >30 exist
+   - Action: MUST select edge position which participates in 2 lines each (1 row or 1 column only, no diagonal)
    - Confidence: 0.40 (weaker position)
    - Example: Most corners and center taken
 
-8. **RANDOM_VALID (10)**: Any valid empty cell
-   - Detection: No strategic patterns detected
-   - Action: Pick any available move (fallback)
+8. **RANDOM_VALID (10)**: Any valid empty cell (fallback when no strategic patterns detected)
+   - Detection: MUST check if no strategic patterns (priorities 100-30) are found
+   - Action: MUST pick any available empty cell (deterministic selection: first empty position in order 0,0 < 0,1 < ... < 2,2)
    - Confidence: 0.20 (minimal strategic value)
    - Example: Backup when analysis fails
 
@@ -532,10 +544,10 @@ The Move Priority System defines a strict ordering for move selection with numer
 5. Final tiebreaker → deterministic position ordering (0,0 < 0,1 < 0,2 < 1,0...)
 
 **Validation**:
-- All moves must be validated before recommendation
-- Invalid moves (occupied, out of bounds) are automatically filtered
-- If highest priority move is invalid, try next priority
-- Executor performs final validation before execution
+- All moves MUST be validated before recommendation (bounds check: row/col in range 0-2, empty cell check)
+- Invalid moves (occupied, out of bounds) MUST be automatically filtered (excluded from recommendation list)
+- If highest priority move is invalid, Strategist MUST try next highest valid priority
+- Executor MUST perform final validation before execution (bounds, empty cell, game not over)
 
 **Acceptance Criteria:**
 - Given AI has 2 symbols in a line with 1 empty cell, when evaluating moves, then IMMEDIATE_WIN (100) is assigned to that position
@@ -556,16 +568,19 @@ The Move Priority System defines a strict ordering for move selection with numer
 
 ### Agent Pipeline Flow
 
-The coordinator orchestrates a sequential pipeline:
-1. Convert current game state to GameState domain model
-2. Call Scout.analyze with GameState
-3. If Scout succeeds, call Strategist.plan with GameState and Scout's BoardAnalysis
-4. If Strategist succeeds, call Executor.execute with GameState and Strategist's Strategy
-5. Extract position from Executor's MoveExecution
-6. Apply move to game engine
-7. Return result or fallback on any failure
+The coordinator MUST execute a sequential pipeline in this exact order:
+1. Coordinator MUST convert current game state to GameState domain model
+2. Coordinator MUST call Scout.analyze(GameState)
+3. Coordinator MUST validate Scout result: if AgentResult.success=True, proceed to step 4; if AgentResult.success=False, execute fallback (rule-based BoardAnalysis)
+4. Coordinator MUST call Strategist.plan(GameState, BoardAnalysis) only if Scout succeeded
+5. Coordinator MUST validate Strategist result: if AgentResult.success=True, proceed to step 6; if AgentResult.success=False, execute fallback (use Scout's highest priority opportunity)
+6. Coordinator MUST call Executor.execute(GameState, Strategy) only if Strategist succeeded
+7. Coordinator MUST validate Executor result: if AgentResult.success=True, proceed to step 8; if AgentResult.success=False, execute fallback (apply Strategist's primary move directly if valid)
+8. Coordinator MUST extract position from Executor's MoveExecution.position
+9. Coordinator MUST apply move to game engine
+10. Coordinator MUST return result (success or fallback)
 
-Each step validates the previous result before proceeding.
+Each step MUST validate the previous result (check AgentResult.success) before proceeding to the next step.
 
 **Acceptance Criteria:**
 - Given valid GameState, when pipeline executes, then Scout.analyze() is called first
@@ -687,7 +702,7 @@ Before persisting or transitioning state, validate:
 **Single Source of Truth**:
 - Game engine maintains authoritative state
 - All layers (agents, API, UI) read from game engine
-- Only game engine may modify state (via public methods)
+- Only game engine MUST modify state (via public methods: make_move, reset_game)
 
 **State Queries**:
 ```
@@ -711,7 +726,7 @@ game_engine.reset_game()
 ### Benefits of State Extraction
 
 1. **Separation of Concerns**: State is independent of game logic, agents, and UI
-2. **Testability**: State can be tested independently; mock states for engine tests
+2. **Testability**: State MUST be testable independently; implementations MUST support mock states for engine tests
 3. **Persistence**: Easy to save/load/replay games
 4. **Auditing**: Complete history of all state changes
 5. **Concurrent Games**: Multiple independent game instances
@@ -736,7 +751,7 @@ game_engine.reset_game()
 
 **Board Representation**: 3x3 grid with cells indexed (row, col) where both row and col ∈ {0, 1, 2}
 
-**Cell States**: Each cell can be in exactly one of three states:
+**Cell States**: Each cell MUST be in exactly one of three states:
 - EMPTY: No symbol placed
 - X: Player X's symbol
 - O: Player O's symbol
@@ -779,7 +794,7 @@ A player wins when they have three of their symbols in any of these 8 winning li
 
 #### Draw Conditions
 
-A draw can be declared in two scenarios:
+A draw MUST be declared in exactly two scenarios:
 
 **1. Complete Draw (Mandatory Detection)**:
 - All 9 cells are occupied (MoveCount = 9)
@@ -789,19 +804,20 @@ A draw can be declared in two scenarios:
 **2. Inevitable Draw (Optional Early Detection)**:
 - MoveCount ≥ 7
 - AND at least one empty cell remains
-- AND no player can achieve a winning line regardless of remaining moves
-- Implementation MAY detect this early for better UX
+- AND no player can achieve a winning line regardless of remaining moves (both players checked for all remaining empty cells)
+- Implementation SHOULD detect this early (before move 9) when possible for better UX, but MUST detect by move 9
 
 **Inevitable Draw Detection Algorithm**:
 
-For each empty cell position P:
-1. Temporarily place current player's symbol at P
-2. Check if this creates a winning line
-3. Temporarily place opponent's symbol at P
-4. Check if this creates a winning line
-5. Repeat for all remaining empty cells
+Implementation MUST execute this algorithm:
+For each empty cell position P (in order 0,0 to 2,2):
+1. MUST temporarily place current player's symbol at P (simulate move without modifying actual board)
+2. MUST check if this creates a winning line (check all 8 lines for 3 symbols)
+3. MUST temporarily place opponent's symbol at P (simulate opponent move)
+4. MUST check if this creates a winning line (check all 8 lines for 3 symbols)
+5. MUST repeat steps 1-4 for all remaining empty cells
 
-If NO empty cell allows either player to win:
+If NO empty cell (after checking all remaining empty cells) allows either player to win (complete a line with 3 symbols):
 - Declare draw immediately (inevitable draw)
 - Set IsGameOver = true, Winner = DRAW
 
@@ -2051,11 +2067,11 @@ helm/
 
 ### Error Categories
 
-**Validation Errors**: Invalid moves, malformed requests, type mismatches. Return clear error messages with validation details.
+**Validation Errors**: Invalid moves, malformed requests, type mismatches. System MUST return clear error messages with validation details (field name, expected type/constraint, actual value, error code).
 
-**Agent Errors**: LLM failures, timeout errors, parsing errors. Log details, return fallback responses, continue game if possible.
+**Agent Errors**: LLM failures, timeout errors, parsing errors. System MUST log error details (error code, agent name, execution time, error message), MUST return fallback responses, MUST continue game if fallback succeeds.
 
-**System Errors**: Network failures, database errors, configuration errors. Log critical errors, provide user-friendly messages, implement circuit breakers if needed.
+**System Errors**: Network failures, database errors, configuration errors. System MUST log critical errors (error code, timestamp, context), MUST provide user-friendly messages (non-technical language), SHOULD implement circuit breakers when errors exceed threshold (e.g., 5 failures in 60 seconds).
 
 ### Comprehensive Failure Matrix
 
@@ -3033,7 +3049,7 @@ CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & streamli
 
 ### Agent Performance
 
-**Fast Path Analysis**: Rule-based checks for immediate wins/blocks before LLM calls, cache common patterns, optimize LLM prompts.
+**Fast Path Analysis**: Scout MUST use rule-based checks for immediate wins/blocks before LLM calls. Rule-based checks MUST scan all 8 lines (3 rows, 3 columns, 2 diagonals) for patterns of 2 symbols + 1 empty. If pattern found, Scout MUST return result without calling LLM. LLM calls MUST only occur when rule-based checks find no immediate win/block.
 
 **Shared LLM Connection**: Reuse LLM connections across agents, connection pooling, efficient token usage.
 
