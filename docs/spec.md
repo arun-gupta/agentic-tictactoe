@@ -134,7 +134,26 @@ Features marked as non-goals may be reconsidered in future versions if there is 
 
 **Position**: Represents a board cell with row and column (0-2). Immutable and hashable.
 
+**Acceptance Criteria:**
+- Given row=0, col=0, when Position is created, then position is valid
+- Given row=3, col=0, when Position is created, then validation error `ERR_POSITION_OUT_OF_BOUNDS` is raised
+- Given row=-1, col=0, when Position is created, then validation error `ERR_POSITION_OUT_OF_BOUNDS` is raised
+- Given Position(row=1, col=2), when hashed, then produces consistent hash value for use in dictionaries/sets
+- Given Position(row=1, col=2) and Position(row=1, col=2), when compared, then positions are equal
+
 **Board**: A 3x3 grid of symbols (X, O, or empty). Provides methods to get/set cells, check emptiness, and list empty positions. Validates size.
+
+**Acceptance Criteria:**
+- Given a 3x3 board structure, when Board is created, then board is valid
+- Given a 2x2 board structure, when Board is created, then validation error `ERR_INVALID_BOARD_SIZE` is raised
+- Given a 4x4 board structure, when Board is created, then validation error `ERR_INVALID_BOARD_SIZE` is raised
+- Given Board with empty cells, when `get_empty_positions()` is called, then returns list of all (row, col) tuples where cell is empty
+- Given Board with all cells occupied, when `get_empty_positions()` is called, then returns empty list
+- Given Position(1, 1) and symbol 'X', when `set_cell(position, 'X')` is called, then cell at (1, 1) contains 'X'
+- Given Position(1, 1), when `get_cell(position)` is called, then returns current symbol ('X', 'O', or EMPTY)
+- Given Position(3, 3), when `get_cell(position)` is called, then raises error `ERR_POSITION_OUT_OF_BOUNDS`
+- Given Position(1, 1) with no symbol set, when `is_empty(position)` is called, then returns True
+- Given Position(1, 1) with 'X' set, when `is_empty(position)` is called, then returns False
 
 **Game State**: Complete game state including:
 - Current board
@@ -147,13 +166,44 @@ Features marked as non-goals may be reconsidered in future versions if there is 
 
 Includes helper methods to get the current player's symbol and the opponent.
 
+**Acceptance Criteria:**
+- Given valid Board, player='X', AI='O', when GameState is created, then game state is valid with move_number=0
+- Given GameState with move_number=0, when `get_current_player()` is called, then returns player symbol 'X'
+- Given GameState with move_number=1, when `get_current_player()` is called, then returns AI symbol 'O'
+- Given GameState with three X's in a row, when game state is evaluated, then `is_game_over=True` and `winner='X'`
+- Given GameState with three O's in a column, when game state is evaluated, then `is_game_over=True` and `winner='O'`
+- Given GameState with three X's on diagonal, when game state is evaluated, then `is_game_over=True` and `winner='X'`
+- Given GameState with all 9 cells occupied and no winner, when game state is evaluated, then `is_game_over=True` and `is_draw=True`
+- Given GameState with 5 moves and no winner, when game state is evaluated, then `is_game_over=False`
+- Given GameState with player='X', when `get_opponent()` is called, then returns 'O'
+- Given invalid board (size ≠ 3x3), when GameState is created, then validation error `ERR_INVALID_BOARD_SIZE` is raised
+
 ### Agent Domain Models
 
 **Threat**: Represents an immediate threat where the opponent can win. Includes position, line type (row/column/diagonal), line index, and severity (always critical for Tic-Tac-Toe).
 
+**Acceptance Criteria:**
+- Given opponent has two O's in row 0 with position (0,2) empty, when Threat is created, then `position=(0,2)`, `line_type='row'`, `line_index=0`, `severity='critical'`
+- Given opponent has two O's in column 1, when Threat is created, then `line_type='column'` and `line_index=1`
+- Given opponent has two O's on main diagonal, when Threat is created, then `line_type='diagonal'` and `line_index=0`
+- Given threat with invalid position (3, 3), when Threat is created, then validation error `ERR_POSITION_OUT_OF_BOUNDS` is raised
+
 **Opportunity**: Represents a winning opportunity. Includes position, line type, line index, and confidence (0.0 to 1.0).
 
+**Acceptance Criteria:**
+- Given AI has two X's in row 1 with position (1,2) empty, when Opportunity is created, then `position=(1,2)`, `line_type='row'`, `line_index=1`, `confidence=1.0`
+- Given AI has one X in center with corners available, when Opportunity is created for fork, then `confidence >= 0.7`
+- Given confidence value 1.5, when Opportunity is created, then validation error `ERR_INVALID_CONFIDENCE` is raised (must be 0.0-1.0)
+- Given confidence value -0.1, when Opportunity is created, then validation error `ERR_INVALID_CONFIDENCE` is raised
+
 **Strategic Move**: A strategic position recommendation with position, move type (center/corner/edge/fork/block_fork), priority (1-10), and reasoning.
+
+**Acceptance Criteria:**
+- Given empty board, when StrategicMove for center is created, then `position=(1,1)`, `move_type='center'`, `priority >= 8`
+- Given move_type='corner', when StrategicMove is created, then position is one of: (0,0), (0,2), (2,0), (2,2)
+- Given move_type='edge', when StrategicMove is created, then position is one of: (0,1), (1,0), (1,2), (2,1)
+- Given priority value 11, when StrategicMove is created, then validation error `ERR_INVALID_PRIORITY` is raised (must be 1-10)
+- Given priority value 0, when StrategicMove is created, then validation error `ERR_INVALID_PRIORITY` is raised
 
 **Board Analysis**: Scout agent output containing:
 - List of threats
@@ -162,6 +212,17 @@ Includes helper methods to get the current player's symbol and the opponent.
 - Human-readable analysis
 - Game phase (opening/midgame/endgame)
 - Board evaluation score (-1.0 to 1.0)
+
+**Acceptance Criteria:**
+- Given board with opponent about to win, when BoardAnalysis is created, then `threats` list contains at least one Threat
+- Given board with AI about to win, when BoardAnalysis is created, then `opportunities` list contains at least one Opportunity with winning position
+- Given empty board (move 0-2), when BoardAnalysis is created, then `game_phase='opening'`
+- Given board with 3-6 moves, when BoardAnalysis is created, then `game_phase='midgame'`
+- Given board with 7-9 moves, when BoardAnalysis is created, then `game_phase='endgame'`
+- Given board evaluation score 1.5, when BoardAnalysis is created, then validation error `ERR_INVALID_EVAL_SCORE` is raised (must be -1.0 to 1.0)
+- Given favorable board for AI, when BoardAnalysis is created, then `board_evaluation_score > 0.0`
+- Given favorable board for opponent, when BoardAnalysis is created, then `board_evaluation_score < 0.0`
+- Given balanced board, when BoardAnalysis is created, then `board_evaluation_score ≈ 0.0` (within ±0.2)
 
 **Move Priority**: Enum defining priority levels for move recommendations (see Priority System below for details):
 - IMMEDIATE_WIN (priority: 100) - We can win on this move
