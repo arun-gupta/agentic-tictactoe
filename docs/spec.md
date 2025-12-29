@@ -45,6 +45,11 @@ A Tic-Tac-Toe game between a human player and an AI opponent. The AI uses three 
 - **Clean Interfaces**: Agents communicate via domain models, not raw data structures
 - **Transport Abstraction**: Communication protocols are abstracted from business logic
 
+**Implementation Standards:**
+- **Testability**: All requirements MUST be specified using Given-When-Then acceptance criteria format, enabling direct mapping to automated tests. Each criterion MUST specify exact inputs, actions, and measurable expected outcomes.
+- **DRY (Don't Repeat Yourself)**: Code reuse through shared utilities, common patterns, and well-defined interfaces
+- **Convention over Configuration (CoC)**: Sensible defaults reduce configuration burden; explicit configuration only when defaults are insufficient
+
 **Operational Principles:**
 - **Configuration over Code**: Behavior controlled through config files, environment variables, and command-line arguments
 - **Hot-swappability**: LLM providers and models can be changed via configuration without code changes
@@ -2182,6 +2187,13 @@ helm/
 ### Test-Driven Development Requirement
 
 **MANDATORY**: Every functionality MUST be accompanied by a test. No code should be merged without corresponding tests.
+
+**Acceptance Criteria Format**: All requirements in this specification use the **Given-When-Then** (Gherkin) format for testability:
+- **Given** [initial context/state] - Specific inputs and preconditions
+- **When** [action/trigger occurs] - The behavior being tested
+- **Then** [expected outcome/assertion] - Measurable, verifiable results
+
+Each acceptance criterion maps directly to one or more test cases. Criteria MUST use specific values (e.g., `row=3` not `invalid row`), specific error codes (e.g., `E_MOVE_OUT_OF_BOUNDS`), and measurable assertions (e.g., `returns list of 9 positions` not `returns some positions`).
 
 **Test Coverage Policy**:
 - **New Features**: MUST include unit tests before implementation (TDD approach preferred)
