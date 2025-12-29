@@ -139,6 +139,13 @@ Features marked as non-goals may be reconsidered in future versions if there is 
 
 **Position**: Represents a board cell with row and column (0-2). Immutable and hashable.
 
+**Data Type Constraints:**
+
+| Field | Type | Constraints | Error Code | Test |
+|-------|------|-------------|------------|------|
+| `row` | integer | 0 ≤ row ≤ 2 | `E_POSITION_OUT_OF_BOUNDS` | Given row=3 or row=-1, when Position created, then reject with E_POSITION_OUT_OF_BOUNDS |
+| `col` | integer | 0 ≤ col ≤ 2 | `E_POSITION_OUT_OF_BOUNDS` | Given col=3 or col=-1, when Position created, then reject with E_POSITION_OUT_OF_BOUNDS |
+
 **Acceptance Criteria:**
 - Given row=0, col=0, when Position is created, then position is valid
 - Given row=3, col=0, when Position is created, then validation error `ERR_POSITION_OUT_OF_BOUNDS` is raised
@@ -187,6 +194,15 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 
 **Threat**: Represents an immediate threat where the opponent will win on next move if not blocked. Threat MUST contain: position (Position object), line_type (string: 'row', 'column', or 'diagonal'), line_index (integer 0-2), severity (string: always 'critical' for Tic-Tac-Toe).
 
+**Data Type Constraints:**
+
+| Field | Type | Constraints | Error Code | Test |
+|-------|------|-------------|------------|------|
+| `position` | Position | Position.row in [0,2], Position.col in [0,2] | `E_POSITION_OUT_OF_BOUNDS` | Given position with row=3 or col=3, when Threat created, then reject with E_POSITION_OUT_OF_BOUNDS |
+| `line_type` | string | Must be one of: 'row', 'column', 'diagonal' | `E_INVALID_LINE_TYPE` | Given line_type='invalid', when Threat created, then reject with E_INVALID_LINE_TYPE |
+| `line_index` | integer | 0 ≤ line_index ≤ 2 | `E_INVALID_LINE_INDEX` | Given line_index=3 or line_index=-1, when Threat created, then reject with E_INVALID_LINE_INDEX |
+| `severity` | string | Must be 'critical' | N/A | Always 'critical' for Tic-Tac-Toe (no validation needed) |
+
 **Acceptance Criteria:**
 - Given opponent has two O's in row 0 with position (0,2) empty, when Threat is created, then `position=(0,2)`, `line_type='row'`, `line_index=0`, `severity='critical'`
 - Given opponent has two O's in column 1, when Threat is created, then `line_type='column'` and `line_index=1`
@@ -195,6 +211,15 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 
 **Opportunity**: Represents a winning opportunity where AI can win on this move. Opportunity MUST contain: position (Position object), line_type (string: 'row', 'column', or 'diagonal'), line_index (integer 0-2), confidence (float 0.0 to 1.0).
 
+**Data Type Constraints:**
+
+| Field | Type | Constraints | Error Code | Test |
+|-------|------|-------------|------------|------|
+| `position` | Position | Position.row in [0,2], Position.col in [0,2] | `E_POSITION_OUT_OF_BOUNDS` | Given position with row=3 or col=3, when Opportunity created, then reject with E_POSITION_OUT_OF_BOUNDS |
+| `line_type` | string | Must be one of: 'row', 'column', 'diagonal' | `E_INVALID_LINE_TYPE` | Given line_type='invalid', when Opportunity created, then reject with E_INVALID_LINE_TYPE |
+| `line_index` | integer | 0 ≤ line_index ≤ 2 | `E_INVALID_LINE_INDEX` | Given line_index=3 or line_index=-1, when Opportunity created, then reject with E_INVALID_LINE_INDEX |
+| `confidence` | float | 0.0 ≤ confidence ≤ 1.0, precision: 2 decimal places | `E_INVALID_CONFIDENCE` | Given confidence=1.5 or confidence=-0.1, when Opportunity created, then reject with E_INVALID_CONFIDENCE |
+
 **Acceptance Criteria:**
 - Given AI has two X's in row 1 with position (1,2) empty, when Opportunity is created, then `position=(1,2)`, `line_type='row'`, `line_index=1`, `confidence=1.0`
 - Given AI has one X in center with corners available, when Opportunity is created for fork, then `confidence >= 0.7`
@@ -202,6 +227,15 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 - Given confidence value -0.1, when Opportunity is created, then validation error `ERR_INVALID_CONFIDENCE` is raised
 
 **Strategic Move**: A position recommendation with position, move type (center/corner/edge/fork/block_fork), priority (1-10 numeric value), and reasoning (required string explanation).
+
+**Data Type Constraints:**
+
+| Field | Type | Constraints | Error Code | Test |
+|-------|------|-------------|------------|------|
+| `position` | Position | Position.row in [0,2], Position.col in [0,2] | `E_POSITION_OUT_OF_BOUNDS` | Given position with row=3 or col=3, when StrategicMove created, then reject with E_POSITION_OUT_OF_BOUNDS |
+| `move_type` | string | Must be one of: 'center', 'corner', 'edge', 'fork', 'block_fork' | `E_INVALID_MOVE_TYPE` | Given move_type='invalid', when StrategicMove created, then reject with E_INVALID_MOVE_TYPE |
+| `priority` | integer | 1 ≤ priority ≤ 10 | `E_INVALID_PRIORITY` | Given priority=11 or priority=0, when StrategicMove created, then reject with E_INVALID_PRIORITY |
+| `reasoning` | string | Required, non-empty (length > 0), max length 1000 characters | `E_MISSING_REASONING` | Given reasoning='' or reasoning=null, when StrategicMove created, then reject with E_MISSING_REASONING |
 
 **Acceptance Criteria:**
 - Given empty board, when StrategicMove for center is created, then `position=(1,1)`, `move_type='center'`, `priority >= 8`
@@ -217,6 +251,16 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 - Human-readable analysis
 - Game phase (opening/midgame/endgame)
 - Board evaluation score (-1.0 to 1.0)
+
+**Data Type Constraints:**
+
+| Field | Type | Constraints | Error Code | Test |
+|-------|------|-------------|------------|------|
+| `threats` | list[Threat] | List of Threat objects, may be empty | N/A | List validation (each Threat must pass Threat constraints) |
+| `opportunities` | list[Opportunity] | List of Opportunity objects, may be empty | N/A | List validation (each Opportunity must pass Opportunity constraints) |
+| `strategic_moves` | list[StrategicMove] | List of StrategicMove objects, may be empty | N/A | List validation (each StrategicMove must pass StrategicMove constraints) |
+| `game_phase` | string | Must be one of: 'opening', 'midgame', 'endgame' | `E_INVALID_GAME_PHASE` | Given game_phase='invalid', when BoardAnalysis created, then reject with E_INVALID_GAME_PHASE |
+| `board_evaluation_score` | float | -1.0 ≤ board_evaluation_score ≤ 1.0, precision: 2 decimal places | `E_INVALID_EVAL_SCORE` | Given board_evaluation_score=1.5 or board_evaluation_score=-1.5, when BoardAnalysis created, then reject with E_INVALID_EVAL_SCORE |
 
 **Acceptance Criteria:**
 - Given board with opponent about to win, when BoardAnalysis is created, then `threats` list contains at least one Threat
@@ -252,6 +296,16 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 
 **Move Recommendation**: Strategist output with position (required Position), priority (required MovePriority enum), confidence (required 0.0-1.0), reasoning (required string), and outcome_description (optional string describing what this move achieves).
 
+**Data Type Constraints:**
+
+| Field | Type | Constraints | Error Code | Test |
+|-------|------|-------------|------------|------|
+| `position` | Position | Required, Position.row in [0,2], Position.col in [0,2] | `E_POSITION_OUT_OF_BOUNDS` | Given position with row=3 or col=3, when MoveRecommendation created, then reject with E_POSITION_OUT_OF_BOUNDS |
+| `priority` | MovePriority enum | Required, must be valid MovePriority enum value | `E_INVALID_PRIORITY` | Given priority=invalid_enum_value, when MoveRecommendation created, then reject with E_INVALID_PRIORITY |
+| `confidence` | float | Required, 0.0 ≤ confidence ≤ 1.0, precision: 2 decimal places | `E_INVALID_CONFIDENCE` | Given confidence=1.5 or confidence=-0.1, when MoveRecommendation created, then reject with E_INVALID_CONFIDENCE |
+| `reasoning` | string | Required, non-empty (length > 0), max length 1000 characters | `E_MISSING_REASONING` | Given reasoning='' or reasoning=null, when MoveRecommendation created, then reject with E_MISSING_REASONING |
+| `outcome_description` | string | Optional, if present: max length 500 characters | N/A | Optional field (no validation if absent) |
+
 **Acceptance Criteria:**
 - Given position (1,1), priority IMMEDIATE_WIN, confidence 1.0, when MoveRecommendation is created, then recommendation is valid
 - Given confidence value 1.5, when MoveRecommendation is created, then validation error `ERR_INVALID_CONFIDENCE` is raised (must be 0.0-1.0)
@@ -266,6 +320,15 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 - Overall game plan
 - Risk assessment (low/medium/high)
 
+**Data Type Constraints:**
+
+| Field | Type | Constraints | Error Code | Test |
+|-------|------|-------------|------------|------|
+| `primary_move` | MoveRecommendation | Required, must pass MoveRecommendation constraints | `E_MISSING_PRIMARY_MOVE` | Given primary_move=null or primary_move missing, when Strategy created, then reject with E_MISSING_PRIMARY_MOVE |
+| `alternatives` | list[MoveRecommendation] | Optional, if present: list sorted by priority descending, each must pass MoveRecommendation constraints | N/A | List validation (each MoveRecommendation must pass MoveRecommendation constraints) |
+| `game_plan` | string | Required, non-empty (length > 0), max length 2000 characters | `E_MISSING_GAME_PLAN` | Given game_plan='' or game_plan=null, when Strategy created, then reject with E_MISSING_GAME_PLAN |
+| `risk_assessment` | string | Required, must be one of: 'low', 'medium', 'high' | `E_INVALID_RISK_LEVEL` | Given risk_assessment='invalid', when Strategy created, then reject with E_INVALID_RISK_LEVEL |
+
 **Acceptance Criteria:**
 - Given multiple move recommendations, when Strategy is created, then primary_move has highest priority among all recommendations
 - Given alternatives with priorities [80, 50, 40], when Strategy is created, then alternatives list is sorted [80, 50, 40] (descending)
@@ -276,6 +339,17 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 - Given no primary move, when Strategy is created, then validation error `ERR_MISSING_PRIMARY_MOVE` is raised
 
 **Move Execution**: Executor output with position, success status, validation errors, execution time, reasoning, and actual priority used.
+
+**Data Type Constraints:**
+
+| Field | Type | Constraints | Error Code | Test |
+|-------|------|-------------|------------|------|
+| `position` | Position | Required if success=True, Position.row in [0,2], Position.col in [0,2] | `E_POSITION_OUT_OF_BOUNDS` | Given position with row=3 or col=3, when MoveExecution created, then reject with E_POSITION_OUT_OF_BOUNDS |
+| `success` | boolean | Required, must be true or false | N/A | Boolean validation (no error code needed) |
+| `validation_errors` | list[string] | Optional, if present: list of error codes (E_CELL_OCCUPIED, E_POSITION_OUT_OF_BOUNDS, E_GAME_ALREADY_OVER) | N/A | List validation (each error code must be valid error code enum value) |
+| `execution_time_ms` | float | Required, execution_time_ms ≥ 0.0, precision: 2 decimal places | `E_INVALID_EXECUTION_TIME` | Given execution_time_ms=-1.0, when MoveExecution created, then reject with E_INVALID_EXECUTION_TIME |
+| `reasoning` | string | Required, non-empty (length > 0), max length 1000 characters | `E_MISSING_REASONING` | Given reasoning='' or reasoning=null, when MoveExecution created, then reject with E_MISSING_REASONING |
+| `actual_priority_used` | MovePriority enum | Optional, if present: must be valid MovePriority enum value | `E_INVALID_PRIORITY` | Given actual_priority_used=invalid_enum_value, when MoveExecution created, then reject with E_INVALID_PRIORITY |
 
 **Acceptance Criteria:**
 - Given valid move execution, when MoveExecution is created, then success=True, validation_errors=empty list
@@ -297,6 +371,18 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 - Optional metadata dictionary
 
 AgentResult MUST provide factory methods: `AgentResult.success(data, execution_time_ms, metadata)` returns AgentResult with success=True, `AgentResult.error(error_message, execution_time_ms, metadata)` returns AgentResult with success=False.
+
+**Data Type Constraints:**
+
+| Field | Type | Constraints | Error Code | Test |
+|-------|------|-------------|------------|------|
+| `success` | boolean | Required, must be true or false | N/A | Boolean validation (no error code needed) |
+| `data` | object (typed) | Required if success=True, type depends on agent (BoardAnalysis, Strategy, or MoveExecution) | `E_MISSING_DATA` | Given success=True and data=null or data missing, when AgentResult created, then reject with E_MISSING_DATA |
+| `error_code` | string | Required if success=False, must be valid error code enum value (E_* prefix pattern) | N/A | String validation (must match error code enum) |
+| `error_message` | string | Required if success=False, non-empty (length > 0), max length 500 characters | `E_MISSING_ERROR_MESSAGE` | Given success=False and error_message='' or error_message=null, when AgentResult created, then reject with E_MISSING_ERROR_MESSAGE |
+| `execution_time_ms` | float | Required, execution_time_ms ≥ 0.0, precision: 2 decimal places | `E_INVALID_EXECUTION_TIME` | Given execution_time_ms=-1.0, when AgentResult created, then reject with E_INVALID_EXECUTION_TIME |
+| `timestamp` | string | Required, ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ), UTC timezone | `E_INVALID_TIMESTAMP` | Given timestamp='invalid' or wrong format, when AgentResult created, then reject with E_INVALID_TIMESTAMP |
+| `metadata` | object | Optional, if present: key-value pairs, max 50 keys, each value max 200 characters | N/A | Object validation (optional field, no error code if absent) |
 
 **Acceptance Criteria:**
 - Given successful agent output with data, when AgentResult.success() is called, then success=True, error_message=None, data is populated
@@ -574,36 +660,320 @@ The Move Priority System defines a strict ordering for move selection with numer
 
 ### Agent Pipeline Flow
 
-The coordinator MUST execute a sequential pipeline in this exact order:
-1. Coordinator MUST convert current game state to GameState domain model
-2. Coordinator MUST call Scout.analyze(GameState)
-3. Coordinator MUST validate Scout result: if AgentResult.success=True, proceed to step 4; if AgentResult.success=False, execute fallback (rule-based BoardAnalysis)
-4. Coordinator MUST call Strategist.plan(GameState, BoardAnalysis) only if Scout succeeded
-5. Coordinator MUST validate Strategist result: if AgentResult.success=True, proceed to step 6; if AgentResult.success=False, execute fallback (use Scout's highest priority opportunity)
-6. Coordinator MUST call Executor.execute(GameState, Strategy) only if Strategist succeeded
-7. Coordinator MUST validate Executor result: if AgentResult.success=True, proceed to step 8; if AgentResult.success=False, execute fallback (apply Strategist's primary move directly if valid)
-8. Coordinator MUST extract position from Executor's MoveExecution.position
-9. Coordinator MUST apply move to game engine
-10. Coordinator MUST return result (success or fallback)
+The coordinator MUST execute a deterministic sequential pipeline with exact rules for every branch. All decision points and fallback strategies are defined below.
 
-Each step MUST validate the previous result (check AgentResult.success) before proceeding to the next step.
+#### Pipeline Entry Point
+
+**Step 0: Pre-flight Validation**
+- Given GameState with board size ≠ 3×3, when pipeline starts, then pipeline MUST return error without calling any agents, error_code=`E_INVALID_BOARD_SIZE`
+- Given GameState with is_game_over=True, when pipeline starts, then pipeline MUST return error without calling any agents, error_code=`E_GAME_ALREADY_OVER`
+- Given valid GameState, when pipeline starts, then proceed to Step 1
+
+#### Step 1: Convert Game State
+- Coordinator MUST convert current game state to GameState domain model
+- Given conversion fails, when GameState creation fails, then pipeline MUST return error, error_code=`E_STATE_CORRUPTED`
+- Given conversion succeeds, when GameState is created, then proceed to Step 2
+
+#### Step 2: Scout Analysis
+
+**Step 2.1: Call Scout Agent**
+- Coordinator MUST call `Scout.analyze(GameState)` with timeout of 5 seconds (local mode) or 10 seconds (distributed mode)
+- Coordinator MUST record start_time before calling Scout
+
+**Step 2.2: Handle Scout Success**
+- Given Scout returns `AgentResult.success=True` AND `AgentResult.data` contains valid `BoardAnalysis`, when Scout succeeds, then:
+  - Store BoardAnalysis from AgentResult.data
+  - Record execution_time_ms from AgentResult.execution_time_ms
+  - Proceed to Step 3
+
+**Step 2.3: Handle Scout Failure - Timeout**
+- Given Scout call exceeds timeout (5s local / 10s distributed), when timeout occurs, then:
+  - Coordinator MUST retry Scout.analyze() up to 3 times with exponential backoff (1s, 2s, 4s delays)
+  - Given all 3 retries timeout, when retries exhausted, then:
+    - Set fallback_active=True
+    - Execute **Fallback Rule Set 1: Rule-Based BoardAnalysis** (see below)
+    - Log error with error_code=`E_LLM_TIMEOUT`, agent_name="scout", retry_count=3
+    - Proceed to Step 3 with rule-based BoardAnalysis
+
+**Step 2.4: Handle Scout Failure - Parse Error**
+- Given Scout returns `AgentResult.success=False` AND error_code=`E_LLM_PARSE_ERROR`, when parse error occurs, then:
+  - Coordinator MUST retry Scout.analyze() up to 2 times with prompt refinement
+  - Given all 2 retries fail with parse error, when retries exhausted, then:
+    - Set fallback_active=True
+    - Execute **Fallback Rule Set 1: Rule-Based BoardAnalysis** (see below)
+    - Log error with error_code=`E_LLM_PARSE_ERROR`, agent_name="scout", retry_count=2
+    - Proceed to Step 3 with rule-based BoardAnalysis
+
+**Step 2.5: Handle Scout Failure - Other Errors**
+- Given Scout returns `AgentResult.success=False` AND error_code NOT in {`E_LLM_TIMEOUT`, `E_LLM_PARSE_ERROR`}, when Scout fails, then:
+  - Coordinator MUST retry Scout.analyze() exactly 1 time with same inputs
+  - Given retry fails, when second failure occurs, then:
+    - Set fallback_active=True
+    - Execute **Fallback Rule Set 1: Rule-Based BoardAnalysis** (see below)
+    - Log error with error_code=`E_SCOUT_FAILED`, agent_name="scout", retry_count=1, original_error_code from AgentResult
+    - Proceed to Step 3 with rule-based BoardAnalysis
+
+**Fallback Rule Set 1: Rule-Based BoardAnalysis**
+When Scout fails, coordinator MUST generate BoardAnalysis using exactly these rules in priority order:
+1. **Check for Immediate Win**: Scan all 8 lines (3 rows, 3 columns, 2 diagonals) for AI having exactly 2 symbols and 1 empty cell. If found, add Opportunity with position=empty_cell, confidence=0.95, priority=IMMEDIATE_WIN (100)
+2. **Check for Block**: Scan all 8 lines for opponent having exactly 2 symbols and 1 empty cell. If found, add Threat with position=empty_cell, severity='critical', and add Opportunity with position=empty_cell, confidence=0.90, priority=BLOCK_THREAT (90)
+3. **Check for Center**: If center (1,1) is empty, add StrategicMove with position=(1,1), move_type='center', priority=50, confidence=0.75
+4. **Check for Corner**: If any corner (0,0), (0,2), (2,0), (2,2) is empty, add StrategicMove with position=first_available_corner (in order 0,0 < 0,2 < 2,0 < 2,2), move_type='corner', priority=40, confidence=0.60
+5. **Default to Any Empty**: If no strategic moves found, select first empty cell in order (0,0 < 0,1 < 0,2 < 1,0 < 1,1 < 1,2 < 2,0 < 2,1 < 2,2), add StrategicMove with priority=10, confidence=0.20
+- BoardAnalysis MUST contain: threats list (may be empty), opportunities list (may be empty), strategic_moves list (must contain at least 1 move), game_phase calculated from move_count (0-2=opening, 3-6=midgame, 7-9=endgame), board_evaluation_score=0.0 (neutral)
+
+#### Step 3: Strategist Planning
+
+**Step 3.1: Call Strategist Agent**
+- Coordinator MUST call `Strategist.plan(GameState, BoardAnalysis)` with timeout of 5 seconds (local mode) or 10 seconds (distributed mode)
+- Coordinator MUST record start_time before calling Strategist
+
+**Step 3.2: Handle Strategist Success**
+- Given Strategist returns `AgentResult.success=True` AND `AgentResult.data` contains valid `Strategy` with primary_move, when Strategist succeeds, then:
+  - Validate Strategy.primary_move.position is valid (bounds 0-2, cell is empty in current GameState)
+  - Given Strategy.primary_move is invalid, when validation fails, then:
+    - Execute **Fallback Rule Set 2: Scout Opportunity Fallback** (see below)
+    - Log warning: primary_move invalid, using Scout opportunity
+    - Proceed to Step 4 with fallback move
+  - Given Strategy.primary_move is valid, when validation succeeds, then:
+    - Store Strategy from AgentResult.data
+    - Record execution_time_ms from AgentResult.execution_time_ms
+    - Proceed to Step 4
+
+**Step 3.3: Handle Strategist Failure - Timeout**
+- Given Strategist call exceeds timeout (5s local / 10s distributed), when timeout occurs, then:
+  - Coordinator MUST retry Strategist.plan() up to 3 times with exponential backoff (1s, 2s, 4s delays)
+  - Given all 3 retries timeout, when retries exhausted, then:
+    - Set fallback_active=True
+    - Execute **Fallback Rule Set 2: Scout Opportunity Fallback** (see below)
+    - Log error with error_code=`E_LLM_TIMEOUT`, agent_name="strategist", retry_count=3
+    - Proceed to Step 4 with fallback move
+
+**Step 3.4: Handle Strategist Failure - Parse Error**
+- Given Strategist returns `AgentResult.success=False` AND error_code=`E_LLM_PARSE_ERROR`, when parse error occurs, then:
+  - Coordinator MUST retry Strategist.plan() up to 2 times with prompt refinement
+  - Given all 2 retries fail with parse error, when retries exhausted, then:
+    - Set fallback_active=True
+    - Execute **Fallback Rule Set 2: Scout Opportunity Fallback** (see below)
+    - Log error with error_code=`E_LLM_PARSE_ERROR`, agent_name="strategist", retry_count=2
+    - Proceed to Step 4 with fallback move
+
+**Step 3.5: Handle Strategist Failure - Other Errors**
+- Given Strategist returns `AgentResult.success=False` AND error_code NOT in {`E_LLM_TIMEOUT`, `E_LLM_PARSE_ERROR`}, when Strategist fails, then:
+  - Coordinator MUST retry Strategist.plan() exactly 1 time with same inputs
+  - Given retry fails, when second failure occurs, then:
+    - Set fallback_active=True
+    - Execute **Fallback Rule Set 2: Scout Opportunity Fallback** (see below)
+    - Log error with error_code=`E_STRATEGIST_FAILED`, agent_name="strategist", retry_count=1, original_error_code from AgentResult
+    - Proceed to Step 4 with fallback move
+
+**Fallback Rule Set 2: Scout Opportunity Fallback**
+When Strategist fails, coordinator MUST select move from BoardAnalysis using exactly these rules in priority order:
+1. **Highest Priority Opportunity**: If opportunities list is non-empty, select opportunity with highest priority (IMMEDIATE_WIN=100 > BLOCK_THREAT=90). If multiple opportunities have same priority, select one with highest confidence. If multiple have same priority and confidence, select first in list order.
+2. **Highest Priority Strategic Move**: If opportunities list is empty and strategic_moves list is non-empty, select strategic_move with highest priority. If multiple strategic_moves have same priority, select one with highest confidence. If multiple have same priority and confidence, apply tiebreaker: center (1,1) > corner (0,0/0,2/2,0/2,2) > edge (0,1/1,0/1,2/2,1). If still tied, select first in position order (0,0 < 0,1 < ... < 2,2).
+3. **First Empty Cell**: If both opportunities and strategic_moves lists are empty, select first empty cell in position order (0,0 < 0,1 < 0,2 < 1,0 < 1,1 < 1,2 < 2,0 < 2,1 < 2,2)
+- Create Strategy object with primary_move=selected_move, alternatives=[], game_plan="Fallback: Using Scout analysis", risk_assessment="medium"
+- Validate selected move position is valid (bounds 0-2, cell is empty). If invalid, select next valid position from same priority level, or proceed to next priority level.
+
+#### Step 4: Executor Execution
+
+**Step 4.1: Call Executor Agent**
+- Coordinator MUST call `Executor.execute(GameState, Strategy)` with timeout of 3 seconds (local mode) or 5 seconds (distributed mode)
+- Coordinator MUST record start_time before calling Executor
+
+**Step 4.2: Handle Executor Success**
+- Given Executor returns `AgentResult.success=True` AND `AgentResult.data` contains valid `MoveExecution` with success=True AND valid position, when Executor succeeds, then:
+  - Validate MoveExecution.position is valid (bounds 0-2, cell is empty in current GameState)
+  - Given MoveExecution.position is invalid, when validation fails, then:
+    - Execute **Fallback Rule Set 3: Strategist Primary Move Fallback** (see below)
+    - Log warning: Executor move invalid, using Strategist primary move
+    - Proceed to Step 5 with fallback move
+  - Given MoveExecution.position is valid, when validation succeeds, then:
+    - Store MoveExecution from AgentResult.data
+    - Record execution_time_ms from AgentResult.execution_time_ms
+    - Extract position from MoveExecution.position
+    - Proceed to Step 5
+
+**Step 4.3: Handle Executor Failure - Timeout**
+- Given Executor call exceeds timeout (3s local / 5s distributed), when timeout occurs, then:
+  - Coordinator MUST retry Executor.execute() up to 3 times with exponential backoff (1s, 2s, 4s delays)
+  - Given all 3 retries timeout, when retries exhausted, then:
+    - Set fallback_active=True
+    - Execute **Fallback Rule Set 3: Strategist Primary Move Fallback** (see below)
+    - Log error with error_code=`E_LLM_TIMEOUT`, agent_name="executor", retry_count=3
+    - Proceed to Step 5 with fallback move
+
+**Step 4.4: Handle Executor Failure - Parse Error**
+- Given Executor returns `AgentResult.success=False` AND error_code=`E_LLM_PARSE_ERROR`, when parse error occurs, then:
+  - Coordinator MUST retry Executor.execute() up to 2 times with prompt refinement
+  - Given all 2 retries fail with parse error, when retries exhausted, then:
+    - Set fallback_active=True
+    - Execute **Fallback Rule Set 3: Strategist Primary Move Fallback** (see below)
+    - Log error with error_code=`E_LLM_PARSE_ERROR`, agent_name="executor", retry_count=2
+    - Proceed to Step 5 with fallback move
+
+**Step 4.5: Handle Executor Failure - Validation Error**
+- Given Executor returns `AgentResult.success=True` AND `MoveExecution.success=False` with validation_errors, when Executor reports validation failure, then:
+  - Check validation_errors list for error codes: `E_CELL_OCCUPIED`, `E_POSITION_OUT_OF_BOUNDS`
+  - If validation_errors contains `E_CELL_OCCUPIED` OR `E_POSITION_OUT_OF_BOUNDS`, then:
+    - Execute **Fallback Rule Set 3: Strategist Primary Move Fallback** (see below)
+    - Log warning: Executor validation failed, using Strategist primary move
+    - Proceed to Step 5 with fallback move
+
+**Step 4.6: Handle Executor Failure - Other Errors**
+- Given Executor returns `AgentResult.success=False` AND error_code NOT in {`E_LLM_TIMEOUT`, `E_LLM_PARSE_ERROR`}, when Executor fails, then:
+  - Coordinator MUST retry Executor.execute() exactly 1 time with same inputs
+  - Given retry fails, when second failure occurs, then:
+    - Set fallback_active=True
+    - Execute **Fallback Rule Set 3: Strategist Primary Move Fallback** (see below)
+    - Log error with error_code=`E_EXECUTOR_FAILED`, agent_name="executor", retry_count=1, original_error_code from AgentResult
+    - Proceed to Step 5 with fallback move
+
+**Fallback Rule Set 3: Strategist Primary Move Fallback**
+When Executor fails, coordinator MUST use Strategist's primary move with basic validation:
+1. **Extract Primary Move**: Get Strategy.primary_move.position
+2. **Validate Position**: Check bounds (row in 0-2, col in 0-2) AND check cell is empty in current GameState
+3. **Given Primary Move is Valid**: When validation passes, use Strategy.primary_move.position as final move position
+4. **Given Primary Move is Invalid**: When validation fails (occupied or out-of-bounds), then:
+   - Check Strategy.alternatives list for first valid alternative move (bounds check AND empty cell check)
+   - Given valid alternative found, when alternative is valid, use alternative move position
+   - Given no valid alternatives, when all alternatives are invalid, select first empty cell in position order (0,0 < 0,1 < ... < 2,2)
+5. Create MoveExecution object with position=selected_position, success=True, actual_priority_used=Strategy.primary_move.priority, validation_errors=[]
+
+#### Step 5: Apply Move to Game Engine
+
+**Step 5.1: Final Position Validation**
+- Coordinator MUST validate final position before applying:
+  - Position bounds: row in range 0-2, col in range 0-2
+  - Cell is empty in current GameState.board
+  - GameState.is_game_over=False
+
+**Step 5.2: Handle Validation Failure**
+- Given final position fails validation, when validation fails, then:
+  - Pipeline MUST return error, error_code=`E_MOVE_OUT_OF_BOUNDS` (if bounds invalid) OR `E_CELL_OCCUPIED` (if cell occupied) OR `E_GAME_ALREADY_OVER` (if game over)
+  - Pipeline MUST NOT apply move to game engine
+  - Pipeline MUST NOT increment move_count
+  - Pipeline MUST return error response to caller
+
+**Step 5.3: Apply Move**
+- Given final position passes validation, when validation succeeds, then:
+  - Coordinator MUST call `game_engine.make_move(position, ai_symbol)`
+  - Coordinator MUST check make_move return value for success
+  - Given make_move returns success, when move applied, then:
+    - Record move in move_history
+    - Increment move_count
+    - Update GameState
+    - Proceed to Step 6
+  - Given make_move returns failure, when move fails, then:
+    - Pipeline MUST return error with error_code from make_move (typically `E_CELL_OCCUPIED` or `E_MOVE_OUT_OF_BOUNDS`)
+    - Pipeline MUST return error response to caller
+
+#### Step 6: Return Result
+
+**Step 6.1: Build Success Response**
+- Given move applied successfully, when pipeline completes, then:
+  - Build MoveResponse with:
+    - success=True
+    - position=applied_move_position
+    - updated_game_state=current GameState after move
+    - ai_move_execution=MoveExecution object (from Executor or fallback)
+    - fallback_used=fallback_active flag
+    - total_execution_time_ms=sum of all agent execution times + coordinator overhead
+  - Return MoveResponse to caller
+
+**Step 6.2: Pipeline Timeout Check**
+- Given pipeline total execution time exceeds 15 seconds, when timeout check occurs, then:
+  - Pipeline MUST abort current agent call (if in progress)
+  - Execute fastest available fallback:
+    - If at Step 2-3: Execute Fallback Rule Set 1, then Fallback Rule Set 2, proceed to Step 5
+    - If at Step 4: Execute Fallback Rule Set 3, proceed to Step 5
+  - Log warning with error_code=`E_LLM_TIMEOUT`, message="Pipeline exceeded 15s timeout, using fallback"
+  - Continue with fallback move application
+
+#### Pipeline Summary
+
+The pipeline MUST execute in exactly this order: Step 0 → Step 1 → Step 2 → Step 3 → Step 4 → Step 5 → Step 6
+
+Each step MUST validate conditions before proceeding. Each failure branch MUST execute the specified fallback rule set. All error codes MUST match the Error Code Enum (Section 5). All retry policies MUST follow the counts and delays specified above.
 
 **Acceptance Criteria:**
-- Given valid GameState, when pipeline executes, then Scout.analyze() is called first
-- Given Scout returns success, when pipeline continues, then Strategist.plan() is called with GameState and BoardAnalysis
-- Given Strategist returns success, when pipeline continues, then Executor.execute() is called with GameState and Strategy
-- Given Executor returns success, when pipeline completes, then move is applied to game engine
-- Given Scout fails, when pipeline executes fallback, then rule-based BoardAnalysis is used (center/corner heuristic)
-- Given Strategist fails, when pipeline executes fallback, then Scout's highest priority opportunity is used as primary move
-- Given Executor fails, when pipeline executes fallback, then Strategist's primary move is applied directly if valid
-- Given pipeline exceeds 15 seconds, when timeout occurs, then fallback strategy is triggered and move is completed
-- Given Scout.analyze() succeeds, when validating result, then AgentResult.success=True and AgentResult.data contains BoardAnalysis
-- Given Strategist.plan() succeeds, when validating result, then AgentResult.success=True and AgentResult.data contains Strategy
-- Given Executor.execute() succeeds, when validating result, then AgentResult.success=True and AgentResult.data contains MoveExecution
-- Given any agent returns error, when validating result, then AgentResult.success=False and AgentResult.error_message is populated
-- Given pipeline completes, when returning result, then total execution time is recorded across all agents
-- Given invalid GameState (size ≠ 3×3), when pipeline starts, then returns error without calling agents
-- Given game_over=True, when pipeline starts, then returns error `ERR_GAME_OVER` without calling agents
+
+**Pre-flight Validation:**
+- Given GameState with board size ≠ 3×3, when pipeline starts, then returns error without calling agents, error_code=`E_INVALID_BOARD_SIZE`
+- Given GameState with is_game_over=True, when pipeline starts, then returns error without calling agents, error_code=`E_GAME_ALREADY_OVER`
+- Given valid GameState, when pipeline starts, then proceeds to Step 1
+
+**Scout Analysis Success:**
+- Given Scout returns AgentResult.success=True with valid BoardAnalysis, when Scout succeeds, then BoardAnalysis is stored and pipeline proceeds to Step 3
+- Given Scout.analyze() completes within timeout, when Scout succeeds, then execution_time_ms is recorded
+
+**Scout Failure - Timeout:**
+- Given Scout call exceeds 5s timeout (local mode), when timeout occurs, then retries up to 3 times with exponential backoff (1s, 2s, 4s delays)
+- Given all 3 Scout retries timeout, when retries exhausted, then executes Fallback Rule Set 1 (rule-based BoardAnalysis), sets fallback_active=True, logs error_code=`E_LLM_TIMEOUT`, agent_name="scout", retry_count=3
+- Given Scout timeout on retry attempt 2, when Scout responds successfully, then uses Scout response, cancels remaining retries, proceeds to Step 3
+
+**Scout Failure - Parse Error:**
+- Given Scout returns error_code=`E_LLM_PARSE_ERROR`, when parse error occurs, then retries up to 2 times with prompt refinement
+- Given all 2 Scout retries fail with parse error, when retries exhausted, then executes Fallback Rule Set 1, sets fallback_active=True, logs error_code=`E_LLM_PARSE_ERROR`, agent_name="scout", retry_count=2
+
+**Scout Failure - Other Errors:**
+- Given Scout returns AgentResult.success=False with error_code NOT in {`E_LLM_TIMEOUT`, `E_LLM_PARSE_ERROR`}, when Scout fails, then retries exactly 1 time with same inputs
+- Given Scout retry fails, when second failure occurs, then executes Fallback Rule Set 1, sets fallback_active=True, logs error_code=`E_SCOUT_FAILED`, agent_name="scout", retry_count=1
+
+**Fallback Rule Set 1:**
+- Given Scout fails, when Fallback Rule Set 1 executes, then BoardAnalysis contains: opportunities list with IMMEDIATE_WIN (priority 100) if AI has 2-in-a-row, threats/opportunities list with BLOCK_THREAT (priority 90) if opponent has 2-in-a-row, strategic_moves list with center (1,1) priority 50 if center is empty, strategic_moves list with corner priority 40 if corners available, at least 1 strategic_move (may be priority 10 fallback)
+- Given empty board, when Fallback Rule Set 1 executes, then strategic_moves contains center (1,1) with priority 50, confidence 0.75
+
+**Strategist Planning Success:**
+- Given Strategist returns AgentResult.success=True with valid Strategy containing primary_move, when Strategist succeeds, then Strategy.primary_move.position is validated (bounds 0-2, cell is empty)
+- Given Strategist.primary_move is valid, when validation succeeds, then Strategy is stored and pipeline proceeds to Step 4
+- Given Strategist.primary_move is invalid (occupied or out-of-bounds), when validation fails, then executes Fallback Rule Set 2 (Scout opportunity fallback), logs warning, proceeds to Step 4
+
+**Strategist Failure - Timeout:**
+- Given Strategist call exceeds 5s timeout (local mode), when timeout occurs, then retries up to 3 times with exponential backoff (1s, 2s, 4s delays)
+- Given all 3 Strategist retries timeout, when retries exhausted, then executes Fallback Rule Set 2, sets fallback_active=True, logs error_code=`E_LLM_TIMEOUT`, agent_name="strategist", retry_count=3
+
+**Strategist Failure - Other Errors:**
+- Given Strategist returns AgentResult.success=False, when Strategist fails, then retries exactly 1 time with same inputs
+- Given Strategist retry fails, when second failure occurs, then executes Fallback Rule Set 2, sets fallback_active=True, logs error_code=`E_STRATEGIST_FAILED`, agent_name="strategist", retry_count=1
+
+**Fallback Rule Set 2:**
+- Given Strategist fails, when Fallback Rule Set 2 executes, then selects highest priority opportunity from BoardAnalysis.opportunities (IMMEDIATE_WIN=100 > BLOCK_THREAT=90). If multiple opportunities have same priority, selects one with highest confidence. If opportunities list is empty, selects highest priority strategic_move from BoardAnalysis.strategic_moves
+- Given BoardAnalysis has no opportunities or strategic_moves, when Fallback Rule Set 2 executes, then selects first empty cell in position order (0,0 < 0,1 < ... < 2,2)
+- Given Fallback Rule Set 2 selects move, when move is selected, then creates Strategy with primary_move=selected_move, alternatives=[], game_plan="Fallback: Using Scout analysis", risk_assessment="medium"
+
+**Executor Execution Success:**
+- Given Executor returns AgentResult.success=True with MoveExecution.success=True and valid position, when Executor succeeds, then MoveExecution.position is validated (bounds 0-2, cell is empty)
+- Given Executor.position is valid, when validation succeeds, then position is extracted and pipeline proceeds to Step 5
+
+**Executor Failure - Validation Error:**
+- Given Executor returns MoveExecution.success=False with validation_errors containing `E_CELL_OCCUPIED` or `E_POSITION_OUT_OF_BOUNDS`, when Executor reports validation failure, then executes Fallback Rule Set 3, logs warning, proceeds to Step 5
+
+**Executor Failure - Timeout:**
+- Given Executor call exceeds 3s timeout (local mode), when timeout occurs, then retries up to 3 times with exponential backoff (1s, 2s, 4s delays)
+- Given all 3 Executor retries timeout, when retries exhausted, then executes Fallback Rule Set 3, sets fallback_active=True, logs error_code=`E_LLM_TIMEOUT`, agent_name="executor", retry_count=3
+
+**Executor Failure - Other Errors:**
+- Given Executor returns AgentResult.success=False, when Executor fails, then retries exactly 1 time with same inputs
+- Given Executor retry fails, when second failure occurs, then executes Fallback Rule Set 3, sets fallback_active=True, logs error_code=`E_EXECUTOR_FAILED`, agent_name="executor", retry_count=1
+
+**Fallback Rule Set 3:**
+- Given Executor fails, when Fallback Rule Set 3 executes, then extracts Strategy.primary_move.position and validates (bounds 0-2, cell is empty)
+- Given Strategy.primary_move is valid, when validation passes, then uses Strategy.primary_move.position as final move position
+- Given Strategy.primary_move is invalid, when validation fails, then checks Strategy.alternatives list for first valid alternative (bounds AND empty cell check)
+- Given valid alternative found, when alternative is valid, then uses alternative move position
+- Given no valid alternatives, when all alternatives are invalid, then selects first empty cell in position order (0,0 < 0,1 < ... < 2,2)
+
+**Move Application:**
+- Given final position passes validation (bounds 0-2, cell is empty, game not over), when validation succeeds, then calls game_engine.make_move(position, ai_symbol)
+- Given make_move returns success, when move is applied, then move is recorded in move_history, move_count is incremented, GameState is updated
+- Given final position fails validation, when validation fails, then pipeline returns error with error_code=`E_MOVE_OUT_OF_BOUNDS` (if bounds invalid) OR `E_CELL_OCCUPIED` (if occupied) OR `E_GAME_ALREADY_OVER` (if game over), move is NOT applied
+
+**Pipeline Timeout:**
+- Given pipeline total execution time exceeds 15 seconds, when timeout check occurs, then pipeline aborts current agent call, executes fastest available fallback (Fallback Rule Set 1/2/3 based on current step), logs warning with error_code=`E_LLM_TIMEOUT`, continues with fallback move application
+
+**Response Building:**
+- Given pipeline completes successfully, when move is applied, then returns MoveResponse with success=True, position=applied_move_position, updated_game_state, ai_move_execution, fallback_used=fallback_active flag, total_execution_time_ms=sum of all agent execution times
 
 ---
 
@@ -1159,7 +1529,26 @@ interface AgentService {
 
 **MoveRequest**: Contains row and column integers (0-2).
 
+**MoveRequest Data Type Constraints:**
+
+| Field | Type | Constraints | Error Code | Test |
+|-------|------|-------------|------------|------|
+| `row` | integer | Required, 0 ≤ row ≤ 2 | `E_MOVE_OUT_OF_BOUNDS` | Given row=3 or row=-1, when MoveRequest validated, then reject with E_MOVE_OUT_OF_BOUNDS |
+| `col` | integer | Required, 0 ≤ col ≤ 2 | `E_MOVE_OUT_OF_BOUNDS` | Given col=3 or col=-1, when MoveRequest validated, then reject with E_MOVE_OUT_OF_BOUNDS |
+
 **MoveResponse**: Contains success status, position (if successful), updated GameState, AI move execution details (if AI moved), and error message (if failed).
+
+**MoveResponse Data Type Constraints:**
+
+| Field | Type | Constraints | Error Code | Test |
+|-------|------|-------------|------------|------|
+| `success` | boolean | Required, must be true or false | N/A | Boolean validation (no error code needed) |
+| `position` | Position | Required if success=True, must pass Position constraints | N/A | Position validation (uses E_POSITION_OUT_OF_BOUNDS) |
+| `updated_game_state` | GameState | Required if success=True, must pass GameState constraints | N/A | GameState validation (uses E_INVALID_BOARD_SIZE, etc.) |
+| `ai_move_execution` | MoveExecution | Optional (present if AI moved), must pass MoveExecution constraints | N/A | MoveExecution validation |
+| `error_message` | string | Required if success=False, non-empty (length > 0), max length 500 characters | N/A | String validation |
+| `fallback_used` | boolean | Optional, if present: must be true or false | N/A | Boolean validation (optional field) |
+| `total_execution_time_ms` | float | Optional, if present: total_execution_time_ms ≥ 0.0, precision: 2 decimal places | N/A | Float validation (optional field) |
 
 **GameStatusResponse**: Contains current GameState, agent status dictionary, and metrics dictionary.
 
@@ -1202,11 +1591,17 @@ All error codes MUST be defined as enum values. Error codes are organized by cat
 - `E_INVALID_PRIORITY` - Priority value not in range 1-10
 - `E_INVALID_EVAL_SCORE` - Board evaluation score not in range -1.0 to 1.0
 - `E_INVALID_RISK_LEVEL` - Risk assessment not one of: low, medium, high
+- `E_INVALID_LINE_TYPE` - Line type not one of: 'row', 'column', 'diagonal'
+- `E_INVALID_LINE_INDEX` - Line index not in range 0-2
+- `E_INVALID_MOVE_TYPE` - Move type not one of: 'center', 'corner', 'edge', 'fork', 'block_fork'
+- `E_INVALID_GAME_PHASE` - Game phase not one of: 'opening', 'midgame', 'endgame'
 - `E_MISSING_REASONING` - Required reasoning field is empty
 - `E_MISSING_PRIMARY_MOVE` - Strategy missing required primary move
 - `E_MISSING_DATA` - AgentResult missing required data field
 - `E_MISSING_ERROR_MESSAGE` - AgentResult.error() missing error_message
+- `E_MISSING_GAME_PLAN` - Strategy missing required game_plan field
 - `E_INVALID_EXECUTION_TIME` - Execution time is negative
+- `E_INVALID_TIMESTAMP` - Timestamp not in ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ)
 
 **API Request Errors**:
 - `E_API_MALFORMED` - Request body is malformed JSON or missing required fields
