@@ -107,15 +107,67 @@ The following sections already have formal acceptance criteria:
    - Configuration Endpoints (7 criteria)
    - MCP Protocol Endpoints (7 criteria)
 
-### 🔶 Sections Needing Acceptance Criteria
+5. **Section 12: Error Handling and Resilience** ✅ COMPLETE (85 criteria total)
+   - LLM API Timeout (5 criteria)
+   - LLM Parse Error (4 criteria)
+   - LLM Rate Limit (4 criteria)
+   - LLM Invalid API Key (4 criteria)
+   - Scout Agent Failure (4 criteria)
+   - Strategist Agent Failure (4 criteria)
+   - Executor Agent Failure (4 criteria)
+   - Invalid Move - Out of Bounds (4 criteria)
+   - Invalid Move - Cell Occupied (4 criteria)
+   - MCP Connection Failed (4 criteria)
+   - MCP Agent Timeout (4 criteria)
+   - API Request Malformed (4 criteria)
+   - Game State Corrupted (4 criteria)
+   - Network Error (4 criteria)
+   - Configuration Error (4 criteria)
+   - Schema Validation Error (4 criteria)
+   - Retry Logic Implementation (4 criteria)
+   - Fallback Execution (4 criteria)
+   - Error Logging (5 criteria)
+   - User Communication (4 criteria)
 
-The following sections need formal acceptance criteria added:
+6. **Section 13: Security Considerations** ✅ COMPLETE (31 criteria total)
+   - Input Validation (6 criteria)
+   - Rate Limiting (4 criteria)
+   - Authentication (4 criteria)
+   - API Key Management (6 criteria)
+   - Game State Security (5 criteria)
+   - Agent Communication Security (5 criteria)
+
+## Summary
+
+**Total Acceptance Criteria Added: 368 criteria across 6 sections**
+
+All normative, testable sections of the specification now have comprehensive Given-When-Then acceptance criteria that can be mapped directly to automated tests.
+
+### 🔶 Sections Not Requiring Acceptance Criteria
+
+The following sections do not need formal acceptance criteria:
+
+#### **Section 1: System Overview**
+- High-level purpose, principles, and non-goals (not testable behaviors)
 
 #### **Section 6: Web UI Functional Requirements**
+- Already has user stories with acceptance criteria in Definition of Done section
+- Visual requirements covered by ui-spec.md with specific measurements
+- UI testing is primarily manual/visual regression
 
-User stories already have some acceptance criteria, but add more specific assertions:
+#### **Sections 7-11: Configuration, LLM Integration, Modes, Metrics**
+- Architectural guidance and configuration formats
+- Behaviors covered by Domain Model and API criteria
 
-**Example for US-001 (Display Game Board)**:
+#### **Sections 14-20: Implementation Guidance (Part II)**
+- Non-normative recommendations
+- Technology stack options and examples
+
+## Usage Example
+
+**From Acceptance Criterion to Test:**
+
+**Example for US-001 (Display Game Board):**
 
 ```markdown
 **Acceptance Criteria:**

@@ -2080,6 +2080,103 @@ This table defines deterministic behavior for all failure scenarios:
 | **Configuration Error** | `CONFIG_ERROR` | No retry | Use default configuration | "Configuration issue. Using defaults..." | Yellow banner at top, dismissible | ERROR | Smoke test required |
 | **Schema Validation Error** | `SCHEMA_VALIDATION_ERROR` | No retry | Log error, return sanitized default | "Data format error. Using safe defaults..." | Yellow toast notification, 5s auto-dismiss | ERROR | Unit test required |
 
+**Acceptance Criteria for LLM API Timeout:**
+- Given Scout LLM call exceeds 5s, when timeout occurs, then retries 3 times with exponential backoff (1s, 2s, 4s)
+- Given 3 retries exhausted for Scout, when timeout persists, then uses rule-based board analysis (center/corner heuristic)
+- Given timeout on retry attempt 2, when LLM finally responds, then uses response and cancels remaining retries
+- Given fallback triggered due to timeout, when move completes, then UI shows orange warning icon with "AI is taking longer than expected. Using quick analysis..."
+- Given timeout event, when logging, then includes agent_name, timeout_duration_ms, retry_count=3, fallback_used=true, log_level=WARNING
+
+**Acceptance Criteria for LLM Parse Error:**
+- Given LLM returns unparseable JSON, when parse error occurs, then retries 2 times with prompt refinement
+- Given 2 retries exhausted, when parse error persists, then uses previous successful agent output or rule-based fallback
+- Given parse error logged, when logging, then includes raw_llm_response, parse_error_details, retry_count, log_level=ERROR
+- Given parse error fallback triggered, when UI updates, then shows yellow warning badge with "AI response unclear. Using backup strategy..."
+
+**Acceptance Criteria for LLM Rate Limit:**
+- Given LLM returns 429 rate limit error, when rate limit detected, then waits for rate limit window (from Retry-After header) + retries once
+- Given rate limit wait time, when UI updates, then shows blue info icon with "AI is busy. Please wait a moment..." and countdown timer
+- Given rate limit resolved after wait, when retry succeeds, then continues normal operation without fallback
+- Given rate limit persists after retry, when second rate limit occurs, then uses cached response or queues request
+
+**Acceptance Criteria for LLM Invalid API Key:**
+- Given LLM returns 401/403 authentication error, when invalid API key detected, then does not retry
+- Given authentication error, when fallback executes, then switches to rule-based moves for entire session
+- Given invalid API key error, when UI updates, then shows red error banner with "AI configuration error. Using rule-based play." persisting for entire session
+- Given authentication error logged, when logging, then includes error_code=LLM_AUTH_ERROR, provider_name, log_level=CRITICAL (sanitize API key from logs)
+
+**Acceptance Criteria for Scout Agent Failure:**
+- Given Scout agent fails, when failure detected, then retries once with same inputs
+- Given Scout retry fails, when second failure occurs, then uses rule-based board analysis (check immediate wins, blocks, then center/corner)
+- Given Scout fallback triggered, when UI updates, then shows orange agent status icon with "AI analysis unavailable. Using standard tactics..."
+- Given Scout fallback used, when logging, then includes error_code=SCOUT_FAILED, fallback_strategy="rule-based", log_level=ERROR
+
+**Acceptance Criteria for Strategist Agent Failure:**
+- Given Strategist agent fails, when failure detected, then retries once
+- Given Strategist retry fails, when second failure occurs, then uses Scout's highest priority opportunity as primary move
+- Given Strategist fallback triggered, when UI updates, then shows orange agent status icon with "AI strategy unavailable. Using tactical move..."
+- Given Strategist fallback, when move executed, then move is Scout's top-priority opportunity (IMMEDIATE_WIN > BLOCK_THREAT > CENTER_CONTROL, etc.)
+
+**Acceptance Criteria for Executor Agent Failure:**
+- Given Executor agent fails, when failure detected, then retries once
+- Given Executor retry fails, when second failure occurs, then applies Strategist's primary move with basic validation (bounds, occupancy)
+- Given Executor fallback triggered, when UI updates, then shows orange agent status icon with "AI execution error. Applying recommended move..."
+- Given Executor fallback validation fails, when move is invalid, then returns error to user (do not apply invalid move)
+
+**Acceptance Criteria for Invalid Move (Out of Bounds):**
+- Given move request with row=3, col=1, when validating, then returns error_code=MOVE_OUT_OF_BOUNDS with no retry
+- Given out of bounds error, when UI updates, then highlights invalid cell area in red with shake animation
+- Given out of bounds error message, when displaying, then shows "Invalid move: Position out of bounds (0-2 only)"
+- Given out of bounds error logged, when logging, then includes attempted_position, log_level=INFO
+
+**Acceptance Criteria for Invalid Move (Cell Occupied):**
+- Given move request for occupied cell (1,1) with X, when validating, then returns error_code=MOVE_OCCUPIED with no retry
+- Given cell occupied error, when UI updates, then highlights occupied cell in red with pulse animation
+- Given cell occupied error message, when displaying, then shows "Invalid move: Cell already occupied"
+- Given cell occupied error, when user attempts, then does not modify game state
+
+**Acceptance Criteria for MCP Connection Failed:**
+- Given MCP connection attempt fails, when connection failure detected, then retries 2 times with 5s delay between attempts
+- Given 2 retries exhausted, when connection still fails, then switches entire agent system to local mode
+- Given MCP fallback to local mode, when UI updates, then shows yellow mode indicator with "Distributed mode unavailable. Using local agents..."
+- Given MCP connection failure logged, when logging, then includes error_code=MCP_CONN_FAILED, mcp_server_url, retry_count=2, log_level=ERROR
+
+**Acceptance Criteria for MCP Agent Timeout:**
+- Given MCP agent call exceeds 10s, when timeout occurs, then retries once with 10s timeout
+- Given MCP retry fails, when second timeout occurs, then switches that specific agent to local mode (other agents remain MCP if available)
+- Given MCP agent timeout, when UI updates, then shows orange agent icon with timeout countdown during retry
+- Given partial MCP fallback, when logging, then includes agent_name, timeout_duration_ms=10000, mode="local_fallback", log_level=WARNING
+
+**Acceptance Criteria for API Request Malformed:**
+- Given API request with malformed JSON, when parsing, then returns 400 Bad Request with specific validation error details
+- Given malformed request, when responding, then includes error_code=API_MALFORMED and JSON path to invalid field
+- Given malformed request error, when UI receives, then shows red toast notification with "Invalid request: [specific validation error]" for 5s auto-dismiss
+- Given malformed request logged, when logging, then includes raw_request (sanitized), validation_error_details, log_level=INFO
+
+**Acceptance Criteria for Game State Corrupted:**
+- Given game state validation fails (e.g., invalid symbol balance, multiple winners), when corruption detected, then does not retry
+- Given state corruption, when handling, then resets game state to new game and logs incident with CRITICAL level
+- Given state corruption error, when UI updates, then shows red modal dialog with "Game state error. Please restart the game." requiring user acknowledgment
+- Given state corruption logged, when logging, then includes corrupted_state_snapshot, validation_failures, incident_id, log_level=CRITICAL
+
+**Acceptance Criteria for Network Error (API):**
+- Given API request fails with network error, when failure detected, then retries 3 times with exponential backoff (1s, 2s, 4s)
+- Given network error during retries, when UI updates, then shows gray offline indicator with "Connection lost. Retrying... (attempt 1/3)"
+- Given all 3 retries fail, when network still unavailable, then shows cached game state and enables offline mode
+- Given network restored during retry, when connection succeeds, then syncs local state with server and resumes normal operation
+
+**Acceptance Criteria for Configuration Error:**
+- Given invalid configuration file format, when loading config, then does not retry
+- Given config error, when handling, then uses default configuration values from Section 9
+- Given config error, when UI updates, then shows yellow banner at top with "Configuration issue. Using defaults..." (dismissible by user)
+- Given config error logged, when logging, then includes config_file_path, error_details, defaults_used, log_level=ERROR
+
+**Acceptance Criteria for Schema Validation Error:**
+- Given API response fails schema validation, when validating, then does not retry
+- Given schema validation failure, when handling, then logs full error details and returns sanitized default response
+- Given schema error, when UI receives, then shows yellow toast notification with "Data format error. Using safe defaults..." for 5s auto-dismiss
+- Given schema error logged, when logging, then includes schema_name, validation_errors, actual_data_structure (sanitized), log_level=ERROR
+
 ### UI Indication Specifications
 
 **Visual Hierarchy**:
@@ -2141,6 +2238,31 @@ This table defines deterministic behavior for all failure scenarios:
 - Provide actionable guidance when possible
 - Show progress indicators during retries
 - Allow manual override/retry for failed actions
+
+**Acceptance Criteria for Retry Logic:**
+- Given transient error occurs, when retrying, then uses exponential backoff with delays: retry_1=1s, retry_2=2s, retry_3=4s
+- Given exponential backoff calculation, when computing delay, then adds random jitter (0-500ms) to prevent thundering herd
+- Given retry loop executing, when max retries reached (3 for most errors), then stops retrying and executes fallback
+- Given retry attempt, when logging, then includes retry_number, delay_ms, error_type, total_elapsed_time_ms
+
+**Acceptance Criteria for Fallback Execution:**
+- Given fallback output generated, when applying fallback, then validates output using same validation rules as primary path
+- Given fallback validation fails, when invalid output detected, then returns error to user (do not apply invalid fallback)
+- Given fallback executed successfully, when tracking metrics, then increments fallback_usage_count for that agent/error type
+- Given fallback usage exceeds 10% of moves in session, when threshold crossed, then logs alert with severity=WARNING
+
+**Acceptance Criteria for Error Logging:**
+- Given any error occurs, when logging, then includes: error_code, error_message, timestamp, context (agent_name, game_id, move_number)
+- Given exception thrown, when logging ERROR or CRITICAL, then includes full stack trace
+- Given error frequency tracking, when same error occurs 5+ times in 1 minute, then logs rate_limit_exceeded warning
+- Given CRITICAL error logged, when severity is CRITICAL, then triggers alerting mechanism (email, Slack, PagerDuty, etc.)
+- Given logging sensitive data, when sanitizing, then removes API keys, user PII, internal paths before logging
+
+**Acceptance Criteria for User Communication:**
+- Given error message displayed, when formatting message, then uses non-technical language (no stack traces, no error codes visible to user)
+- Given error with known fix, when displaying error, then includes actionable guidance (e.g., "Check your API key in Config tab")
+- Given retry in progress, when UI updates, then shows progress indicator (spinner, countdown, or "Retrying... 2/3")
+- Given error with manual retry option, when displaying error, then shows "Retry" button allowing user to trigger manual retry
 
 ---
 
@@ -2545,17 +2667,59 @@ results = duckdb.query("""
 
 **Input Validation**: All inputs validated via type-safe models, sanitize user inputs, prevent injection attacks.
 
+**Acceptance Criteria for Input Validation:**
+- Given API request with string input, when validating, then sanitizes HTML/script tags to prevent XSS attacks
+- Given API request with special characters in move reasoning, when storing, then escapes SQL special characters to prevent SQL injection
+- Given API request with position values, when validating, then enforces type safety (integers only, range 0-2)
+- Given malformed JSON in request body, when parsing, then returns 422 Unprocessable Entity without processing
+- Given API request with overly long strings (>10KB), when validating, then rejects with error `ERR_INPUT_TOO_LARGE`
+- Given API request with null values in required fields, when validating, then returns 400 Bad Request with specific missing field names
+
 **Rate Limiting**: Limit API request rates, prevent abuse, implement per-user limits if multi-user.
 
+**Acceptance Criteria for Rate Limiting:**
+- Given single IP makes >100 requests in 1 minute, when rate limit exceeded, then returns 429 Too Many Requests with Retry-After header
+- Given rate-limited client, when waiting for rate limit window, then allows requests after window expires
+- Given distributed denial of service attempt detected, when anomaly threshold crossed, then implements temporary IP block (5 minute cooldown)
+- Given rate limit applied, when logging, then includes client_ip, request_count, time_window, action_taken
+
 **Authentication** (if multi-user): Implement user authentication, session management, authorization checks.
+
+**Acceptance Criteria for Authentication:**
+- Given unauthenticated user accessing protected endpoint, when checking auth, then returns 401 Unauthorized
+- Given authenticated user with expired session token, when validating session, then returns 401 with error `ERR_SESSION_EXPIRED`
+- Given user attempts to access another user's game, when checking authorization, then returns 403 Forbidden
+- Given failed login attempt, when logging, then records failed_login event with timestamp, username, ip_address (no password logged)
 
 ### Data Security
 
 **API Keys**: Store in environment variables, never commit to version control, use secrets management in production.
 
+**Acceptance Criteria for API Key Management:**
+- Given API key stored in code, when code review or security scan runs, then fails with error "API keys must be in environment variables"
+- Given API key in environment variable, when application starts, then loads key without logging full key value (log only last 4 characters)
+- Given missing required API key (OpenAI/Anthropic/Google), when starting application, then raises error `ERR_MISSING_API_KEY` with provider name
+- Given invalid API key format (not matching provider pattern), when validating, then returns error `ERR_INVALID_API_KEY_FORMAT` before making LLM call
+- Given API key exposed in logs, when log sanitization runs, then replaces API key with "[REDACTED-****XXXX]" showing only last 4 characters
+- Given production environment, when deploying, then uses secrets management service (AWS Secrets Manager, HashiCorp Vault, etc.) not plain env vars
+
 **Game State**: Validate game state integrity, prevent state manipulation, log state changes.
 
+**Acceptance Criteria for Game State Security:**
+- Given game state received from client, when validating, then verifies state matches server-side authoritative state
+- Given client attempts to modify game_id, when processing request, then ignores client-provided game_id and uses server session game_id
+- Given game state change, when persisting, then logs state change with: timestamp, previous_state_hash, new_state_hash, move_made, player
+- Given state validation detects tampering (invalid move history, impossible board), when detected, then rejects state and returns error `ERR_STATE_TAMPERING`
+- Given checksum mismatch between client and server state, when detected, then forces state sync from server (server is source of truth)
+
 **Agent Communication**: If using MCP over network, use HTTPS, validate MCP protocol messages, prevent unauthorized agent access.
+
+**Acceptance Criteria for Agent Communication Security:**
+- Given MCP connection over network, when establishing connection, then enforces HTTPS/TLS (reject HTTP connections)
+- Given MCP message received, when parsing, then validates message signature/checksum to prevent message tampering
+- Given MCP agent request without valid authentication token, when checking auth, then returns 401 Unauthorized and closes connection
+- Given MCP message with unexpected format, when parsing, then returns error `ERR_INVALID_MCP_MESSAGE` and logs security event
+- Given multiple failed authentication attempts to MCP server, when threshold exceeded (3 failures), then temporarily blocks client IP for 5 minutes
 
 ---
 
