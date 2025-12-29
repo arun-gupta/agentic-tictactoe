@@ -1112,6 +1112,298 @@ Visual elements mentioned in Section 12 (Failure Matrix UI Indications) provide 
 
 ---
 
+## 6.2 Accessibility Requirements
+
+The application MUST comply with **WCAG 2.1 Level AA** accessibility guidelines to ensure the game is usable by people with disabilities, including those using assistive technologies.
+
+### Quick Wins (Essential Requirements)
+
+These are high-impact, low-effort accessibility improvements that MUST be implemented:
+
+**1. Alternative Text and Labels**
+
+All interactive elements MUST have descriptive labels or alternative text:
+
+- Game board cells: `aria-label="Row 1, Column 1, Empty"` or `aria-label="Row 2, Column 2, X"`
+- Buttons: Use descriptive text or `aria-label` (e.g., "New Game", "Undo Move")
+- Agent status indicators: `aria-label="Scout agent processing"` or `aria-label="Strategist agent complete"`
+- Icons: All icons MUST have text alternatives via `aria-label` or visually hidden text
+- Images: All images MUST have descriptive `alt` attributes (decorative images: `alt=""`)
+
+Example:
+```html
+<button class="cell" aria-label="Row 1, Column 1, Empty">
+  <!-- Cell content -->
+</button>
+
+<button aria-label="Start new game">
+  <span aria-hidden="true">🎮</span>
+  New Game
+</button>
+```
+
+**2. Keyboard Navigation**
+
+All functionality MUST be accessible via keyboard alone (no mouse required):
+
+- **Tab**: Navigate between interactive elements in logical order
+- **Shift+Tab**: Navigate backwards
+- **Enter/Space**: Activate buttons and select cells
+- **Arrow keys**: Navigate between game board cells (grid navigation)
+- **Escape**: Close modals, cancel actions, return to previous state
+
+Game board cell navigation:
+- Arrow Right/Left: Move focus horizontally between cells
+- Arrow Up/Down: Move focus vertically between cells
+- Enter/Space: Make move in focused cell
+
+Tab order MUST follow logical flow:
+1. Main navigation tabs (Play, Config, Metrics)
+2. Game board cells (row by row: 0,0 → 0,1 → 0,2 → 1,0...)
+3. Game controls (New Game, Undo)
+4. Configuration controls
+5. Metrics tabs and content
+
+**3. Focus Indicators**
+
+All focusable elements MUST have visible focus indicators:
+
+- Focus outline MUST be clearly visible (minimum 3px solid outline)
+- Focus outline MUST have high contrast against background
+- Focus outline MUST NOT be removed with `outline: none` without providing alternative
+- Use `:focus-visible` to show focus only for keyboard navigation (not mouse clicks)
+
+Example:
+```css
+.cell:focus-visible {
+  outline: 3px solid #00adb5;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(0, 173, 181, 0.2);
+}
+
+button:focus-visible {
+  outline: 3px solid #00adb5;
+  outline-offset: 2px;
+}
+```
+
+Default browser focus indicators are acceptable but custom focus styles are preferred for better visibility.
+
+**4. Semantic HTML**
+
+Use proper HTML5 semantic elements to provide structure and meaning:
+
+- `<main>`: Main content area (game board and panels)
+- `<nav>`: Navigation (main tabs: Play, Config, Metrics)
+- `<section>`: Major content sections (game board section, agent insights section)
+- `<article>`: Self-contained content (move history entries)
+- `<header>`: Page header with title
+- `<button>`: Interactive elements that trigger actions (NOT `<div>` with click handlers)
+- `<table>`: Tabular data (metrics table, performance summary)
+- `<form>`: Configuration inputs (NOT just `<div>` containers)
+
+Example structure:
+```html
+<header>
+  <h1>Tic-Tac-Toe Multi-Agent Game</h1>
+</header>
+
+<nav aria-label="Main navigation">
+  <button>Play</button>
+  <button>Config</button>
+  <button>Metrics</button>
+</nav>
+
+<main>
+  <section aria-label="Game board">
+    <!-- Game board content -->
+  </section>
+
+  <section aria-label="Agent insights">
+    <!-- Agent insights content -->
+  </section>
+</main>
+```
+
+**5. ARIA Live Regions**
+
+Dynamic content updates MUST be announced to screen readers using ARIA live regions:
+
+- **Game status**: `<div role="status" aria-live="polite">It's your turn</div>`
+- **AI moves**: `<div role="status" aria-live="polite">AI placed O in row 2, column 2</div>`
+- **Agent updates**: `<div role="status" aria-live="polite">Scout agent is analyzing</div>`
+- **Errors**: `<div role="alert" aria-live="assertive">Invalid move: cell is occupied</div>`
+- **Game over**: `<div role="alert" aria-live="assertive">Game over. You won!</div>`
+
+Use appropriate politeness levels:
+- `aria-live="polite"`: Non-critical updates (agent status, moves)
+- `aria-live="assertive"`: Important updates (errors, game over)
+
+Example:
+```html
+<!-- Game status announcements -->
+<div role="status" aria-live="polite" aria-atomic="true" class="sr-only">
+  <span id="game-status">It's your turn</span>
+</div>
+
+<!-- Error announcements -->
+<div role="alert" aria-live="assertive" aria-atomic="true" class="sr-only">
+  <span id="error-message"></span>
+</div>
+
+<!-- Agent processing status -->
+<div role="status" aria-live="polite">
+  <span>Scout agent is analyzing the board</span>
+</div>
+```
+
+**6. Browser Zoom Support**
+
+The UI MUST remain functional and usable at 200% zoom:
+
+- Layout MUST NOT break or cause horizontal scrolling at 200% zoom
+- Text MUST remain readable and NOT overlap
+- Interactive elements MUST remain clickable and NOT be cut off
+- Use responsive units (rem, em, %) instead of fixed pixels for font sizes
+- Test at zoom levels: 100%, 150%, 200%
+
+Example:
+```css
+/* Use rem for font sizes */
+.cell {
+  font-size: 2.5rem; /* Scales with browser zoom */
+}
+
+/* Use flexible layouts */
+.game-board {
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(80px, 1fr));
+}
+```
+
+**7. Lighthouse Accessibility Audit**
+
+Run Chrome DevTools Lighthouse accessibility audit and achieve minimum score of 90:
+
+**How to run:**
+1. Open Chrome DevTools (F12)
+2. Navigate to "Lighthouse" tab
+3. Select "Accessibility" category
+4. Click "Generate report"
+5. Fix all issues with severity "Error" or "Warning"
+
+**Common issues to fix:**
+- Missing `alt` attributes on images
+- Low color contrast ratios
+- Missing form labels
+- Duplicate IDs
+- Missing ARIA attributes
+- Links without discernible text
+
+**Target:**
+- Accessibility score: ≥ 90 (green)
+- Zero errors with severity "Error"
+- Address all warnings where feasible
+
+**8. Skip Links**
+
+Provide "Skip to main content" link as the first focusable element:
+
+```html
+<a href="#main-content" class="skip-link">
+  Skip to main content
+</a>
+
+<main id="main-content">
+  <!-- Main content -->
+</main>
+```
+
+CSS for skip link (visible only on focus):
+```css
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #00adb5;
+  color: #1a1a2e;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+```
+
+This allows keyboard users to bypass navigation and jump directly to main content.
+
+### Additional Accessibility Guidelines
+
+Beyond the 8 quick wins, consider these additional improvements:
+
+**Screen Reader Testing:**
+- Test with NVDA (Windows) or VoiceOver (Mac)
+- Verify all content is announced correctly
+- Verify navigation is logical and efficient
+- Test move announcements: "You placed X in row 1, column 1"
+
+**Color and Contrast:**
+- Verify color contrast ratios meet WCAG AA standards:
+  - Normal text: 4.5:1 minimum
+  - Large text (18pt+): 3:1 minimum
+  - UI components: 3:1 minimum
+- Do NOT rely on color alone to convey information
+- Use icons + text + color for status indicators
+
+**Motion and Animations:**
+- Respect `prefers-reduced-motion` media query
+- Disable or reduce animations for users who prefer reduced motion:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+```
+
+**Form Accessibility:**
+- Associate all labels with inputs using `for` attribute
+- Use `aria-describedby` for help text and error messages
+- Use `aria-invalid="true"` for invalid inputs
+- Group related inputs with `<fieldset>` and `<legend>`
+
+**Testing Tools:**
+- **Automated:** axe DevTools, pa11y, Lighthouse
+- **Manual:** Screen readers (NVDA, VoiceOver), keyboard-only navigation
+- **Simulators:** Color blindness simulators, zoom testing
+
+### Acceptance Criteria for Accessibility
+
+All user stories MUST meet these accessibility criteria to be considered complete:
+
+- [ ] All interactive elements have descriptive labels or alternative text
+- [ ] All functionality works with keyboard alone (no mouse required)
+- [ ] All focusable elements have visible focus indicators
+- [ ] Semantic HTML5 elements used throughout
+- [ ] ARIA live regions announce dynamic content updates
+- [ ] UI remains functional at 200% browser zoom
+- [ ] Lighthouse accessibility score ≥ 90
+- [ ] Skip link provided for keyboard navigation
+- [ ] No WCAG 2.1 Level AA violations
+- [ ] Tested with screen reader (NVDA or VoiceOver)
+
+---
+
 ## 7. Project Structure
 
 ### Directory Organization
