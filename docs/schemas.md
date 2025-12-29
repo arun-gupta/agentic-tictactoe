@@ -669,6 +669,63 @@ Referenced from: [spec.md Section 2.1](./spec.md#21-machine-verifiable-schema-de
 }
 ```
 
+## API Error Response Schema
+
+### ErrorResponse Schema
+
+All API error responses MUST follow this JSON Schema definition:
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "ErrorResponse",
+  "description": "Standard error response for all API errors",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["failure"],
+      "description": "Always 'failure' for error responses"
+    },
+    "error_code": {
+      "type": "string",
+      "description": "Error code enum value (see spec.md Section 5 for error code enum)",
+      "pattern": "^E_[A-Z_]+$"
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable error message"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC) when error occurred"
+    },
+    "details": {
+      "type": "object",
+      "description": "Additional error context (field name, expected value, actual value, etc.)",
+      "additionalProperties": true,
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "Field name that caused the error"
+        },
+        "expected": {
+          "description": "Expected value or constraint"
+        },
+        "actual": {
+          "description": "Actual value that caused the error"
+        }
+      }
+    }
+  },
+  "required": ["status", "error_code", "message", "timestamp"],
+  "additionalProperties": false
+}
+```
+
+**Note**: Error codes are defined in [spec.md Section 5 Error Code Enum](./spec.md#error-code-enum). HTTP status code mappings are defined in [spec.md Section 5 HTTP Status Code Mapping](./spec.md#http-status-code-mapping).
+
 ## Schema Validation Notes
 
 **Validation Requirements**:

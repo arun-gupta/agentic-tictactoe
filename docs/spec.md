@@ -340,6 +340,7 @@ The following domain models have formal JSON Schema (OpenAPI 3.1) definitions fo
 - `MoveRequest`: Player move request (row, col)
 - `MoveResponse`: Move response with updated state and AI move
 - `GameStatusResponse`: Complete game status including agents and metrics
+- `ErrorResponse`: Standard error response for all API errors (error codes and HTTP status mappings defined in Section 5)
 
 ### Schema Usage Requirements
 
@@ -866,8 +867,8 @@ A move is illegal if ANY of the following conditions are true:
 | Out of Bounds | row < 0 OR row > 2 OR col < 0 OR col > 2 | `MOVE_OUT_OF_BOUNDS` |
 | Cell Occupied | Board[row][col] ≠ EMPTY | `MOVE_OCCUPIED` |
 | Game Over | IsGameOver = true | `GAME_ALREADY_OVER` |
-| Invalid Player | Player symbol is not X or O | `INVALID_PLAYER` |
-| Wrong Turn | Player ≠ CurrentPlayer | `WRONG_TURN` |
+| Invalid Player | Player symbol is not X or O | `E_INVALID_PLAYER` |
+| Wrong Turn | Player ≠ CurrentPlayer | `E_INVALID_TURN` |
 
 #### Legal Move Invariants
 
@@ -880,13 +881,13 @@ A move at position (row, col) by player P is legal if and only if ALL of the fol
 6. P ∈ {X, O}
 
 **Acceptance Criteria:**
-- Given row=-1, col=1, when validating move, then error=`MOVE_OUT_OF_BOUNDS`
-- Given row=3, col=1, when validating move, then error=`MOVE_OUT_OF_BOUNDS`
-- Given row=1, col=-1, when validating move, then error=`MOVE_OUT_OF_BOUNDS`
-- Given row=1, col=3, when validating move, then error=`MOVE_OUT_OF_BOUNDS`
-- Given Board[1][1]=X, when attempting move at (1,1), then error=`MOVE_OCCUPIED`
-- Given IsGameOver=true, when attempting move, then error=`GAME_ALREADY_OVER`
-- Given player='Z', when validating move, then error=`INVALID_PLAYER`
+- Given row=-1, col=1, when validating move, then error=`E_MOVE_OUT_OF_BOUNDS`
+- Given row=3, col=1, when validating move, then error=`E_MOVE_OUT_OF_BOUNDS`
+- Given row=1, col=-1, when validating move, then error=`E_MOVE_OUT_OF_BOUNDS`
+- Given row=1, col=3, when validating move, then error=`E_MOVE_OUT_OF_BOUNDS`
+- Given Board[1][1]=X, when attempting move at (1,1), then error=`E_CELL_OCCUPIED`
+- Given IsGameOver=true, when attempting move, then error=`E_GAME_ALREADY_OVER`
+- Given player='Z', when validating move, then error=`E_INVALID_PLAYER`
 - Given CurrentPlayer=X and attempting move with player=O, when validating move, then error=`WRONG_TURN`
 - Given row=1, col=1, Board[1][1]=EMPTY, IsGameOver=false, player=CurrentPlayer, when validating move, then move is legal (no error)
 - Given all 6 invariants satisfied, when validating move, then returns success and allows move execution
@@ -991,8 +992,8 @@ The engine is stateless regarding agent coordination; it only manages game rules
 
 **Acceptance Criteria:**
 - Given valid position (1,1) and player=X (CurrentPlayer), when make_move() is called, then returns success and board updated
-- Given invalid position (3,3), when make_move() is called, then returns failure with error code `MOVE_OUT_OF_BOUNDS`
-- Given occupied position, when make_move() is called, then returns failure with error code `MOVE_OCCUPIED`
+- Given invalid position (3,3), when make_move() is called, then returns failure with error code `E_MOVE_OUT_OF_BOUNDS`
+- Given occupied position, when make_move() is called, then returns failure with error code `E_CELL_OCCUPIED`
 - Given board with winning line for X, when check_winner() is called, then returns X
 - Given board with no winning lines, when check_winner() is called, then returns None
 - Given MoveCount=9 and no winner, when check_draw() is called, then returns true
@@ -1092,9 +1093,9 @@ interface AgentService {
 
 **Acceptance Criteria for POST /api/game/move:**
 - Given valid MoveRequest with row=1, col=1, player=X, when POST /api/game/move, then returns 200 with MoveResponse containing updated GameState
-- Given invalid MoveRequest with row=3, col=1, when POST /api/game/move, then returns 400 with error `MOVE_OUT_OF_BOUNDS`
-- Given MoveRequest for occupied cell, when POST /api/game/move, then returns 400 with error `MOVE_OCCUPIED`
-- Given MoveRequest when game is over, when POST /api/game/move, then returns 400 with error `GAME_ALREADY_OVER`
+- Given invalid MoveRequest with row=3, col=1, when POST /api/game/move, then returns 400 with error_code `E_MOVE_OUT_OF_BOUNDS` and error response schema (status="failure", error_code, message, timestamp, details)
+- Given MoveRequest for occupied cell, when POST /api/game/move, then returns 400 with error_code `E_CELL_OCCUPIED` and error response schema
+- Given MoveRequest when game is over, when POST /api/game/move, then returns 400 with error_code `E_GAME_ALREADY_OVER` and error response schema
 - Given valid player move that doesn't end game, when POST /api/game/move, then response includes AI move execution details
 - Given valid player move that completes winning line, when POST /api/game/move, then response has IsGameOver=true and winner set
 - Given malformed JSON in request body, when POST /api/game/move, then returns 422 Unprocessable Entity
@@ -1158,6 +1159,205 @@ interface AgentService {
 **GameStatusResponse**: Contains current GameState, agent status dictionary, and metrics dictionary.
 
 All API requests and responses must use strongly-typed, validated models. Implementation approach (typed classes, interfaces, records, etc.) determined by technology stack choice in Section 14.
+
+### Error Response Schema
+
+All API error responses MUST follow the JSON Schema defined in [schemas.md ErrorResponse Schema](./schemas.md#errorresponse-schema).
+
+**Error Response Summary**:
+- `status` (string, required): Always "failure" for error responses
+- `error_code` (string, required): Error code enum value (see Error Code Enum below)
+- `message` (string, required): Human-readable error message
+- `timestamp` (string, required): ISO 8601 timestamp (UTC) when error occurred
+- `details` (object, optional): Additional error context (field name, expected value, actual value, etc.)
+
+### Error Code Enum
+
+All error codes MUST be defined as enum values. Error codes are organized by category:
+
+**Move Validation Errors**:
+- `E_MOVE_OUT_OF_BOUNDS` - Position row/col not in range 0-2
+- `E_CELL_OCCUPIED` - Cell at position already contains a symbol
+- `E_GAME_ALREADY_OVER` - Attempted move when game is over (IsGameOver=true)
+- `E_INVALID_TURN` - Move attempted by wrong player (not current player's turn)
+- `E_INVALID_PLAYER` - Player symbol is not X or O
+
+**Game State Errors**:
+- `E_GAME_NOT_FOUND` - No active game exists (404)
+- `E_STATE_CORRUPTED` - Game state is invalid or corrupted
+- `E_INVALID_BOARD_SIZE` - Board size is not 3x3
+- `E_INVALID_SYMBOL_BALANCE` - Symbol count imbalance (|count(X) - count(O)| > 1)
+- `E_MULTIPLE_WINNERS` - Both players have winning lines (invalid state)
+- `E_WIN_NOT_FINALIZED` - Winner set but IsGameOver=false (invalid state)
+
+**Domain Model Validation Errors**:
+- `E_POSITION_OUT_OF_BOUNDS` - Position coordinates out of valid range (0-2)
+- `E_INVALID_BOARD_SIZE` - Board size validation failed
+- `E_INVALID_CONFIDENCE` - Confidence value not in range 0.0-1.0
+- `E_INVALID_PRIORITY` - Priority value not in range 1-10
+- `E_INVALID_EVAL_SCORE` - Board evaluation score not in range -1.0 to 1.0
+- `E_INVALID_RISK_LEVEL` - Risk assessment not one of: low, medium, high
+- `E_MISSING_REASONING` - Required reasoning field is empty
+- `E_MISSING_PRIMARY_MOVE` - Strategy missing required primary move
+- `E_MISSING_DATA` - AgentResult missing required data field
+- `E_MISSING_ERROR_MESSAGE` - AgentResult.error() missing error_message
+- `E_INVALID_EXECUTION_TIME` - Execution time is negative
+
+**API Request Errors**:
+- `E_API_MALFORMED` - Request body is malformed JSON or missing required fields
+- `E_INVALID_PROVIDER` - LLM provider name is invalid (not OpenAI, Anthropic, Google, Ollama)
+- `E_INVALID_MODEL` - Model name is invalid for specified provider
+- `E_GAME_RESET_REQUIRED` - Configuration change requires game reset (409 Conflict)
+
+**Agent Errors** (internal, may be returned in agent_status):
+- `E_SCOUT_FAILED` - Scout agent execution failed
+- `E_STRATEGIST_FAILED` - Strategist agent execution failed
+- `E_EXECUTOR_FAILED` - Executor agent execution failed
+- `E_LLM_TIMEOUT` - LLM API call exceeded timeout (Scout: 5s, Strategist: 5s, Executor: 3s)
+- `E_LLM_PARSE_ERROR` - LLM response could not be parsed
+- `E_LLM_RATE_LIMIT` - LLM API rate limit exceeded
+- `E_LLM_AUTH_ERROR` - LLM API authentication failed (invalid API key)
+
+**System Errors**:
+- `E_MCP_CONN_FAILED` - MCP connection failed
+- `E_MCP_TIMEOUT` - MCP agent call timed out
+- `E_NETWORK_ERROR` - Network connection error
+- `E_CONFIG_ERROR` - Configuration error
+- `E_SCHEMA_VALIDATION_ERROR` - Schema validation failed
+
+### HTTP Status Code Mapping
+
+Error codes MUST map to HTTP status codes as follows:
+
+| HTTP Status | Error Codes | When Thrown |
+|-------------|-------------|-------------|
+| **400 Bad Request** | `E_MOVE_OUT_OF_BOUNDS`, `E_CELL_OCCUPIED`, `E_GAME_ALREADY_OVER`, `E_INVALID_TURN`, `E_INVALID_PLAYER`, `E_INVALID_PROVIDER`, `E_INVALID_MODEL`, `E_API_MALFORMED` | Client error: invalid request data or game rules violation |
+| **404 Not Found** | `E_GAME_NOT_FOUND` | Resource not found (no active game, invalid agent name) |
+| **409 Conflict** | `E_GAME_RESET_REQUIRED` | Operation requires game reset (configuration change during active game) |
+| **422 Unprocessable Entity** | `E_POSITION_OUT_OF_BOUNDS`, `E_INVALID_BOARD_SIZE`, `E_INVALID_CONFIDENCE`, `E_INVALID_PRIORITY`, `E_INVALID_EVAL_SCORE`, `E_INVALID_RISK_LEVEL`, `E_MISSING_REASONING`, `E_MISSING_PRIMARY_MOVE`, `E_SCHEMA_VALIDATION_ERROR` | Request is well-formed but contains semantic validation errors |
+| **500 Internal Server Error** | `E_STATE_CORRUPTED`, `E_SCOUT_FAILED`, `E_STRATEGIST_FAILED`, `E_EXECUTOR_FAILED`, `E_LLM_TIMEOUT`, `E_LLM_PARSE_ERROR`, `E_LLM_RATE_LIMIT`, `E_LLM_AUTH_ERROR`, `E_MCP_CONN_FAILED`, `E_MCP_TIMEOUT`, `E_NETWORK_ERROR`, `E_CONFIG_ERROR` | Server-side error (agent failures, LLM errors, system errors) |
+
+### Error Response Examples
+
+**Example 1: Invalid Move - Cell Occupied**
+```json
+{
+  "status": "failure",
+  "error_code": "E_CELL_OCCUPIED",
+  "message": "Cell (1,2) is already occupied",
+  "timestamp": "2025-12-28T15:22:34Z",
+  "details": {
+    "field": "position",
+    "expected": "empty cell",
+    "actual": "cell contains 'X'",
+    "position": {"row": 1, "col": 2}
+  }
+}
+```
+HTTP Status: 400 Bad Request
+
+**Example 2: Invalid Move - Out of Bounds**
+```json
+{
+  "status": "failure",
+  "error_code": "E_MOVE_OUT_OF_BOUNDS",
+  "message": "Position out of bounds (0-2 only)",
+  "timestamp": "2025-12-28T15:22:35Z",
+  "details": {
+    "field": "position",
+    "expected": "row and col in range 0-2",
+    "actual": {"row": 3, "col": 1}
+  }
+}
+```
+HTTP Status: 400 Bad Request
+
+**Example 3: Game Already Over**
+```json
+{
+  "status": "failure",
+  "error_code": "E_GAME_ALREADY_OVER",
+  "message": "Game is already over. Winner: X",
+  "timestamp": "2025-12-28T15:22:36Z",
+  "details": {
+    "game_state": {
+      "is_game_over": true,
+      "winner": "X",
+      "move_count": 5
+    }
+  }
+}
+```
+HTTP Status: 400 Bad Request
+
+**Example 4: Game Not Found**
+```json
+{
+  "status": "failure",
+  "error_code": "E_GAME_NOT_FOUND",
+  "message": "No active game found",
+  "timestamp": "2025-12-28T15:22:37Z"
+}
+```
+HTTP Status: 404 Not Found
+
+**Example 5: Malformed Request**
+```json
+{
+  "status": "failure",
+  "error_code": "E_API_MALFORMED",
+  "message": "Invalid request: missing required field 'row'",
+  "timestamp": "2025-12-28T15:22:38Z",
+  "details": {
+    "field": "row",
+    "expected": "integer in range 0-2",
+    "actual": "missing"
+  }
+}
+```
+HTTP Status: 400 Bad Request
+
+**Example 6: LLM Timeout (Internal Error)**
+```json
+{
+  "status": "failure",
+  "error_code": "E_LLM_TIMEOUT",
+  "message": "AI is taking longer than expected. Using quick analysis...",
+  "timestamp": "2025-12-28T15:22:39Z",
+  "details": {
+    "agent": "scout",
+    "timeout_duration_ms": 5000,
+    "retry_count": 3,
+    "fallback_used": true
+  }
+}
+```
+HTTP Status: 500 Internal Server Error (Note: This error is typically handled internally with fallback, but may be returned in agent_status)
+
+**Example 7: Schema Validation Error**
+```json
+{
+  "status": "failure",
+  "error_code": "E_SCHEMA_VALIDATION_ERROR",
+  "message": "Invalid confidence value: must be 0.0-1.0",
+  "timestamp": "2025-12-28T15:22:40Z",
+  "details": {
+    "field": "confidence",
+    "expected": "float in range 0.0-1.0",
+    "actual": 1.5
+  }
+}
+```
+HTTP Status: 422 Unprocessable Entity
+
+### Error Code Usage Rules
+
+1. **All API error responses MUST include**: status="failure", error_code, message, timestamp
+2. **Error codes MUST be from the Error Code Enum** (no custom error codes)
+3. **HTTP status codes MUST match the mapping table** above
+4. **Details field is optional** but SHOULD be included when it provides useful context (field name, expected/actual values)
+5. **Error messages MUST be human-readable** and user-friendly (non-technical language for client-facing errors)
+6. **Internal agent errors** (E_SCOUT_FAILED, E_LLM_TIMEOUT, etc.) are typically handled with fallbacks and not returned to client, but may appear in agent_status responses
 
 ---
 
@@ -2075,26 +2275,27 @@ helm/
 
 ### Comprehensive Failure Matrix
 
-This table defines deterministic behavior for all failure scenarios:
+This table defines deterministic behavior for all failure scenarios. All error codes MUST match the Error Code Enum defined in Section 5 (Error Response Schema). HTTP status codes MUST follow the mapping in Section 5.
 
-| Error Type | Error Code | Retry Policy | Fallback Strategy | User Message | UI Indication | Log Level | Test Coverage |
-|------------|------------|--------------|-------------------|--------------|---------------|-----------|---------------|
-| **LLM API Timeout** | `LLM_TIMEOUT` | 3 retries, exponential backoff (1s, 2s, 4s); per-agent timeouts: Scout 5s, Strategist 5s, Executor 3s (local mode) | Use rule-based move selection | "AI is taking longer than expected. Using quick analysis..." | Orange warning icon, show retry countdown | WARNING | Resilience test required |
-| **LLM Parse Error** | `LLM_PARSE_ERROR` | 2 retries with prompt refinement | Use previous successful agent output or rule-based | "AI response unclear. Using backup strategy..." | Yellow warning badge, show "Using fallback" | ERROR | Unit test required |
-| **LLM Rate Limit** | `LLM_RATE_LIMIT` | Wait + retry once after rate limit window | Queue request or use cached response | "AI is busy. Please wait a moment..." | Blue info icon, show wait timer | WARNING | Integration test required |
-| **LLM Invalid API Key** | `LLM_AUTH_ERROR` | No retry | Fallback to rule-based moves entirely | "AI configuration error. Using rule-based play." | Red error banner, persist for session | CRITICAL | Smoke test required |
-| **Scout Agent Failure** | `SCOUT_FAILED` | 1 retry | Use rule-based board analysis (immediate wins/blocks/center) | "AI analysis unavailable. Using standard tactics..." | Orange agent status icon, show "Rule-based mode" | ERROR | Resilience test required |
-| **Strategist Agent Failure** | `STRATEGIST_FAILED` | 1 retry | Use Scout's highest priority opportunity directly | "AI strategy unavailable. Using tactical move..." | Orange agent status icon, show "Tactical mode" | ERROR | Resilience test required |
-| **Executor Agent Failure** | `EXECUTOR_FAILED` | 1 retry | Use Strategist's primary move with basic validation | "AI execution error. Applying recommended move..." | Orange agent status icon, show "Direct execution" | ERROR | Resilience test required |
-| **Invalid Move (Out of Bounds)** | `MOVE_OUT_OF_BOUNDS` | No retry | Return error to user, request new move | "Invalid move: Position out of bounds (0-2 only)" | Red cell highlight, shake animation | INFO | Unit test required |
-| **Invalid Move (Cell Occupied)** | `MOVE_OCCUPIED` | No retry | Return error to user, request new move | "Invalid move: Cell already occupied" | Red cell highlight, pulse animation | INFO | Unit test required |
-| **MCP Connection Failed** | `MCP_CONN_FAILED` | 2 retries with 5s delay | Switch to local mode agents | "Distributed mode unavailable. Using local agents..." | Yellow mode indicator, show "Local mode active" | ERROR | Integration test required |
-| **MCP Agent Timeout** | `MCP_TIMEOUT` | 1 retry with 10s timeout | Switch to local mode for that agent | "Agent not responding. Using local fallback..." | Orange agent icon, show timeout countdown | WARNING | Resilience test required |
-| **API Request Malformed** | `API_MALFORMED` | No retry | Return 400 Bad Request with validation details | "Invalid request: [specific validation error]" | Red toast notification, 5s auto-dismiss | INFO | Contract test required |
-| **Game State Corrupted** | `STATE_CORRUPTED` | No retry | Reset game state, log incident | "Game state error. Please restart the game." | Red modal dialog, require user acknowledgment | CRITICAL | Integration test required |
-| **Network Error (API)** | `NETWORK_ERROR` | 3 retries with exponential backoff | Show cached state, allow offline mode | "Connection lost. Retrying..." | Gray offline indicator, show retry attempt (1/3) | WARNING | E2E test required |
-| **Configuration Error** | `CONFIG_ERROR` | No retry | Use default configuration | "Configuration issue. Using defaults..." | Yellow banner at top, dismissible | ERROR | Smoke test required |
-| **Schema Validation Error** | `SCHEMA_VALIDATION_ERROR` | No retry | Log error, return sanitized default | "Data format error. Using safe defaults..." | Yellow toast notification, 5s auto-dismiss | ERROR | Unit test required |
+| Error Type | Error Code | HTTP Status | Retry Policy | Fallback Strategy | User Message | UI Indication | Log Level | Test Coverage |
+|------------|------------|-------------|--------------|-------------------|--------------|---------------|-----------|---------------|
+| **LLM API Timeout** | `E_LLM_TIMEOUT` | 500 | 3 retries, exponential backoff (1s, 2s, 4s); per-agent timeouts: Scout 5s, Strategist 5s, Executor 3s (local mode) | Use rule-based move selection | "AI is taking longer than expected. Using quick analysis..." | Orange warning icon, show retry countdown | WARNING | Resilience test required |
+| **LLM Parse Error** | `E_LLM_PARSE_ERROR` | 500 | 2 retries with prompt refinement | Use previous successful agent output or rule-based | "AI response unclear. Using backup strategy..." | Yellow warning badge, show "Using fallback" | ERROR | Unit test required |
+| **LLM Rate Limit** | `E_LLM_RATE_LIMIT` | 500 | Wait + retry once after rate limit window | Queue request or use cached response | "AI is busy. Please wait a moment..." | Blue info icon, show wait timer | WARNING | Integration test required |
+| **LLM Invalid API Key** | `E_LLM_AUTH_ERROR` | 500 | No retry | Fallback to rule-based moves entirely | "AI configuration error. Using rule-based play." | Red error banner, persist for session | CRITICAL | Smoke test required |
+| **Scout Agent Failure** | `E_SCOUT_FAILED` | 500 | 1 retry | Use rule-based board analysis (immediate wins/blocks/center) | "AI analysis unavailable. Using standard tactics..." | Orange agent status icon, show "Rule-based mode" | ERROR | Resilience test required |
+| **Strategist Agent Failure** | `E_STRATEGIST_FAILED` | 500 | 1 retry | Use Scout's highest priority opportunity directly | "AI strategy unavailable. Using tactical move..." | Orange agent status icon, show "Tactical mode" | ERROR | Resilience test required |
+| **Executor Agent Failure** | `E_EXECUTOR_FAILED` | 500 | 1 retry | Use Strategist's primary move with basic validation | "AI execution error. Applying recommended move..." | Orange agent status icon, show "Direct execution" | ERROR | Resilience test required |
+| **Invalid Move (Out of Bounds)** | `E_MOVE_OUT_OF_BOUNDS` | 400 | No retry | Return error to user, request new move | "Invalid move: Position out of bounds (0-2 only)" | Red cell highlight, shake animation | INFO | Unit test required |
+| **Invalid Move (Cell Occupied)** | `E_CELL_OCCUPIED` | 400 | No retry | Return error to user, request new move | "Invalid move: Cell already occupied" | Red cell highlight, pulse animation | INFO | Unit test required |
+| **Game Already Over** | `E_GAME_ALREADY_OVER` | 400 | No retry | Return error to user | "Game is already over. Winner: [X/O/DRAW]" | Red cell highlight, show game over message | INFO | Unit test required |
+| **MCP Connection Failed** | `E_MCP_CONN_FAILED` | 500 | 2 retries with 5s delay | Switch to local mode agents | "Distributed mode unavailable. Using local agents..." | Yellow mode indicator, show "Local mode active" | ERROR | Integration test required |
+| **MCP Agent Timeout** | `E_MCP_TIMEOUT` | 500 | 1 retry with 10s timeout | Switch to local mode for that agent | "Agent not responding. Using local fallback..." | Orange agent icon, show timeout countdown | WARNING | Resilience test required |
+| **API Request Malformed** | `E_API_MALFORMED` | 400 | No retry | Return 400 Bad Request with validation details | "Invalid request: [specific validation error]" | Red toast notification, 5s auto-dismiss | INFO | Contract test required |
+| **Game State Corrupted** | `E_STATE_CORRUPTED` | 500 | No retry | Reset game state, log incident | "Game state error. Please restart the game." | Red modal dialog, require user acknowledgment | CRITICAL | Integration test required |
+| **Network Error (API)** | `E_NETWORK_ERROR` | 500 | 3 retries with exponential backoff | Show cached state, allow offline mode | "Connection lost. Retrying..." | Gray offline indicator, show retry attempt (1/3) | WARNING | E2E test required |
+| **Configuration Error** | `E_CONFIG_ERROR` | 500 | No retry | Use default configuration | "Configuration issue. Using defaults..." | Yellow banner at top, dismissible | ERROR | Smoke test required |
+| **Schema Validation Error** | `E_SCHEMA_VALIDATION_ERROR` | 422 | No retry | Log error, return sanitized default | "Data format error. Using safe defaults..." | Yellow toast notification, 5s auto-dismiss | ERROR | Unit test required |
 
 **Acceptance Criteria for LLM API Timeout:**
 - Given Scout LLM call exceeds 5s, when timeout occurs, then retries 3 times with exponential backoff (1s, 2s, 4s)
@@ -2119,13 +2320,13 @@ This table defines deterministic behavior for all failure scenarios:
 - Given LLM returns 401/403 authentication error, when invalid API key detected, then does not retry
 - Given authentication error, when fallback executes, then switches to rule-based moves for entire session
 - Given invalid API key error, when UI updates, then shows red error banner with "AI configuration error. Using rule-based play." persisting for entire session
-- Given authentication error logged, when logging, then includes error_code=LLM_AUTH_ERROR, provider_name, log_level=CRITICAL (sanitize API key from logs)
+- Given authentication error logged, when logging, then includes error_code=E_LLM_AUTH_ERROR, provider_name, log_level=CRITICAL (sanitize API key from logs)
 
 **Acceptance Criteria for Scout Agent Failure:**
 - Given Scout agent fails, when failure detected, then retries once with same inputs
 - Given Scout retry fails, when second failure occurs, then uses rule-based board analysis (check immediate wins, blocks, then center/corner)
 - Given Scout fallback triggered, when UI updates, then shows orange agent status icon with "AI analysis unavailable. Using standard tactics..."
-- Given Scout fallback used, when logging, then includes error_code=SCOUT_FAILED, fallback_strategy="rule-based", log_level=ERROR
+- Given Scout fallback used, when logging, then includes error_code=E_SCOUT_FAILED, fallback_strategy="rule-based", log_level=ERROR
 
 **Acceptance Criteria for Strategist Agent Failure:**
 - Given Strategist agent fails, when failure detected, then retries once
@@ -2140,13 +2341,13 @@ This table defines deterministic behavior for all failure scenarios:
 - Given Executor fallback validation fails, when move is invalid, then returns error to user (do not apply invalid move)
 
 **Acceptance Criteria for Invalid Move (Out of Bounds):**
-- Given move request with row=3, col=1, when validating, then returns error_code=MOVE_OUT_OF_BOUNDS with no retry
+- Given move request with row=3, col=1, when validating, then returns HTTP 400 with error_code `E_MOVE_OUT_OF_BOUNDS` and error response schema (status="failure", error_code="E_MOVE_OUT_OF_BOUNDS", message, timestamp, details with position)
 - Given out of bounds error, when UI updates, then highlights invalid cell area in red with shake animation
 - Given out of bounds error message, when displaying, then shows "Invalid move: Position out of bounds (0-2 only)"
 - Given out of bounds error logged, when logging, then includes attempted_position, log_level=INFO
 
 **Acceptance Criteria for Invalid Move (Cell Occupied):**
-- Given move request for occupied cell (1,1) with X, when validating, then returns error_code=MOVE_OCCUPIED with no retry
+- Given move request for occupied cell (1,1) with X, when validating, then returns HTTP 400 with error_code `E_CELL_OCCUPIED` and error response schema (status="failure", error_code="E_CELL_OCCUPIED", message, timestamp, details with position and actual cell value)
 - Given cell occupied error, when UI updates, then highlights occupied cell in red with pulse animation
 - Given cell occupied error message, when displaying, then shows "Invalid move: Cell already occupied"
 - Given cell occupied error, when user attempts, then does not modify game state
@@ -2155,7 +2356,7 @@ This table defines deterministic behavior for all failure scenarios:
 - Given MCP connection attempt fails, when connection failure detected, then retries 2 times with 5s delay between attempts
 - Given 2 retries exhausted, when connection still fails, then switches entire agent system to local mode
 - Given MCP fallback to local mode, when UI updates, then shows yellow mode indicator with "Distributed mode unavailable. Using local agents..."
-- Given MCP connection failure logged, when logging, then includes error_code=MCP_CONN_FAILED, mcp_server_url, retry_count=2, log_level=ERROR
+- Given MCP connection failure logged, when logging, then includes error_code=E_MCP_CONN_FAILED, mcp_server_url, retry_count=2, log_level=ERROR
 
 **Acceptance Criteria for MCP Agent Timeout:**
 - Given MCP agent call exceeds 10s, when timeout occurs, then retries once with 10s timeout
