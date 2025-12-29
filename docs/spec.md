@@ -1777,6 +1777,30 @@ This section defines **what** the UI must do (functional requirements). Visual d
 - The UI MUST disable the board during AI turn
 - The UI MUST show validation errors for invalid moves (occupied cell, out of bounds)
 
+**Acceptance Criteria for Board Interaction:**
+
+**Click Handling on Empty Cells:**
+- Given game is waiting for player input (CurrentPlayer=player_symbol, IsGameOver=false), when player clicks empty cell at position (row, col), then UI MUST send POST /api/game/move request with row and col, board MUST be disabled (opacity=0.6, cursor=not-allowed) during API call, board MUST re-enable after response received
+- Given empty cell at (1,1), when player clicks cell, then click event MUST be processed, API request MUST be sent within 50ms of click, cell MUST show loading indicator (spinner or pulse animation) until response received
+
+**Click Handling on Occupied Cells (Guard):**
+- Given game is waiting for player input (CurrentPlayer=player_symbol, IsGameOver=false), when player clicks non-empty cell (cell contains 'X' or 'O'), then click MUST be ignored (no API request sent), UI MUST display toast notification with message="Cell occupied", severity="warning", toast MUST auto-dismiss after 3 seconds, board state MUST remain unchanged
+- Given occupied cell at (0,0) with 'X', when player clicks cell, then no POST /api/game/move request is sent, toast notification appears within 100ms, toast shows warning icon and "Cell occupied" message
+
+**Click Handling During AI Turn (Guard):**
+- Given game is in AI turn (CurrentPlayer=ai_symbol OR active_agent is not null), when player clicks any cell (empty or occupied), then click MUST be ignored (no API request sent), board MUST remain disabled (opacity=0.6, cursor=not-allowed), no toast notification shown
+- Given AI is processing (active_agent="scout" or "strategist" or "executor"), when player clicks cell at (1,1), then no POST /api/game/move request is sent, board remains disabled, no visual feedback for click
+
+**Click Handling When Game Over (Guard):**
+- Given game is over (IsGameOver=true), when player clicks any cell, then click MUST be ignored (no API request sent), board MUST remain disabled (opacity=0.6, cursor=not-allowed), no toast notification shown
+- Given game over with winner='X', when player clicks cell at (1,1), then no POST /api/game/move request is sent, board remains disabled
+
+**API Error Handling:**
+- Given player clicks empty cell, when POST /api/game/move returns 400 with error_code=`E_CELL_OCCUPIED`, then UI MUST display toast notification with message="Cell already occupied", severity="error", toast MUST auto-dismiss after 5 seconds, board MUST re-enable (opacity=1.0, cursor=pointer)
+- Given player clicks empty cell, when POST /api/game/move returns 400 with error_code=`E_MOVE_OUT_OF_BOUNDS`, then UI MUST display toast notification with message="Position out of bounds (0-2 only)", severity="error", toast MUST auto-dismiss after 5 seconds
+- Given player clicks empty cell, when POST /api/game/move returns 400 with error_code=`E_GAME_ALREADY_OVER`, then UI MUST display toast notification with message="Game is already over", severity="info", toast MUST auto-dismiss after 5 seconds
+- Given player clicks empty cell, when POST /api/game/move returns 500 (server error), then UI MUST display toast notification with message="Server error. Please try again.", severity="error", toast MUST auto-dismiss after 5 seconds, board MUST re-enable
+
 **US-003: View Last Move**
 - As a player, I MUST see which move was made most recently
 - The last move indicator MUST update after each player or AI move
@@ -1784,6 +1808,24 @@ This section defines **what** the UI must do (functional requirements). Visual d
 **US-004: View Current Turn**
 - As a player, I MUST know whose turn it is (player or AI)
 - The current turn indicator MUST update after each move
+
+**Acceptance Criteria for Current Turn Indicator:**
+
+**Visibility and Accuracy:**
+- Given game is active (IsGameOver=false), when board is rendered, then current turn indicator MUST be visible (display not 'none', opacity=1.0), indicator MUST show correct player symbol ('X' or 'O') matching CurrentPlayer from GameState, indicator MUST be visible within 100ms after board render completes
+- Given CurrentPlayer='X', when board is rendered, then turn indicator displays "X's Turn" or "Player X's Turn" with color #e94560 (Player X color), indicator is visible within 100ms
+- Given CurrentPlayer='O', when board is rendered, then turn indicator displays "O's Turn" or "AI's Turn" with color #00adb5 (Player O/AI color), indicator is visible within 100ms
+
+**Update Timing:**
+- Given player makes move, when POST /api/game/move returns success with updated GameState, then current turn indicator MUST update to show new CurrentPlayer within 100ms of response received, indicator MUST reflect AI turn (CurrentPlayer=ai_symbol) immediately
+- Given AI makes move, when game state updates (CurrentPlayer switches to player_symbol), then current turn indicator MUST update to show player turn within 100ms of state update, indicator MUST reflect player turn (CurrentPlayer=player_symbol) immediately
+
+**Game Over State:**
+- Given game is over (IsGameOver=true), when board is rendered, then current turn indicator MUST display "Game Over" or winner message ("X Wins", "O Wins", "Draw"), indicator MUST be visible, turn indicator MUST NOT show "X's Turn" or "O's Turn" when game is over
+- Given game over with winner='X', when board is rendered, then turn indicator displays "X Wins" with color #e94560, indicator is visible within 100ms
+
+**State Consistency:**
+- Given CurrentPlayer='X' from GameState, when turn indicator is displayed, then indicator text MUST match CurrentPlayer exactly, indicator color MUST match player symbol color (#e94560 for X, #00adb5 for O), indicator MUST NOT show stale/previous turn information
 
 **US-005: View Game Status**
 - As a player, I MUST see the current move number
@@ -1806,6 +1848,29 @@ This section defines **what** the UI must do (functional requirements). Visual d
 - As a player, I MUST see real-time Scout analysis (threats, opportunities, strategic moves)
 - As a player, I MUST see real-time Strategist strategy (recommended move, reasoning, priority)
 - As a player, I MUST see real-time Executor execution (validation, success status, timing)
+
+**Acceptance Criteria for Agent Insights Panel:**
+
+**Scout Agent Metrics Panel (Required Fields):**
+- Given Scout agent completes analysis, when Agent Insights Panel displays Scout metrics, then panel MUST show execution_time (float, precision: 2 decimal places, unit: milliseconds), panel MUST show confidence (float, 0.0-1.0, precision: 2 decimal places) from highest priority opportunity or strategic move, panel MUST show priority (integer, 1-10 or enum value) from highest priority move, panel MUST NOT show optional fields as empty/null (only required fields displayed)
+- Given Scout returns BoardAnalysis with opportunities list containing priority=100, confidence=0.95, when Scout metrics panel is displayed, then execution_time is shown (e.g., "1234.56 ms"), confidence is shown (e.g., "0.95"), priority is shown (e.g., "100" or "IMMEDIATE_WIN"), no optional/empty fields are displayed
+
+**Strategist Agent Metrics Panel (Required Fields):**
+- Given Strategist agent completes planning, when Agent Insights Panel displays Strategist metrics, then panel MUST show execution_time (float, precision: 2 decimal places, unit: milliseconds), panel MUST show confidence (float, 0.0-1.0, precision: 2 decimal places) from primary_move, panel MUST show priority (integer, 1-10 or enum value) from primary_move, panel MUST NOT show optional fields as empty/null (only required fields displayed)
+- Given Strategist returns Strategy with primary_move.priority=90, primary_move.confidence=0.90, when Strategist metrics panel is displayed, then execution_time is shown (e.g., "2345.67 ms"), confidence is shown (e.g., "0.90"), priority is shown (e.g., "90" or "BLOCK_THREAT"), no optional/empty fields are displayed
+
+**Executor Agent Metrics Panel (Required Fields):**
+- Given Executor agent completes execution, when Agent Insights Panel displays Executor metrics, then panel MUST show execution_time (float, precision: 2 decimal places, unit: milliseconds), panel MUST show confidence (float, 0.0-1.0, precision: 2 decimal places) from MoveExecution (if available), panel MUST show priority (integer, 1-10 or enum value) from actual_priority_used, panel MUST NOT show optional fields as empty/null (only required fields displayed)
+- Given Executor returns MoveExecution with actual_priority_used=80, execution_time_ms=567.89, when Executor metrics panel is displayed, then execution_time is shown (e.g., "567.89 ms"), priority is shown (e.g., "80" or "FORCE_WIN"), confidence is shown if available from MoveExecution, no optional/empty fields are displayed
+
+**Panel Visibility:**
+- Given agent is processing (active_agent="scout" or "strategist" or "executor"), when Agent Insights Panel is displayed, then panel for active agent MUST be visible (display not 'none'), panel MUST show loading indicator (spinner or progress bar), panel MUST show "Processing..." or agent name with "Processing" status
+- Given all agents completed, when Agent Insights Panel is displayed, then all three agent panels (Scout, Strategist, Executor) MUST be visible, each panel MUST show required fields (execution_time, confidence, priority), panels MUST NOT show loading indicators
+
+**Field Format Requirements:**
+- Given execution_time=1234.567, when displayed in metrics panel, then value MUST be formatted as "1234.57 ms" (2 decimal places, unit suffix)
+- Given confidence=0.95, when displayed in metrics panel, then value MUST be formatted as "0.95" or "95%" (2 decimal places or percentage)
+- Given priority=100, when displayed in metrics panel, then value MUST be formatted as "100" or "IMMEDIATE_WIN" (numeric or enum name)
 
 **US-009: View Agent Processing Status**
 - As a player, I MUST see which agent is currently active
