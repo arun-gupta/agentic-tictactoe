@@ -541,9 +541,9 @@ Agents are stateless; all context comes from inputs. Results include execution m
 ### Agent Timeout Configuration
 
 **Per-Agent Timeouts**:
-- **Scout Agent**: 5 seconds (rule-based fallback available)
-- **Strategist Agent**: 5 seconds (uses Scout's best opportunity as fallback)
-- **Executor Agent**: 3 seconds (direct move execution, minimal processing)
+- **Scout Agent**: 5 seconds (local mode) or 10 seconds (distributed mode) - rule-based fallback available
+- **Strategist Agent**: 5 seconds (local mode) or 10 seconds (distributed mode) - uses Scout's best opportunity as fallback
+- **Executor Agent**: 3 seconds (local mode) or 5 seconds (distributed mode) - direct move execution, minimal processing
 - **Total Pipeline Timeout**: 15 seconds (sum of all agents + 2s buffer)
 
 **Timeout Behavior**:
@@ -555,6 +555,46 @@ Agents are stateless; all context comes from inputs. Results include execution m
 **Configuration**:
 - Timeout values configurable via config file
 - Different timeouts for local mode (5s/5s/3s) vs distributed MCP mode (10s/10s/5s)
+
+### Network & Timeout Specifications
+
+**API Request Timeouts**:
+- **Client → Server (UI to API)**: HTTP request timeout MUST be 30 seconds
+- **Server → LLM Provider**: Per-agent timeouts (Scout: 5s/10s, Strategist: 5s/10s, Executor: 3s/5s) as specified above
+- **Server → MCP Agent**: 10 seconds per agent call (distributed mode only)
+- **Health Check Endpoint**: MUST respond within 100ms (no external dependencies)
+- **Readiness Check Endpoint**: MUST respond within 500ms (may check dependencies)
+
+**Network Retry Policies**:
+- **LLM API Connection Failures**: 3 retries with exponential backoff (1s, 2s, 4s delays) + random jitter (0-500ms)
+- **MCP Connection Failures**: 2 retries with 5s delay between attempts
+- **Network Timeout Errors**: 3 retries with exponential backoff (1s, 2s, 4s delays)
+- **HTTP 5xx Errors**: 2 retries with exponential backoff (1s, 2s delays)
+- **HTTP 429 Rate Limit**: Wait for Retry-After header + 1 retry after wait period
+- **HTTP 4xx Errors (except 429)**: No retry (client error, retry will not help)
+
+**Network Error Handling**:
+- Given network connection failure (connection refused, timeout, DNS failure), when LLM API call fails, then retries according to retry policy, logs error_code=`E_NETWORK_ERROR`, uses fallback after retries exhausted
+- Given network timeout (no response within timeout period), when API call times out, then retries according to retry policy, logs error_code=`E_NETWORK_ERROR` with timeout_duration_ms, uses fallback after retries exhausted
+- Given DNS resolution failure, when API call fails, then logs error_code=`E_NETWORK_ERROR` with details="DNS resolution failed", does not retry (DNS failures typically persistent), uses fallback immediately
+
+**Connection Pooling**:
+- LLM API connections MUST be pooled and reused (connection per provider, not per request)
+- Connection pool size: 5 connections per LLM provider (configurable)
+- Connection idle timeout: 60 seconds (close idle connections after 60s)
+- Connection max lifetime: 300 seconds (recycle connections after 5 minutes)
+
+**Keep-Alive Settings**:
+- HTTP keep-alive MUST be enabled for LLM API connections
+- Keep-alive timeout: 30 seconds
+- Max connections per host: 10 (prevents connection exhaustion)
+
+**Acceptance Criteria for Network Timeouts**:
+- Given LLM API call exceeds Scout timeout (5s local), when timeout occurs, then request is cancelled, retry is attempted with exponential backoff, fallback is used after 3 retries exhausted
+- Given network connection failure, when connection fails, then retries 3 times with exponential backoff (1s, 2s, 4s) + jitter, logs error_code=`E_NETWORK_ERROR` with connection_error details
+- Given HTTP 429 rate limit response, when rate limit detected, then waits for Retry-After header duration, retries once after wait, logs error_code=`E_LLM_RATE_LIMIT`
+- Given HTTP 5xx server error, when server error occurs, then retries 2 times with exponential backoff (1s, 2s), logs error_code=`E_NETWORK_ERROR` with http_status_code
+- Given HTTP 4xx client error (except 429), when client error occurs, then does not retry, logs error_code=`E_NETWORK_ERROR` with http_status_code and error_message, uses fallback immediately
 
 ### Move Priority System
 
@@ -1052,10 +1092,83 @@ FALLBACK ───────────────────────�
 - State MUST be recoverable after system restart
 - State MUST support concurrent games (multiple game_id instances)
 
-**Storage Implementations**:
-- **In-Memory**: Dictionary/Map keyed by game_id (development, single game)
-- **File System**: JSON files in `data/games/{game_id}.json` (simple persistence)
-- **Database**: Table with game_id as primary key (production, multiple games)
+**Storage Implementation: JSON File-Based Persistence**
+
+**File Location and Naming**:
+- Game state MUST be persisted to JSON files in directory: `data/games/`
+- File naming pattern: `{game_id}.json` where game_id is UUID v4 format
+- Example: `data/games/550e8400-e29b-41d4-a716-446655440000.json`
+- Directory MUST be created if it does not exist on first write
+- File permissions: 0644 (readable by owner and group, writable by owner)
+
+**JSON File Structure**:
+```json
+{
+  "game_id": "550e8400-e29b-41d4-a716-446655440000",
+  "version": "1.0",
+  "created_at": "2025-01-15T10:30:00Z",
+  "updated_at": "2025-01-15T10:35:00Z",
+  "game_state": {
+    "board": {
+      "cells": [
+        ["X", "O", "EMPTY"],
+        ["EMPTY", "X", "O"],
+        ["EMPTY", "EMPTY", "EMPTY"]
+      ]
+    },
+    "current_player": "X",
+    "move_count": 4,
+    "is_game_over": false,
+    "winner": null,
+    "is_draw": false,
+    "player_symbol": "X",
+    "ai_symbol": "O"
+  },
+  "move_history": [
+    {
+      "move_number": 1,
+      "player": "X",
+      "position": {"row": 0, "col": 0},
+      "timestamp": "2025-01-15T10:30:15Z"
+    },
+    {
+      "move_number": 2,
+      "player": "O",
+      "position": {"row": 0, "col": 1},
+      "timestamp": "2025-01-15T10:30:20Z"
+    }
+  ],
+  "metadata": {
+    "agent_config": {
+      "scout_model": "openai/gpt-5-mini",
+      "strategist_model": "openai/gpt-5-mini",
+      "executor_model": "openai/gpt-5-mini"
+    }
+  }
+}
+```
+
+**Persistence Rules**:
+- Game state MUST be persisted synchronously after each successful move (before returning response to client)
+- Persistence MUST be atomic: write to temporary file first, then rename to final filename (prevents corruption on write failure)
+- Given persistence write fails, when save fails, then game state MUST remain in memory, error MUST be logged with error_code=`E_STATE_PERSISTENCE_ERROR`, game continues (state not lost, but not persisted)
+- Given game state file exists, when loading game, then file MUST be read and validated against GameState JSON Schema before use
+- Given corrupted JSON file (invalid JSON or schema violation), when loading game, then file MUST be rejected, error MUST be logged with error_code=`E_STATE_CORRUPTED`, new game MUST be created
+- Given file does not exist, when loading game, then new game MUST be created with new game_id
+
+**File Format Requirements**:
+- JSON MUST be valid JSON (RFC 7159 compliant)
+- JSON MUST be pretty-printed with 2-space indentation for readability
+- JSON MUST use UTF-8 encoding
+- All timestamps MUST use ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ, UTC timezone)
+- Board MUST serialize as 3x3 nested array: `[[cell, cell, cell], [cell, cell, cell], [cell, cell, cell]]` where each cell is string: "EMPTY", "X", or "O"
+- Move history MUST be array of MoveHistory objects in chronological order (move_number ascending)
+- File size MUST NOT exceed 100KB per game (enforced limit to prevent abuse)
+
+**Backup and Recovery**:
+- Implementation MAY create backup files: `{game_id}.json.bak` before overwriting
+- Given backup file exists, when loading fails, then system MAY attempt to load from backup file
+- Backup files MUST be cleaned up after successful load (optional, not required)
 
 **State Serialization**:
 - State MUST be serializable to JSON (see Section 2.1 GameState Schema)
@@ -1460,11 +1573,76 @@ interface AgentService {
 
 ### REST API Endpoints
 
+**Health & Readiness**:
+- GET /health - Health check endpoint (liveness probe)
+- GET /ready - Readiness check endpoint (readiness probe)
+
 **Game Management**:
 - POST /api/game/move - Make a player move (row, col), returns MoveResponse with game state and AI move
 - GET /api/game/status - Get current game status including game state, agent status, and metrics
 - POST /api/game/reset - Reset game to initial state
 - GET /api/game/history - Get move history
+
+**Acceptance Criteria for GET /health:**
+- Given server is running, when GET /health is called, then returns 200 OK with JSON response containing status="healthy", timestamp (ISO 8601), uptime_seconds (float, precision: 2 decimal places)
+- Given server is running, when GET /health is called, then response MUST complete within 100ms (no external dependencies checked)
+- Given server is shutting down, when GET /health is called, then returns 503 Service Unavailable with status="unhealthy"
+- Given health check fails, when GET /health is called, then returns 503 Service Unavailable with error details
+
+**Health Check Response Schema:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "uptime_seconds": 1234.56,
+  "version": "1.0.0"
+}
+```
+
+**Acceptance Criteria for GET /ready:**
+- Given server is ready to accept requests (all dependencies available, configuration valid), when GET /ready is called, then returns 200 OK with JSON response containing status="ready", checks object with dependency statuses
+- Given LLM API keys are configured, when GET /ready is called, then checks.llm_configuration="ok"
+- Given LLM API keys are missing, when GET /ready is called, then checks.llm_configuration="error", returns 503 Service Unavailable
+- Given configuration file is invalid, when GET /ready is called, then checks.configuration="error", returns 503 Service Unavailable
+- Given server is not ready, when GET /ready is called, then returns 503 Service Unavailable with status="not_ready" and specific check failures
+- Given readiness check fails, when game endpoints are called, then game endpoints MUST return 503 Service Unavailable with message="Service not ready. Check /ready endpoint."
+
+**Readiness Check Response Schema:**
+```json
+{
+  "status": "ready",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "checks": {
+    "llm_configuration": "ok",
+    "configuration": "ok",
+    "game_engine": "ok"
+  }
+}
+```
+
+**Readiness Check Failure Response Schema:**
+```json
+{
+  "status": "not_ready",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "checks": {
+    "llm_configuration": "error",
+    "configuration": "ok",
+    "game_engine": "ok"
+  },
+  "errors": [
+    {
+      "check": "llm_configuration",
+      "message": "OpenAI API key not configured"
+    }
+  ]
+}
+```
+
+**Game Availability Requirement:**
+- Given GET /ready returns 503 (not ready), when any game endpoint (POST /api/game/move, GET /api/game/status, POST /api/game/reset, GET /api/game/history) is called, then endpoint MUST return 503 Service Unavailable with error_code=`E_SERVICE_NOT_READY`, message="Service not ready. Check /ready endpoint."
+- Given GET /ready returns 200 (ready), when game endpoints are called, then game endpoints process requests normally
+- Given server startup, when server starts, then GET /ready MUST return 503 until all readiness checks pass, game endpoints MUST return 503 until /ready returns 200
 
 **Acceptance Criteria for POST /api/game/move:**
 - Given valid MoveRequest with row=1, col=1, player=X, when POST /api/game/move, then returns 200 with MoveResponse containing updated GameState
@@ -1624,6 +1802,8 @@ All error codes MUST be defined as enum values. Error codes are organized by cat
 - `E_NETWORK_ERROR` - Network connection error
 - `E_CONFIG_ERROR` - Configuration error
 - `E_SCHEMA_VALIDATION_ERROR` - Schema validation failed
+- `E_SERVICE_NOT_READY` - Service not ready (readiness check failed)
+- `E_STATE_PERSISTENCE_ERROR` - Game state persistence failed
 
 ### HTTP Status Code Mapping
 
@@ -1635,7 +1815,8 @@ Error codes MUST map to HTTP status codes as follows:
 | **404 Not Found** | `E_GAME_NOT_FOUND` | Resource not found (no active game, invalid agent name) |
 | **409 Conflict** | `E_GAME_RESET_REQUIRED` | Operation requires game reset (configuration change during active game) |
 | **422 Unprocessable Entity** | `E_POSITION_OUT_OF_BOUNDS`, `E_INVALID_BOARD_SIZE`, `E_INVALID_CONFIDENCE`, `E_INVALID_PRIORITY`, `E_INVALID_EVAL_SCORE`, `E_INVALID_RISK_LEVEL`, `E_MISSING_REASONING`, `E_MISSING_PRIMARY_MOVE`, `E_SCHEMA_VALIDATION_ERROR` | Request is well-formed but contains semantic validation errors |
-| **500 Internal Server Error** | `E_STATE_CORRUPTED`, `E_SCOUT_FAILED`, `E_STRATEGIST_FAILED`, `E_EXECUTOR_FAILED`, `E_LLM_TIMEOUT`, `E_LLM_PARSE_ERROR`, `E_LLM_RATE_LIMIT`, `E_LLM_AUTH_ERROR`, `E_MCP_CONN_FAILED`, `E_MCP_TIMEOUT`, `E_NETWORK_ERROR`, `E_CONFIG_ERROR` | Server-side error (agent failures, LLM errors, system errors) |
+| **500 Internal Server Error** | `E_STATE_CORRUPTED`, `E_SCOUT_FAILED`, `E_STRATEGIST_FAILED`, `E_EXECUTOR_FAILED`, `E_LLM_TIMEOUT`, `E_LLM_PARSE_ERROR`, `E_LLM_RATE_LIMIT`, `E_LLM_AUTH_ERROR`, `E_MCP_CONN_FAILED`, `E_MCP_TIMEOUT`, `E_NETWORK_ERROR`, `E_CONFIG_ERROR`, `E_STATE_PERSISTENCE_ERROR` | Server-side error (agent failures, LLM errors, system errors) |
+| **503 Service Unavailable** | `E_SERVICE_NOT_READY` | Service not ready (readiness check failed, health check failed) |
 
 ### Error Response Examples
 
@@ -3817,13 +3998,165 @@ CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & streamli
 
 ## 17. Metrics and Observability
 
+### Log Format Specification
+
+**Log Structure**: All logs MUST use structured JSON format for machine parsing and analysis.
+
+**Log Entry Schema**:
+```json
+{
+  "timestamp": "2025-01-15T10:30:00.123Z",
+  "level": "INFO|WARNING|ERROR|CRITICAL",
+  "service": "api|ui|agent|coordinator",
+  "component": "scout|strategist|executor|game_engine|api_handler",
+  "event_type": "agent_call|move_execution|error|state_change|metric",
+  "message": "Human-readable log message",
+  "context": {
+    "game_id": "550e8400-e29b-41d4-a716-446655440000",
+    "agent_name": "scout",
+    "move_number": 3,
+    "execution_time_ms": 1234.56
+  },
+  "error": {
+    "error_code": "E_LLM_TIMEOUT",
+    "error_message": "LLM call exceeded timeout",
+    "stack_trace": "Full stack trace for ERROR/CRITICAL only"
+  },
+  "metadata": {
+    "request_id": "req-12345",
+    "user_agent": "Mozilla/5.0...",
+    "ip_address": "192.168.1.1"
+  }
+}
+```
+
+**Log Levels and When to Use**:
+- **INFO**: Normal operations (game started, move made, agent completed successfully)
+- **WARNING**: Recoverable issues (fallback used, retry attempted, rate limit encountered)
+- **ERROR**: Errors that require attention (agent failure, validation error, LLM parse error)
+- **CRITICAL**: System-level failures (configuration error, state corruption, authentication failure)
+
+**What Gets Logged and When**:
+
+**Game Events** (INFO level):
+- Game created: `event_type="game_created"`, context includes game_id, player_symbol, ai_symbol
+- Move made: `event_type="move_made"`, context includes game_id, move_number, position, player, execution_time_ms
+- Game completed: `event_type="game_completed"`, context includes game_id, winner, move_count, game_duration_ms
+
+**Agent Events** (INFO level):
+- Agent call started: `event_type="agent_call_started"`, context includes agent_name, game_id, move_number
+- Agent call completed: `event_type="agent_call_completed"`, context includes agent_name, execution_time_ms, success=true, tokens_used (if LLM call)
+- Agent call failed: `event_type="agent_call_failed"`, level=ERROR, error includes error_code, error_message, retry_count
+
+**LLM Events** (INFO level):
+- LLM API call: `event_type="llm_api_call"`, context includes provider, model, input_tokens, output_tokens, latency_ms, cost_usd
+- LLM retry: `event_type="llm_retry"`, level=WARNING, context includes retry_number, delay_ms, original_error_code
+
+**Error Events** (ERROR/CRITICAL level):
+- Validation error: `event_type="validation_error"`, level=ERROR, error includes error_code, field_name, expected_value, actual_value
+- System error: `event_type="system_error"`, level=CRITICAL, error includes error_code, error_message, stack_trace
+
+**State Events** (INFO level):
+- State persisted: `event_type="state_persisted"`, context includes game_id, file_path, file_size_bytes
+- State loaded: `event_type="state_loaded"`, context includes game_id, file_path, load_time_ms
+- State persistence failed: `event_type="state_persistence_failed"`, level=ERROR, error includes error_code, file_path, error_message
+
+**Log Output**:
+- Logs MUST be written to stdout/stderr (for containerized deployments)
+- Logs MAY be written to files: `logs/app-{date}.log` (rotated daily)
+- Log file format: One JSON object per line (JSONL format)
+- Log file rotation: Daily rotation, keep last 30 days of logs
+- Log file size limit: 100MB per file, rotate when limit reached
+
+### Metrics Format Specification
+
+**Metrics Structure**: Metrics MUST be collected and exported in Prometheus-compatible format or JSON format.
+
+**Prometheus Format Example**:
+```
+# Agent execution time histogram
+agent_execution_time_ms_bucket{agent="scout",le="1000"} 5
+agent_execution_time_ms_bucket{agent="scout",le="5000"} 20
+agent_execution_time_ms_bucket{agent="scout",le="+Inf"} 25
+agent_execution_time_ms_sum{agent="scout"} 125000
+agent_execution_time_ms_count{agent="scout"} 25
+
+# LLM API call counter
+llm_api_calls_total{provider="openai",model="gpt-5-mini",status="success"} 100
+llm_api_calls_total{provider="openai",model="gpt-5-mini",status="error"} 5
+
+# Token usage gauge
+llm_tokens_used{provider="openai",model="gpt-5-mini",type="input"} 50000
+llm_tokens_used{provider="openai",model="gpt-5-mini",type="output"} 10000
+
+# Game metrics counter
+games_total{outcome="X_WIN"} 10
+games_total{outcome="O_WIN"} 8
+games_total{outcome="DRAW"} 2
+```
+
+**JSON Metrics Format** (Alternative):
+```json
+{
+  "timestamp": "2025-01-15T10:30:00Z",
+  "metrics": {
+    "agent_execution_time_ms": {
+      "scout": {"min": 500, "max": 5000, "avg": 2000, "p95": 4500, "p99": 4800},
+      "strategist": {"min": 400, "max": 4500, "avg": 1800, "p95": 4200, "p99": 4400},
+      "executor": {"min": 200, "max": 3000, "avg": 800, "p95": 2800, "p99": 2900}
+    },
+    "llm_api_calls": {
+      "openai": {"total": 100, "success": 95, "error": 5},
+      "anthropic": {"total": 50, "success": 48, "error": 2}
+    },
+    "tokens_used": {
+      "openai": {"input": 50000, "output": 10000, "total": 60000},
+      "anthropic": {"input": 25000, "output": 5000, "total": 30000}
+    },
+    "games": {
+      "total": 20,
+      "x_win": 10,
+      "o_win": 8,
+      "draw": 2
+    }
+  }
+}
+```
+
+**Metrics Collection Points**:
+- **Per Agent Call**: Execution time, success/failure, tokens used, LLM provider/model
+- **Per Game**: Total moves, game duration, outcome, total cost, fallback count
+- **Per API Request**: Request latency, response status, error count
+- **System-Wide**: Uptime, total games, total API requests, error rates
+
+**Metrics Export**:
+- Metrics MUST be exportable via `GET /metrics` endpoint (Prometheus format) or `GET /api/metrics` (JSON format)
+- Metrics MUST be collected every 10 seconds (configurable)
+- Metrics MUST be aggregated over 1-minute windows for display
+- Historical metrics MUST be retained for 7 days (configurable)
+
+**Acceptance Criteria for Logging**:
+- Given agent call completes, when logging, then log entry includes timestamp (ISO 8601), level=INFO, event_type="agent_call_completed", context with agent_name, execution_time_ms, success=true
+- Given agent call fails, when logging, then log entry includes level=ERROR, event_type="agent_call_failed", error with error_code, error_message, retry_count
+- Given LLM API call made, when logging, then log entry includes event_type="llm_api_call", context with provider, model, input_tokens, output_tokens, latency_ms, cost_usd
+- Given state persisted, when logging, then log entry includes event_type="state_persisted", context with game_id, file_path, file_size_bytes
+- Given error occurs, when logging ERROR or CRITICAL, then log entry includes full stack_trace in error.stack_trace field
+- Given log entry created, when writing log, then log entry is valid JSON, all required fields present, timestamp is ISO 8601 format
+
+**Acceptance Criteria for Metrics**:
+- Given agent completes execution, when collecting metrics, then agent_execution_time_ms metric is recorded with agent label, execution_time_ms value
+- Given LLM API call completes, when collecting metrics, then llm_api_calls_total counter is incremented with provider, model, status labels
+- Given game completes, when collecting metrics, then games_total counter is incremented with outcome label
+- Given metrics endpoint called, when GET /metrics, then returns Prometheus-format metrics or JSON-format metrics (based on Accept header)
+- Given metrics collected, when exporting, then all metrics include timestamp, labels are valid (no special characters), values are numeric
+
 ### Agent Metrics
 
 **Per-Agent Tracking**:
-- Execution time (min, max, average)
+- Execution time (min, max, average, p95, p99)
 - Success/failure rate
 - LLM call count
-- Token usage
+- Token usage (input, output, total)
 - Error count and types
 
 **Aggregation**: Metrics aggregated per agent, per game, and system-wide.
@@ -3836,6 +4169,8 @@ CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & streamli
 - Win/loss/draw statistics
 - Average move time
 - Agent pipeline success rate
+- Total cost (USD)
+- Total tokens used
 
 ### System Metrics
 
@@ -3845,12 +4180,13 @@ CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & streamli
 - Resource usage (CPU, memory)
 - API request rates
 - Error rates
+- LLM provider usage distribution
 
 ### Metrics Display
 
 **Metrics Dashboard**: Real-time metrics display with charts and tables.
 
-**API Endpoints**: Metrics available via REST API for external monitoring.
+**API Endpoints**: Metrics available via REST API for external monitoring (`GET /metrics` for Prometheus format, `GET /api/metrics` for JSON format).
 
 **Logging**: Metrics logged to files for historical analysis.
 
