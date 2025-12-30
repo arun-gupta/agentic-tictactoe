@@ -148,8 +148,8 @@ Features marked as non-goals may be reconsidered in future versions if there is 
 
 **Acceptance Criteria:**
 - Given row=0, col=0, when Position is created, then position is valid
-- Given row=3, col=0, when Position is created, then validation error `ERR_POSITION_OUT_OF_BOUNDS` is raised
-- Given row=-1, col=0, when Position is created, then validation error `ERR_POSITION_OUT_OF_BOUNDS` is raised
+- Given row=3, col=0, when Position is created, then validation error `E_POSITION_OUT_OF_BOUNDS` is raised
+- Given row=-1, col=0, when Position is created, then validation error `E_POSITION_OUT_OF_BOUNDS` is raised
 - Given Position(row=1, col=2), when hashed, then produces consistent hash value for use in dictionaries/sets
 - Given Position(row=1, col=2) and Position(row=1, col=2), when compared, then positions are equal
 
@@ -157,13 +157,13 @@ Features marked as non-goals may be reconsidered in future versions if there is 
 
 **Acceptance Criteria:**
 - Given a 3x3 board structure, when Board is created, then board is valid
-- Given a 2x2 board structure, when Board is created, then validation error `ERR_INVALID_BOARD_SIZE` is raised
-- Given a 4x4 board structure, when Board is created, then validation error `ERR_INVALID_BOARD_SIZE` is raised
+- Given a 2x2 board structure, when Board is created, then validation error `E_INVALID_BOARD_SIZE` is raised
+- Given a 4x4 board structure, when Board is created, then validation error `E_INVALID_BOARD_SIZE` is raised
 - Given Board with empty cells, when `get_empty_positions()` is called, then returns list of all (row, col) tuples where cell is empty
 - Given Board with all cells occupied, when `get_empty_positions()` is called, then returns empty list
 - Given Position(1, 1) and symbol 'X', when `set_cell(position, 'X')` is called, then cell at (1, 1) contains 'X'
 - Given Position(1, 1), when `get_cell(position)` is called, then returns current symbol ('X', 'O', or EMPTY)
-- Given Position(3, 3), when `get_cell(position)` is called, then raises error `ERR_POSITION_OUT_OF_BOUNDS`
+- Given Position(3, 3), when `get_cell(position)` is called, then raises error `E_POSITION_OUT_OF_BOUNDS`
 - Given Position(1, 1) with no symbol set, when `is_empty(position)` is called, then returns True
 - Given Position(1, 1) with 'X' set, when `is_empty(position)` is called, then returns False
 
@@ -188,7 +188,7 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 - Given GameState with all 9 cells occupied and no winner, when game state is evaluated, then `is_game_over=True` and `is_draw=True`
 - Given GameState with 5 moves and no winner, when game state is evaluated, then `is_game_over=False`
 - Given GameState with player='X', when `get_opponent()` is called, then returns 'O'
-- Given invalid board (size ≠ 3x3), when GameState is created, then validation error `ERR_INVALID_BOARD_SIZE` is raised
+- Given invalid board (size ≠ 3x3), when GameState is created, then validation error `E_INVALID_BOARD_SIZE` is raised
 
 ### Agent Domain Models
 
@@ -207,7 +207,7 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 - Given opponent has two O's in row 0 with position (0,2) empty, when Threat is created, then `position=(0,2)`, `line_type='row'`, `line_index=0`, `severity='critical'`
 - Given opponent has two O's in column 1, when Threat is created, then `line_type='column'` and `line_index=1`
 - Given opponent has two O's on main diagonal, when Threat is created, then `line_type='diagonal'` and `line_index=0`
-- Given threat with invalid position (3, 3), when Threat is created, then validation error `ERR_POSITION_OUT_OF_BOUNDS` is raised
+- Given threat with invalid position (3, 3), when Threat is created, then validation error `E_POSITION_OUT_OF_BOUNDS` is raised
 
 **Opportunity**: Represents a winning opportunity where AI can win on this move. Opportunity MUST contain: position (Position object), line_type (string: 'row', 'column', or 'diagonal'), line_index (integer 0-2), confidence (float 0.0 to 1.0).
 
@@ -223,8 +223,8 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 **Acceptance Criteria:**
 - Given AI has two X's in row 1 with position (1,2) empty, when Opportunity is created, then `position=(1,2)`, `line_type='row'`, `line_index=1`, `confidence=1.0`
 - Given AI has one X in center with corners available, when Opportunity is created for fork, then `confidence >= 0.7`
-- Given confidence value 1.5, when Opportunity is created, then validation error `ERR_INVALID_CONFIDENCE` is raised (must be 0.0-1.0)
-- Given confidence value -0.1, when Opportunity is created, then validation error `ERR_INVALID_CONFIDENCE` is raised
+- Given confidence value 1.5, when Opportunity is created, then validation error `E_INVALID_CONFIDENCE` is raised (must be 0.0-1.0)
+- Given confidence value -0.1, when Opportunity is created, then validation error `E_INVALID_CONFIDENCE` is raised
 
 **Strategic Move**: A position recommendation with position, move type (center/corner/edge/fork/block_fork), priority (1-10 numeric value), and reasoning (required string explanation).
 
@@ -241,8 +241,8 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 - Given empty board, when StrategicMove for center is created, then `position=(1,1)`, `move_type='center'`, `priority >= 8`
 - Given move_type='corner', when StrategicMove is created, then position is one of: (0,0), (0,2), (2,0), (2,2)
 - Given move_type='edge', when StrategicMove is created, then position is one of: (0,1), (1,0), (1,2), (2,1)
-- Given priority value 11, when StrategicMove is created, then validation error `ERR_INVALID_PRIORITY` is raised (must be 1-10)
-- Given priority value 0, when StrategicMove is created, then validation error `ERR_INVALID_PRIORITY` is raised
+- Given priority value 11, when StrategicMove is created, then validation error `E_INVALID_PRIORITY` is raised (must be 1-10)
+- Given priority value 0, when StrategicMove is created, then validation error `E_INVALID_PRIORITY` is raised
 
 **Board Analysis**: Scout agent output containing:
 - List of threats
@@ -268,7 +268,7 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 - Given empty board (move 0-2), when BoardAnalysis is created, then `game_phase='opening'`
 - Given board with 3-6 moves, when BoardAnalysis is created, then `game_phase='midgame'`
 - Given board with 7-9 moves, when BoardAnalysis is created, then `game_phase='endgame'`
-- Given board evaluation score 1.5, when BoardAnalysis is created, then validation error `ERR_INVALID_EVAL_SCORE` is raised (must be -1.0 to 1.0)
+- Given board evaluation score 1.5, when BoardAnalysis is created, then validation error `E_INVALID_EVAL_SCORE` is raised (must be -1.0 to 1.0)
 - Given favorable board for AI, when BoardAnalysis is created, then `board_evaluation_score > 0.0`
 - Given favorable board for opponent, when BoardAnalysis is created, then `board_evaluation_score < 0.0`
 - Given balanced board, when BoardAnalysis is created, then `board_evaluation_score ≈ 0.0` (within ±0.2)
@@ -308,10 +308,10 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 
 **Acceptance Criteria:**
 - Given position (1,1), priority IMMEDIATE_WIN, confidence 1.0, when MoveRecommendation is created, then recommendation is valid
-- Given confidence value 1.5, when MoveRecommendation is created, then validation error `ERR_INVALID_CONFIDENCE` is raised (must be 0.0-1.0)
-- Given confidence value -0.1, when MoveRecommendation is created, then validation error `ERR_INVALID_CONFIDENCE` is raised
-- Given invalid position (3,3), when MoveRecommendation is created, then validation error `ERR_POSITION_OUT_OF_BOUNDS` is raised
-- Given priority IMMEDIATE_WIN and empty reasoning, when MoveRecommendation is created, then validation error `ERR_MISSING_REASONING` is raised
+- Given confidence value 1.5, when MoveRecommendation is created, then validation error `E_INVALID_CONFIDENCE` is raised (must be 0.0-1.0)
+- Given confidence value -0.1, when MoveRecommendation is created, then validation error `E_INVALID_CONFIDENCE` is raised
+- Given invalid position (3,3), when MoveRecommendation is created, then validation error `E_POSITION_OUT_OF_BOUNDS` is raised
+- Given priority IMMEDIATE_WIN and empty reasoning, when MoveRecommendation is created, then validation error `E_MISSING_REASONING` is raised
 - Given high-priority move (IMMEDIATE_WIN), when comparing with low-priority move (EDGE_PLAY), then high-priority move ranks higher
 
 **Strategy**: Strategist output containing:
@@ -334,9 +334,9 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 - Given alternatives with priorities [80, 50, 40], when Strategy is created, then alternatives list is sorted [80, 50, 40] (descending)
 - Given alternatives with priorities [40, 80, 50], when Strategy is created, then alternatives list is sorted [80, 50, 40] (descending)
 - Given risk_assessment='low', when Strategy is created, then risk_assessment is 'low'
-- Given risk_assessment='invalid', when Strategy is created, then validation error `ERR_INVALID_RISK_LEVEL` is raised (must be low/medium/high)
+- Given risk_assessment='invalid', when Strategy is created, then validation error `E_INVALID_RISK_LEVEL` is raised (must be low/medium/high)
 - Given empty alternatives list and primary move, when Strategy is created, then strategy is valid (alternatives optional)
-- Given no primary move, when Strategy is created, then validation error `ERR_MISSING_PRIMARY_MOVE` is raised
+- Given no primary move, when Strategy is created, then validation error `E_MISSING_PRIMARY_MOVE` is raised
 
 **Move Execution**: Executor output with position, success status, validation errors, execution time, reasoning, and actual priority used.
 
@@ -353,11 +353,11 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 
 **Acceptance Criteria:**
 - Given valid move execution, when MoveExecution is created, then success=True, validation_errors=empty list
-- Given invalid move (cell occupied), when MoveExecution is created, then success=False, validation_errors contains `ERR_CELL_OCCUPIED`
-- Given invalid move (out of bounds), when MoveExecution is created, then success=False, validation_errors contains `ERR_POSITION_OUT_OF_BOUNDS`
+- Given invalid move (cell occupied), when MoveExecution is created, then success=False, validation_errors contains `E_CELL_OCCUPIED`
+- Given invalid move (out of bounds), when MoveExecution is created, then success=False, validation_errors contains `E_POSITION_OUT_OF_BOUNDS`
 - Given multiple validation errors, when MoveExecution is created, then validation_errors list contains all error codes
 - Given execution time 1234ms, when MoveExecution is created, then execution_time_ms=1234
-- Given negative execution time, when MoveExecution is created, then validation error `ERR_INVALID_EXECUTION_TIME` is raised
+- Given negative execution time, when MoveExecution is created, then validation error `E_INVALID_EXECUTION_TIME` is raised
 - Given priority used differs from recommended, when MoveExecution is created, then actual_priority_used reflects priority that was executed
 
 ### Result Wrappers
@@ -388,11 +388,11 @@ AgentResult MUST provide factory methods: `AgentResult.success(data, execution_t
 - Given successful agent output with data, when AgentResult.success() is called, then success=True, error_message=None, data is populated
 - Given failed agent execution, when AgentResult.error() is called, then success=False, error_message is populated, data=None
 - Given execution time 2500ms, when AgentResult is created, then execution_time_ms=2500
-- Given negative execution time, when AgentResult is created, then validation error `ERR_INVALID_EXECUTION_TIME` is raised
+- Given negative execution time, when AgentResult is created, then validation error `E_INVALID_EXECUTION_TIME` is raised
 - Given timestamp, when AgentResult is created, then timestamp is ISO 8601 format (e.g., "2025-01-15T10:30:00Z")
 - Given metadata dictionary {"model": "gpt-4o", "provider": "openai"}, when AgentResult is created, then metadata contains both key-value pairs
-- Given success result without data, when AgentResult.success() is called, then validation error `ERR_MISSING_DATA` is raised
-- Given error result without error_message, when AgentResult.error() is called, then validation error `ERR_MISSING_ERROR_MESSAGE` is raised
+- Given success result without data, when AgentResult.success() is called, then validation error `E_MISSING_DATA` is raised
+- Given error result without error_message, when AgentResult.error() is called, then validation error `E_MISSING_ERROR_MESSAGE` is raised
 
 ---
 
@@ -479,7 +479,7 @@ The following domain models have formal JSON Schema (OpenAPI 3.1) definitions fo
 - Given board with 3-6 moves, when Scout.analyze() is called, then game_phase='midgame'
 - Given board with 7-9 moves, when Scout.analyze() is called, then game_phase='endgame'
 - Given LLM timeout (>5s), when Scout.analyze() is called, then returns rule-based BoardAnalysis (fallback)
-- Given invalid board (size ≠ 3x3), when Scout.analyze() is called, then returns AgentResult.error() with code `ERR_INVALID_BOARD`
+- Given invalid board (size ≠ 3x3), when Scout.analyze() is called, then returns AgentResult.error() with code `E_INVALID_BOARD_SIZE`
 - Given favorable AI board position, when Scout.analyze() is called, then board_evaluation_score > 0.0
 - Given execution time, when Scout.analyze() completes, then AgentResult.execution_time_ms is recorded
 
@@ -515,9 +515,9 @@ The following domain models have formal JSON Schema (OpenAPI 3.1) definitions fo
 
 **Acceptance Criteria:**
 - Given Strategy with valid move (empty cell, in bounds), when Executor.execute() is called, then returns MoveExecution with success=True
-- Given Strategy with occupied cell move, when Executor.execute() is called, then returns MoveExecution with success=False, validation_errors contains `ERR_CELL_OCCUPIED`
-- Given Strategy with out-of-bounds move (3,3), when Executor.execute() is called, then returns MoveExecution with success=False, validation_errors contains `ERR_POSITION_OUT_OF_BOUNDS`
-- Given Strategy with game-over state, when Executor.execute() is called, then returns MoveExecution with success=False, validation_errors contains `ERR_GAME_OVER`
+- Given Strategy with occupied cell move, when Executor.execute() is called, then returns MoveExecution with success=False, validation_errors contains `E_CELL_OCCUPIED`
+- Given Strategy with out-of-bounds move (3,3), when Executor.execute() is called, then returns MoveExecution with success=False, validation_errors contains `E_POSITION_OUT_OF_BOUNDS`
+- Given Strategy with game-over state, when Executor.execute() is called, then returns MoveExecution with success=False, validation_errors contains `E_GAME_ALREADY_OVER`
 - Given multiple validation errors, when Executor.execute() is called, then MoveExecution.validation_errors contains all error codes
 - Given execution time, when Executor.execute() completes, then MoveExecution.execution_time_ms is recorded
 - Given valid move execution, when Executor.execute() completes, then MoveExecution.actual_priority_used matches Strategy.primary_move.priority
@@ -1376,7 +1376,7 @@ A move at position (row, col) by player P is legal if and only if ALL of the fol
 - Given Board[1][1]=X, when attempting move at (1,1), then error=`E_CELL_OCCUPIED`
 - Given IsGameOver=true, when attempting move, then error=`E_GAME_ALREADY_OVER`
 - Given player='Z', when validating move, then error=`E_INVALID_PLAYER`
-- Given CurrentPlayer=X and attempting move with player=O, when validating move, then error=`WRONG_TURN`
+- Given CurrentPlayer=X and attempting move with player=O, when validating move, then error=`E_INVALID_TURN`
 - Given row=1, col=1, Board[1][1]=EMPTY, IsGameOver=false, player=CurrentPlayer, when validating move, then move is legal (no error)
 - Given all 6 invariants satisfied, when validating move, then returns success and allows move execution
 
@@ -1419,7 +1419,7 @@ IF MoveCount is odd THEN CurrentPlayer MUST be O
 - Given MoveCount=4 (even), when verifying turn, then CurrentPlayer=X
 - Given MoveCount=5 (odd), when verifying turn, then CurrentPlayer=O
 - Given valid move by CurrentPlayer, when move completes, then CurrentPlayer switches to opponent
-- Given X attempts move when CurrentPlayer=O, when validating turn, then error=`WRONG_TURN`
+- Given X attempts move when CurrentPlayer=O, when validating turn, then error=`E_INVALID_TURN`
 
 #### Game Termination Conditions
 
@@ -1454,13 +1454,13 @@ A valid game state must satisfy ALL of the following:
 8. **No Post-Termination Moves**: IF IsGameOver = true on move N THEN no symbols placed after move N
 
 **Acceptance Criteria:**
-- Given count(X)=5 and count(O)=3, when validating state, then error=`ERR_INVALID_SYMBOL_BALANCE` (|5-3|=2 > 1)
+- Given count(X)=5 and count(O)=3, when validating state, then error=`E_INVALID_SYMBOL_BALANCE` (|5-3|=2 > 1)
 - Given count(X)=3 and count(O)=3, when validating state, then CurrentPlayer must be X
 - Given count(X)=4 and count(O)=3, when validating state, then CurrentPlayer must be O
-- Given count(X)=3, count(O)=3, CurrentPlayer=O, when validating state, then error=`ERR_INVALID_TURN_ORDER`
-- Given board with X winning line and O winning line, when validating state, then error=`ERR_MULTIPLE_WINNERS`
+- Given count(X)=3, count(O)=3, CurrentPlayer=O, when validating state, then error=`E_INVALID_TURN`
+- Given board with X winning line and O winning line, when validating state, then error=`E_MULTIPLE_WINNERS`
 - Given winner=X detected, when validating state, then IsGameOver must be true
-- Given winner=X and IsGameOver=false, when validating state, then error=`ERR_WIN_NOT_FINALIZED`
+- Given winner=X and IsGameOver=false, when validating state, then error=`E_WIN_NOT_FINALIZED`
 - Given MoveCount=9 and no winner, when validating state, then Winner must be DRAW
 - Given IsGameOver=true on move 5 with winner=X, when checking board, then symbols at moves 6-9 must not exist
 - Given valid state satisfying all 8 rules, when validating state, then validation passes with no errors
@@ -1699,8 +1699,8 @@ interface AgentService {
 - Given no configuration set, when GET /api/config/models, then returns 200 with default configuration from Section 9
 - Given when GET /api/config/models/available, then returns 200 with list of available models grouped by provider (OpenAI, Anthropic, Google)
 - Given valid ModelConfigRequest, when POST /api/config/models, then returns 200 with updated configuration and warning about game reset
-- Given invalid provider name, when POST /api/config/models, then returns 400 with error `ERR_INVALID_PROVIDER`
-- Given invalid model name for provider, when POST /api/config/models, then returns 400 with error `ERR_INVALID_MODEL`
+- Given invalid provider name, when POST /api/config/models, then returns 400 with error `E_INVALID_PROVIDER`
+- Given invalid model name for provider, when POST /api/config/models, then returns 400 with error `E_INVALID_MODEL`
 - Given active game in progress, when POST /api/config/models, then returns 409 Conflict with message "Game reset required"
 
 ### Request/Response Models
@@ -1757,14 +1757,13 @@ All error codes MUST be defined as enum values. Error codes are organized by cat
 **Game State Errors**:
 - `E_GAME_NOT_FOUND` - No active game exists (404)
 - `E_STATE_CORRUPTED` - Game state is invalid or corrupted
-- `E_INVALID_BOARD_SIZE` - Board size is not 3x3
+- `E_INVALID_BOARD_SIZE` - Board size is not 3x3 (used for both game state and domain model validation)
 - `E_INVALID_SYMBOL_BALANCE` - Symbol count imbalance (|count(X) - count(O)| > 1)
 - `E_MULTIPLE_WINNERS` - Both players have winning lines (invalid state)
 - `E_WIN_NOT_FINALIZED` - Winner set but IsGameOver=false (invalid state)
 
 **Domain Model Validation Errors**:
 - `E_POSITION_OUT_OF_BOUNDS` - Position coordinates out of valid range (0-2)
-- `E_INVALID_BOARD_SIZE` - Board size validation failed
 - `E_INVALID_CONFIDENCE` - Confidence value not in range 0.0-1.0
 - `E_INVALID_PRIORITY` - Priority value not in range 1-10
 - `E_INVALID_EVAL_SCORE` - Board evaluation score not in range -1.0 to 1.0
@@ -3542,7 +3541,7 @@ results = duckdb.query("""
 - Given API request with special characters in move reasoning, when storing, then escapes SQL special characters to prevent SQL injection
 - Given API request with position values, when validating, then enforces type safety (integers only, range 0-2)
 - Given malformed JSON in request body, when parsing, then returns 422 Unprocessable Entity without processing
-- Given API request with overly long strings (>10KB), when validating, then rejects with error `ERR_INPUT_TOO_LARGE`
+- Given API request with overly long strings (>10KB), when validating, then rejects with error `E_API_MALFORMED` (input exceeds maximum size)
 - Given API request with null values in required fields, when validating, then returns 400 Bad Request with specific missing field names
 
 **Rate Limiting**: Limit API request rates, prevent abuse, implement per-user limits if multi-user.
@@ -3557,7 +3556,7 @@ results = duckdb.query("""
 
 **Acceptance Criteria for Authentication:**
 - Given unauthenticated user accessing protected endpoint, when checking auth, then returns 401 Unauthorized
-- Given authenticated user with expired session token, when validating session, then returns 401 with error `ERR_SESSION_EXPIRED`
+- Given authenticated user with expired session token, when validating session, then returns 401 Unauthorized (authentication-related errors use standard HTTP 401 without specific error code in this specification)
 - Given user attempts to access another user's game, when checking authorization, then returns 403 Forbidden
 - Given failed login attempt, when logging, then records failed_login event with timestamp, username, ip_address (no password logged)
 
@@ -3568,8 +3567,8 @@ results = duckdb.query("""
 **Acceptance Criteria for API Key Management:**
 - Given API key stored in code, when code review or security scan runs, then fails with error "API keys must be in environment variables"
 - Given API key in environment variable, when application starts, then loads key without logging full key value (log only last 4 characters)
-- Given missing required API key (OpenAI/Anthropic/Google), when starting application, then raises error `ERR_MISSING_API_KEY` with provider name
-- Given invalid API key format (not matching provider pattern), when validating, then returns error `ERR_INVALID_API_KEY_FORMAT` before making LLM call
+- Given missing required API key (OpenAI/Anthropic/Google), when starting application, then raises error `E_CONFIG_ERROR` with provider name
+- Given invalid API key format (not matching provider pattern), when validating, then returns error `E_LLM_AUTH_ERROR` before making LLM call
 - Given API key exposed in logs, when log sanitization runs, then replaces API key with "[REDACTED-****XXXX]" showing only last 4 characters
 - Given production environment, when deploying, then uses secrets management service (AWS Secrets Manager, HashiCorp Vault, etc.) not plain env vars
 
@@ -3579,7 +3578,7 @@ results = duckdb.query("""
 - Given game state received from client, when validating, then verifies state matches server-side authoritative state
 - Given client attempts to modify game_id, when processing request, then ignores client-provided game_id and uses server session game_id
 - Given game state change, when persisting, then logs state change with: timestamp, previous_state_hash, new_state_hash, move_made, player
-- Given state validation detects tampering (invalid move history, impossible board), when detected, then rejects state and returns error `ERR_STATE_TAMPERING`
+- Given state validation detects tampering (invalid move history, impossible board), when detected, then rejects state and returns error `E_STATE_CORRUPTED`
 - Given checksum mismatch between client and server state, when detected, then forces state sync from server (server is source of truth)
 
 **Agent Communication**: If using MCP over network, use HTTPS, validate MCP protocol messages, prevent unauthorized agent access.
@@ -3588,7 +3587,7 @@ results = duckdb.query("""
 - Given MCP connection over network, when establishing connection, then enforces HTTPS/TLS (reject HTTP connections)
 - Given MCP message received, when parsing, then validates message signature/checksum to prevent message tampering
 - Given MCP agent request without valid authentication token, when checking auth, then returns 401 Unauthorized and closes connection
-- Given MCP message with unexpected format, when parsing, then returns error `ERR_INVALID_MCP_MESSAGE` and logs security event
+- Given MCP message with unexpected format, when parsing, then returns error `E_MCP_CONN_FAILED` and logs security event
 - Given multiple failed authentication attempts to MCP server, when threshold exceeded (3 failures), then temporarily blocks client IP for 5 minutes
 
 ---
