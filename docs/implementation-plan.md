@@ -19,9 +19,34 @@
 - **pytest-asyncio** - Async test support
 
 **LLM Integration:**
-- **LiteLLM** - Unified interface for multiple LLM providers (OpenAI, Anthropic, Google)
-- **openai** - OpenAI SDK (for direct integration)
-- **anthropic** - Anthropic SDK (for direct integration)
+- **Pydantic AI** - Selected framework for this implementation (see rationale below)
+- See Section 19 for comprehensive framework comparison and alternatives
+- **openai** - OpenAI SDK (used by Pydantic AI for OpenAI provider)
+- **anthropic** - Anthropic SDK (used by Pydantic AI for Anthropic provider)
+- **google-generativeai** - Google SDK (used by Pydantic AI for Google Gemini provider)
+
+**Framework Selection Rationale** (based on Section 19 guidance):
+
+This implementation uses **Pydantic AI** for the following reasons (per Section 19 recommendations for this project):
+
+1. **Type-Safe Agent Workflows**: This project uses three specialized agents (Scout, Strategist, Executor) with defined workflows. Pydantic AI provides agent workflow abstractions that align well with this architecture.
+
+2. **Pydantic Integration**: The project extensively uses Pydantic v2 for domain models (Section 2). Pydantic AI is built by the Pydantic team and provides excellent integration with existing Pydantic models, enabling seamless type-safe structured outputs.
+
+3. **Balanced Features**: Pydantic AI offers a good balance - more agent abstractions than Instructor (which focuses only on structured outputs), but lighter weight than LangChain (which may be overkill for this use case).
+
+4. **Multi-Provider Support**: Pydantic AI supports multiple LLM providers (OpenAI, Anthropic, Google Gemini) as required by the specification.
+
+5. **Modern Python**: Clean, modern API design that fits well with FastAPI and Python 3.11+ stack.
+
+**Alternative Considered**: Instructor + LiteLLM/Direct SDKs was also recommended in Section 19. Instructor was considered for maximum type safety with minimal overhead. However, Pydantic AI was selected because:
+
+- **Agent Definitions**: Pydantic AI provides `Agent` as a first-class concept, making it easier to define reusable agent components (Scout, Strategist) with clear interfaces
+- **Structured Outputs Built-In**: While Instructor focuses solely on structured outputs, Pydantic AI combines structured outputs with agent abstractions, providing a more complete solution
+- **Simpler Implementation**: With Pydantic AI, agents are defined as `Agent` instances with response models, reducing boilerplate compared to using Instructor + manual agent coordination code
+- **Future Extensibility**: If agent-to-agent communication patterns evolve beyond the coordinator pattern, Pydantic AI's agent abstractions provide a foundation for more complex workflows
+
+Note: This project uses a coordinator pattern (Section 3) where agents don't directly communicate - the coordinator orchestrates the pipeline. Pydantic AI's agent abstractions still provide value through cleaner agent definitions and structured outputs, even with coordinator-based orchestration.
 
 **Type Safety:**
 - **mypy** - Static type checker
@@ -937,37 +962,54 @@ pre-commit install --overwrite
 - Implement using Google SDK
 - Support models: gemini-1.5-pro, gemini-1.5-flash
 
-**5.1.5. LiteLLM Unified Provider** (recommended)
-- Use `litellm` for unified interface
-- Automatically supports all providers
-- Simpler error handling
+**5.1.5. Pydantic AI Implementation**
+
+**Framework Selected**: **Pydantic AI** (see Technology Stack section for selection rationale based on Section 19)
+
+**Implementation Approach**:
+- Use Pydantic AI's `Agent` class for type-safe agent definitions
+- Define agents (Scout, Strategist) using Pydantic AI with Pydantic response models
+- Use Pydantic AI's multi-provider support (OpenAI, Anthropic, Google Gemini)
+- Leverage Pydantic AI's structured output validation for domain models (BoardAnalysis, Strategy)
+- Use Pydantic AI's error handling and retry mechanisms
+
+**Key Pydantic AI Features Used**:
+- Type-safe agent definitions with Pydantic response models
+- Automatic validation of LLM outputs against domain models
+- Multi-provider support via provider configuration
+- Built-in error handling and retry logic
+- Agent workflow abstractions for Scout → Strategist coordination
+
+**Note**: See Section 19 for comprehensive framework comparison. While Pydantic AI is selected for this implementation, the abstraction layer allows switching frameworks if needed (per Section 19 implementation strategy).
 
 **Test Coverage**: LLM Provider Abstraction (Section 16)
 - Provider interface contract validation
 - OpenAI provider implementation (model support, error handling, retries)
 - Anthropic provider implementation (model support, error handling)
 - Google Gemini provider implementation (model support, error handling)
-- LiteLLM unified provider (multi-provider support)
+- Pydantic AI structured output validation against domain models
 - Error handling and retry logic
 - Token usage and latency tracking
 
 **Test Files**: `tests/unit/llm/test_providers.py`
 
-#### 5.2. Agent LLM Integration
+#### 5.2. Agent LLM Integration with Pydantic AI
 
-**Spec Reference**: Section 16.3 - LLM Usage Patterns
+**Spec Reference**: Section 16.3 - LLM Usage Patterns, Section 19 (Pydantic AI framework)
 
-**5.2.1. Scout LLM Enhancement**
-- Add LLM call for strategic analysis
-- Prompt engineering: "Analyze this Tic-Tac-Toe board..."
-- Parse LLM response into `BoardAnalysis`
+**5.2.1. Scout LLM Enhancement (Pydantic AI)**
+- Create Pydantic AI Agent with `BoardAnalysis` as response model
+- Define prompt: "Analyze this Tic-Tac-Toe board..."
+- Use Pydantic AI's structured output to automatically validate response against `BoardAnalysis` domain model
+- Leverage Pydantic AI's built-in error handling and retry logic
 - Fallback to rule-based if LLM fails/times out
 - Update `src/agents/scout.py`
 
-**5.2.2. Strategist LLM Enhancement**
-- Add LLM call for move recommendation
-- Prompt engineering: "Given this analysis, recommend best move..."
-- Parse LLM response into `Strategy`
+**5.2.2. Strategist LLM Enhancement (Pydantic AI)**
+- Create Pydantic AI Agent with `Strategy` as response model
+- Define prompt: "Given this analysis, recommend best move..."
+- Use Pydantic AI's structured output to automatically validate response against `Strategy` domain model
+- Leverage Pydantic AI's built-in error handling and retry logic
 - Fallback to priority-based selection if LLM fails
 - Update `src/agents/strategist.py`
 
@@ -1049,7 +1091,8 @@ GOOGLE_API_KEY=...
 - ✅ Comprehensive test coverage for LLM integration (provider abstraction, agent integration, configuration, metrics)
 
 **Spec References:**
-- Section 16: LLM Integration
+- Section 16: LLM Integration (provider and model configuration)
+- Section 19: LLM Framework Selection (comprehensive framework comparison and recommendations)
 - Section 16.3: LLM Usage Patterns
 - Section 12.1: LLM Provider Metadata
 
