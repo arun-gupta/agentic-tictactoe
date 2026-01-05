@@ -38,7 +38,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     
     # Logging
-    "pythonjsonlogger>=2.0.0",
+    "python-json-logger>=2.0.0",
 ]
 
 [project.optional-dependencies]
