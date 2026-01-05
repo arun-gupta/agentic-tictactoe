@@ -2121,7 +2121,7 @@ This section defines **what** the UI must do (functional requirements). Visual d
 
 **US-020: Select Agent Mode**
 - **AC-US020.1**: As a player, I MUST be able to toggle between local mode and distributed MCP mode
-- **AC-US020.2**: As a player, I MUST be able to select LLM framework (LangChain, LiteLLM, Instructor, Direct SDKs)
+- **AC-US020.2**: As a player, I MUST be able to select LLM framework (see Section 19 for available options)
 
 **US-021: Configure Game Settings**
 - **AC-US021.1**: As a player, I MUST be able to reset the game
@@ -2590,7 +2590,7 @@ Note: Domain models must be strongly-typed with runtime validation. Implementati
 - executor_mcp: Executor with MCP protocol support
 - base_mcp_agent: Base class for MCP protocol support
 
-Note: Agents use an LLM framework abstraction layer that supports multiple providers. LLM framework choice (LangChain, LiteLLM, Instructor, Direct SDKs) determines the multi-provider abstraction implementation - see Section 19.
+Note: Agents use an LLM framework abstraction layer that supports multiple providers. LLM framework choice determines the multi-provider abstraction implementation. See Section 19 for framework options and selection guidance.
 
 **game/**: Game logic:
 - engine: Core game rules and state management
@@ -3638,7 +3638,7 @@ The following are example technology stacks. Any stack meeting the requirements 
 - **Requirements Met**: Web-based interface, API client, interactive components
 
 **LLM Integration:**
-- See Section 19 for framework options (LangChain, LiteLLM, Direct SDKs, etc.)
+- See Section 19 for framework options and selection guidance
 - Any framework supporting multiple LLM providers
 - **Requirements Met**: Multi-provider support, hot-swapping, connection pooling
 
@@ -3688,11 +3688,11 @@ This section provides a complete, opinionated Python technology stack for rapid 
 - Built-in components for metrics and charts
 - Easy integration with FastAPI backend
 
-**LLM Integration**: Instructor + Direct SDKs
+**LLM Integration**: See Section 19 for framework options and selection guidance
+- Recommended: Instructor + Direct SDKs or Pydantic AI for type-safe architectures
 - Type-safe LLM responses using Pydantic models
 - Works with OpenAI, Anthropic, Google SDKs
 - Automatic retry and validation
-- See Section 19 for details
 
 **Testing**: pytest + pytest-asyncio + pytest-cov
 - Async test support
@@ -3882,7 +3882,7 @@ CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & streamli
 
 **Advantages:**
 - **Rapid Development**: Streamlit enables quick UI prototyping
-- **LLM Ecosystem**: Best-in-class LLM libraries (LangChain, Instructor, SDKs)
+- **LLM Ecosystem**: Best-in-class LLM libraries (see Section 19 for options)
 - **Type Safety**: Pydantic provides runtime validation + type hints
 - **Async Support**: Native async/await for agent coordination
 - **Data Science**: Excellent for metrics and analytics
@@ -3935,7 +3935,7 @@ CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & streamli
 
 ### Mode 1: Local (Fast)
 
-**Description**: In-process agent execution using an LLM framework with shared connection pooling. No MCP protocol overhead. The LLM framework (LangChain, LiteLLM, Instructor, or Direct SDKs - see Section 19) provides multi-provider support, allowing LLM provider switching via configuration.
+**Description**: In-process agent execution using an LLM framework with shared connection pooling. No MCP protocol overhead. The LLM framework (see Section 19 for options) provides multi-provider support, allowing LLM provider switching via configuration.
 
 **Characteristics**:
 - Fast execution (< 1 second per move)
@@ -3972,7 +3972,7 @@ CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 & streamli
 
 ## 16. LLM Integration
 
-**Note**: This section describes LLM provider and model configuration. For LLM framework selection (LangChain, LiteLLM, Instructor, Direct SDKs), see Section 19: Implementation Choices.
+**Note**: This section describes LLM provider and model configuration. For LLM framework selection guidance, see Section 19: Implementation Choices.
 
 ### Supported Providers
 
@@ -4265,7 +4265,17 @@ For single-machine deployments with co-located agents, the local mode provides b
 
 ### LLM Integration Framework Options
 
-Multiple LLM integration framework options exist with different trade-offs:
+This section provides guidance for choosing between LLM integration frameworks: LangChain, LiteLLM, Instructor, Pydantic AI, and Direct SDKs. Each framework has different strengths and trade-offs.
+
+**Decision Criteria**:
+
+When choosing an LLM framework, consider:
+1. **Type Safety**: Does the framework support strongly-typed, validated outputs?
+2. **Multi-Provider Support**: Can you switch between OpenAI, Anthropic, Google Gemini easily?
+3. **Framework Weight**: What is the performance overhead and dependency footprint?
+4. **Ecosystem**: What tools, integrations, and community support are available?
+5. **Agent Workflows**: Does the framework support complex agent patterns or is it focused on simple calls?
+6. **Production Readiness**: Is it suitable for production deployments with error handling and observability?
 
 **Option 1: LangChain**
 
@@ -4277,12 +4287,14 @@ Multiple LLM integration framework options exist with different trade-offs:
 - Chain abstractions for agent workflows
 - Prompt management and templates
 - MCP integration available
+- Extensive tooling and integrations
 
 **Cons**:
 - Heavy framework with abstraction layers
 - Performance overhead from middleware
 - Frequent API changes between versions
 - May be overkill for simple LLM calls
+- Steep learning curve for advanced features
 
 **Best for**: Rapid prototyping, complex agent workflows, projects requiring LangChain ecosystem tools.
 
@@ -4296,15 +4308,58 @@ Multiple LLM integration framework options exist with different trade-offs:
 - Drop-in replacement pattern
 - Minimal overhead
 - Good for multi-model testing
+- Simple API
 
 **Cons**:
 - Fewer features than LangChain
 - Smaller ecosystem
 - Limited agent workflow abstractions
+- Basic structured output support
 
-**Best for**: Multi-provider support without framework weight, performance-sensitive applications.
+**Best for**: Multi-provider support without framework weight, performance-sensitive applications, simple LLM call patterns.
 
-**Option 3: Direct SDK Calls**
+**Option 3: Instructor (Type-Safe Structured Outputs)**
+
+**Description**: Type-safe structured outputs from LLMs using strongly-typed domain models (Pydantic).
+
+**Pros**:
+- Perfect fit for strongly-typed architectures
+- Type-safe LLM responses validated against domain models (Pydantic)
+- Works with multiple providers (OpenAI, Anthropic, Google via LiteLLM)
+- Automatic retry and validation
+- Clean, minimal API
+- Excellent error handling
+
+**Cons**:
+- Focused on structured outputs (not a full framework)
+- Needs to be combined with direct SDKs or LiteLLM
+- Less comprehensive than LangChain
+- No built-in agent workflow abstractions
+
+**Best for**: Projects using strongly-typed domain models, type-safe architectures, production deployments requiring validation, when you need structured outputs with minimal framework overhead.
+
+**Option 4: Pydantic AI**
+
+**Description**: Full framework for building AI agents with Pydantic models, providing type-safe agent workflows with structured outputs.
+
+**Pros**:
+- Built by Pydantic team, excellent Pydantic integration
+- Type-safe agent definitions and responses
+- Structured outputs with automatic validation
+- Agent workflow abstractions (better than Instructor)
+- Multi-provider support
+- Clean, modern API design
+- Good balance of features and simplicity
+
+**Cons**:
+- Newer framework (less mature than LangChain)
+- Smaller ecosystem than LangChain
+- More focused on agent patterns than general LLM orchestration
+- May require more code for complex workflows compared to LangChain
+
+**Best for**: Type-safe agent development, projects using Pydantic models extensively, modern Python applications, when you want structured outputs with agent abstractions but less weight than LangChain.
+
+**Option 5: Direct SDK Calls**
 
 **Description**: Use provider SDKs directly (OpenAI SDK, Anthropic SDK, Google GenAI SDK).
 
@@ -4314,42 +4369,54 @@ Multiple LLM integration framework options exist with different trade-offs:
 - Better performance (no middleware)
 - Stable provider APIs
 - Easier debugging
+- No framework dependencies
 
 **Cons**:
 - Need separate code per provider
 - Manual prompt management
 - More boilerplate code
 - Provider switching requires code changes
+- No structured output validation (must implement manually)
+- No agent workflow abstractions
 
-**Best for**: Production deployments prioritizing performance, single-provider applications.
+**Best for**: Production deployments prioritizing performance, single-provider applications, when you need maximum control and minimal dependencies.
 
-**Option 4: Instructor (Type-Safe Structured Outputs)**
+**Comparison Matrix**
 
-**Description**: Type-safe structured outputs from LLMs using strongly-typed domain models.
-
-**Pros**:
-- Perfect fit for strongly-typed architectures
-- Type-safe LLM responses validated against domain models
-- Works with multiple providers
-- Automatic retry and validation
-- Clean, minimal API
-
-**Cons**:
-- Focused on structured outputs
-- Needs to be combined with direct SDKs
-- Less comprehensive than LangChain
-
-**Best for**: Projects using strongly-typed domain models, type-safe architectures, production deployments requiring validation.
+| Framework | Type Safety | Multi-Provider | Weight | Agent Workflows | Best Use Case |
+|-----------|-------------|----------------|--------|-----------------|---------------|
+| LangChain | Medium | Excellent | Heavy | Excellent | Complex workflows, rapid prototyping |
+| LiteLLM | Low | Excellent | Light | Basic | Multi-provider, simple calls |
+| Instructor | Excellent | Good (via SDKs/LiteLLM) | Light | None | Structured outputs, type safety |
+| Pydantic AI | Excellent | Good | Medium | Good | Type-safe agents, modern Python |
+| Direct SDKs | Manual | None | Minimal | None | Performance-critical, single provider |
 
 **Recommended Approach**:
 
 Choose based on your stack and requirements:
-- **Rapid Prototyping**: LangChain (rich ecosystem, quick setup)
-- **Multi-Provider with Minimal Weight**: LiteLLM (lightweight, broad provider support)
-- **Type-Safe Production**: Instructor + Direct SDKs (strongly-typed, validated outputs)
-- **Performance-Critical**: Direct SDKs (minimal overhead, full control)
 
-**Implementation Strategy**: Make the LLM framework selection configurable. Create an abstraction layer (LLMProvider interface) that can be implemented by any framework, allowing runtime selection via configuration.
+- **Rapid Prototyping with Complex Workflows**: LangChain (rich ecosystem, quick setup, extensive tooling)
+- **Multi-Provider with Minimal Weight**: LiteLLM (lightweight, broad provider support, simple API)
+- **Type-Safe Structured Outputs (Simple)**: Instructor + Direct SDKs/LiteLLM (strongly-typed, validated outputs, minimal framework)
+- **Type-Safe Agents (Modern)**: Pydantic AI (type-safe agent workflows, Pydantic integration, balanced features)
+- **Performance-Critical Single Provider**: Direct SDKs (minimal overhead, full control)
+- **Type-Safe Production with Agent Patterns**: Pydantic AI or Instructor + Direct SDKs (depending on need for agent abstractions)
+
+**For This Project**:
+
+Given the requirements for:
+- Strongly-typed domain models (Pydantic-based)
+- Multi-provider support (OpenAI, Anthropic, Google Gemini)
+- Type-safe structured outputs
+- Production deployment
+- Agent workflows (Scout, Strategist, Executor)
+
+**Recommended**: **Pydantic AI** or **Instructor + LiteLLM/Direct SDKs**
+
+- **Pydantic AI**: Best if you want agent workflow abstractions with type safety
+- **Instructor + LiteLLM**: Best if you want maximum type safety with minimal framework overhead and can implement agent patterns yourself
+
+**Implementation Strategy**: Make the LLM framework selection configurable. Create an abstraction layer (LLMProvider interface) that can be implemented by any framework, allowing runtime selection via configuration. This enables A/B testing different frameworks and switching based on requirements.
 
 ---
 
