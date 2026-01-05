@@ -1,0 +1,4 @@
+"""Agent insights component."""
+
+# Placeholder - to be implemented in Phase 6
+
