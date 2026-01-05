@@ -75,17 +75,235 @@ agentic-tictactoe/
 - Create placeholder files for main modules
 - Set up logging configuration (Section 17)
 
-**0.3. Configure CI/CD**
-- Set up GitHub Actions workflow
-- Configure automated testing on PR and push
-- Set up code coverage reporting
-- Configure pre-commit hooks
+**0.3. Set Up GitHub Actions CI/CD**
+
+Create `.github/workflows/ci.yml` with the following pipeline:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install pytest pytest-cov black ruff mypy
+
+    - name: Run linting (black)
+      run: black --check src/ tests/
+
+    - name: Run linting (ruff)
+      run: ruff check src/ tests/
+
+    - name: Run type checking (mypy)
+      run: mypy src/
+
+    - name: Run tests with coverage
+      run: pytest tests/ --cov=src --cov-report=xml --cov-report=term
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: docker build -t agentic-tictactoe:${{ github.sha }} .
+
+    - name: Test Docker image
+      run: |
+        docker run --rm agentic-tictactoe:${{ github.sha }} python -c "import src; print('Import successful')"
+```
+
+**Pipeline Features:**
+- ✅ Runs on every push and PR
+- ✅ Tests on Python 3.11
+- ✅ Linting with black and ruff
+- ✅ Type checking with mypy
+- ✅ Tests with coverage reporting
+- ✅ Coverage upload to Codecov
+- ✅ Docker build verification (main branch only)
+- ✅ Fast feedback (fails on first error)
+
+**0.4. Configure Pre-commit Hooks**
+
+Create `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: https://github.com/psf/black
+    rev: 23.11.0
+    hooks:
+      - id: black
+        language_version: python3.11
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.6
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+```
+
+Install pre-commit hooks:
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+**0.5. Create Initial Dockerfile**
+
+Create `Dockerfile`:
+
+```dockerfile
+# Multi-stage build for minimal production image
+FROM python:3.11-slim as builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy dependency files
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -e .
+
+# Production stage
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /app /app
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Expose API port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health')"
+
+# Run the application
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+Create `.dockerignore`:
+
+```
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.git/
+.github/
+*.md
+tests/
+.env
+.env.local
+```
+
+**0.6. Create docker-compose.yml for Local Development**
+
+```yaml
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - LOG_LEVEL=INFO
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    volumes:
+      - ./src:/app/src  # Hot reload in development
+      - ./logs:/app/logs
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+```
 
 **Acceptance Criteria:**
-- Project builds and installs successfully
-- `pytest` runs (even with no tests yet)
-- `mypy` type checking passes
-- `black` and `ruff` linting passes
+- ✅ Project builds and installs successfully
+- ✅ GitHub Actions CI pipeline runs on push/PR
+- ✅ `pytest` runs (even with no tests yet) and pipeline passes
+- ✅ `mypy` type checking passes in CI
+- ✅ `black` and `ruff` linting passes in CI
+- ✅ Pre-commit hooks prevent committing bad code
+- ✅ Docker image builds successfully
+- ✅ `docker-compose up` starts the application
+- ✅ Code coverage report generated and uploaded
 
 **Spec References:**
 - Section 7: Project Structure
@@ -1194,34 +1412,57 @@ GOOGLE_API_KEY=...
 - API usage examples
 - License and contributing
 
-#### 9.2. Docker Containerization
+#### 9.2. Production Docker Optimization
 
 **Spec Reference**: Section 10 - Deployment Considerations
 
-**Files to Create:**
-- `Dockerfile`
-- `docker-compose.yml`
-- `.dockerignore`
+**Note**: Basic Dockerfile and docker-compose.yml were created in Phase 0. This phase focuses on production optimization.
 
-**Implementation:**
-- Multi-stage Docker build (build stage + runtime stage)
-- Minimal runtime image (python:3.11-slim)
-- Health checks in Dockerfile
-- Environment variable configuration
-- Volume mounts for logs/metrics
+**Tasks:**
+- Optimize Docker image size (multi-stage build already in place)
+- Add production-specific environment variables
+- Configure resource limits (memory, CPU)
+- Set up Docker secrets for API keys (instead of env vars)
+- Add production health checks with more aggressive timeouts
 
-**docker-compose.yml:**
+**Update docker-compose.yml for Production:**
 ```yaml
 services:
   api:
-    build: .
+    image: agentic-tictactoe:${VERSION:-latest}
     ports:
       - "8000:8000"
     environment:
-      - LLM_PROVIDER=openai
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ENV=production
+      - LOG_LEVEL=INFO
+      - LLM_PROVIDER=${LLM_PROVIDER}
+    secrets:
+      - openai_api_key
+      - anthropic_api_key
+      - google_api_key
     volumes:
       - ./logs:/app/logs
+      - ./metrics:/app/metrics
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+secrets:
+  openai_api_key:
+    external: true
+  anthropic_api_key:
+    external: true
+  google_api_key:
+    external: true
 ```
 
 #### 9.3. Local Deployment
@@ -1276,36 +1517,88 @@ open http://localhost:8000
 - Google Cloud Run
 - Limitations: May need to adjust timeout values
 
-#### 9.5. CI/CD Pipeline
+#### 9.5. Continuous Deployment Pipeline
+
+**Note**: CI pipeline was created in Phase 0. This phase adds CD (deployment) pipeline.
 
 **Files to Create:**
-- `.github/workflows/ci.yml`
 - `.github/workflows/deploy.yml`
 
-**CI Pipeline:**
-- Trigger on: push, pull_request
-- Steps:
-  1. Checkout code
-  2. Set up Python 3.11
-  3. Install dependencies
-  4. Run linting (black, ruff, mypy)
-  5. Run tests with coverage
-  6. Upload coverage report
-  7. Build Docker image (on main branch)
-
 **CD Pipeline:**
-- Trigger on: push to main, tag release
-- Steps:
-  1. Build Docker image
-  2. Push to container registry
-  3. Deploy to production environment
-  4. Run smoke tests
-  5. Notify team
+
+```yaml
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: your-dockerhub-username/agentic-tictactoe
+        tags: |
+          type=ref,event=branch
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Deploy to production (example)
+      run: |
+        # Add your deployment script here
+        # Examples:
+        # - SSH to server and pull new image
+        # - Update Kubernetes deployment
+        # - Deploy to cloud platform (AWS ECS, Google Cloud Run, etc.)
+        echo "Deploy to production server"
+
+    - name: Run smoke tests
+      run: |
+        # Wait for deployment
+        sleep 30
+        # Run basic health check
+        curl -f https://your-production-url.com/health || exit 1
+```
+
+**Deployment Secrets to Add:**
+- `DOCKER_USERNAME`: Docker Hub username
+- `DOCKER_PASSWORD`: Docker Hub password or token
+- Cloud platform credentials (if deploying to AWS/GCP/Azure)
 
 **Phase 9 Deliverables:**
 - ✅ Complete documentation (README, API docs, deployment guide)
-- ✅ Docker containerization with compose file
-- ✅ CI/CD pipeline configured
+- ✅ Production Docker optimization (Phase 0 had basic setup)
+- ✅ CI pipeline verified (from Phase 0)
+- ✅ CD pipeline configured for automatic deployment
 - ✅ Production deployment ready
 - ✅ Monitoring and alerting set up
 
@@ -1445,24 +1738,34 @@ Use this checklist to verify each phase is complete:
 
 | Phase | Duration | Cumulative |
 |-------|----------|------------|
-| Phase 0: Project Setup | 1-2 days | 2 days |
-| Phase 1: Domain Models | 3-5 days | 7 days |
-| Phase 2: Game Engine | 3-4 days | 11 days |
-| Phase 3: Agent System | 5-7 days | 18 days |
-| Phase 4: REST API | 3-4 days | 22 days |
-| Phase 5: LLM Integration | 3-4 days | 26 days |
-| Phase 6: Web UI | 4-6 days | 32 days |
-| Phase 7: Testing & QA | 3-4 days | 36 days |
-| Phase 8: Config & Observability | 2-3 days | 39 days |
-| Phase 9: Documentation & Deployment | 2-3 days | 42 days |
+| Phase 0: Project Setup + CI/CD + Docker | 2-3 days | 3 days |
+| Phase 1: Domain Models | 3-5 days | 8 days |
+| Phase 2: Game Engine | 3-4 days | 12 days |
+| Phase 3: Agent System | 5-7 days | 19 days |
+| Phase 4: REST API | 3-4 days | 23 days |
+| Phase 5: LLM Integration | 3-4 days | 27 days |
+| Phase 6: Web UI | 4-6 days | 33 days |
+| Phase 7: Testing & QA | 3-4 days | 37 days |
+| Phase 8: Config & Observability | 2-3 days | 40 days |
+| Phase 9: Documentation & Deployment | 1-2 days | 42 days |
 | Phase 10: MCP Mode (Optional) | 3-5 days | 47 days |
 
 **Notes:**
 - Timeline assumes one developer working full-time
+- Phase 0 is longer because it includes CI/CD pipeline and Docker setup
+- Phase 9 is shorter because Docker and CI were done in Phase 0
 - Adjust based on your experience level
-- Phases 0-4 are minimum viable product (MVP)
-- Phases 5-9 are production-ready system
+- Phases 0-4 are minimum viable product (MVP) - **23 days (~3 weeks)**
+- Phases 5-9 are production-ready system - **42 days (~6 weeks)**
 - Phase 10 is optional enhancement
+
+**Key Milestones:**
+- ✅ Day 3: CI/CD pipeline running, Docker working
+- ✅ Day 12: Game engine complete, can play human vs human
+- ✅ Day 23: MVP complete - API-driven game with rule-based AI
+- ✅ Day 27: LLM-enhanced AI intelligence
+- ✅ Day 33: Full UI with all features
+- ✅ Day 42: Production-ready system
 
 ---
 
