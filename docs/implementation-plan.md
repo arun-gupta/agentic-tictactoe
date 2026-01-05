@@ -153,7 +153,7 @@ jobs:
 
 **Why minimal?** This gets CI working immediately without blocking your work. You can commit code even if linting isn't perfect yet.
 
-**0.4. Set Up Basic Pre-commit Hooks** ✅ (Optional but Recommended)**
+**0.4. Set Up Basic Pre-commit Hooks (Optional but Recommended)** ✅
 
 Create `.pre-commit-config.yaml` with **minimal** hooks for fast local feedback:
 
