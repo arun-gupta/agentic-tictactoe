@@ -2257,7 +2257,7 @@ Quality:
 
 ## 6.1 UI Visual Design Specification
 
-**Note**: Visual design specifications (colors, animations, layouts, typography, spacing, component styling) are defined separately in [docs/ui/ui-spec.md](./ui/ui-spec.md) with an interactive HTML preview. The visual designs reference the user story IDs above (US-001 through US-025) to maintain traceability between functional requirements and visual design.
+**Note**: Visual design specifications (colors, animations, layouts, typography, spacing, component styling) are defined separately in [ui-spec.md](./ui-spec.md) with an interactive HTML preview. The visual designs reference the user story IDs above (US-001 through US-025) to maintain traceability between functional requirements and visual design.
 
 Visual elements mentioned in Section 12 (Failure Matrix UI Indications) provide guidance for error state presentation but exact styling is documented in ui/ui-spec.md.
 

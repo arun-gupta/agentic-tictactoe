@@ -1000,7 +1000,7 @@ GOOGLE_API_KEY=...
 
 #### 6.1. UI Foundation
 
-**Spec Reference**: Section 6 - Web UI Functional Requirements, docs/ui/ui-spec.md
+**Spec Reference**: Section 6 - Web UI Functional Requirements, docs/spec/ui-spec.md
 
 **Files to Create:**
 - `src/ui/index.html`
@@ -1207,7 +1207,7 @@ GOOGLE_API_KEY=...
 
 **Spec References:**
 - Section 6: Web UI Functional Requirements (all 25 user stories)
-- docs/ui/ui-spec.md: Visual Design Specification
+- docs/spec/ui-spec.md: Visual Design Specification
 
 ---
 
