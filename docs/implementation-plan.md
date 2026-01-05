@@ -236,85 +236,14 @@ jobs:
       with:
         file: ./coverage.xml
         fail_ci_if_error: false
-
-  docker-build:
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Build Docker image
-      run: docker build -t agentic-tictactoe:${{ github.sha }} .
-
-    - name: Test Docker image
-      run: |
-        docker run --rm agentic-tictactoe:${{ github.sha }} python -c "import src; print('Import successful')"
-```
-
-**Create `Dockerfile`:**
-
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install dependencies
-COPY pyproject.toml README.md ./
-COPY src/ ./src/
-
-RUN pip install --no-cache-dir -e .
-
-# Create non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
-
-EXPOSE 8000
-
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-**Create `.dockerignore`:**
-
-```
-.venv/
-__pycache__/
-*.pyc
-.pytest_cache/
-.coverage
-.git/
-tests/
-```
-
-**Create `docker-compose.yml`:**
-
-```yaml
-version: '3.8'
-
-services:
-  api:
-    build: .
-    ports:
-      - "8000:8000"
-    environment:
-      - LOG_LEVEL=INFO
-      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
-    volumes:
-      - ./src:/app/src
-      - ./logs:/app/logs
-    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 **Enhanced Pipeline Features:**
 - ✅ Strict type checking with mypy
 - ✅ Coverage threshold enforced (80%)
 - ✅ Coverage reporting to Codecov
-- ✅ Docker build on main branch
 - ✅ All checks now blocking (must pass)
+- ⏸️ Docker build deferred to Phase 9 (when containerization is needed)
 
 **Update `.pre-commit-config.yaml` (if not done in Phase 0):**
 
@@ -484,7 +413,6 @@ repos:
 
 **Phase 1 Deliverables:**
 - ✅ Enhanced CI/CD pipeline with coverage and type checking
-- ✅ Docker and docker-compose setup complete
 - ✅ All domain models implemented with full validation
 - ✅ 84 unit tests passing (100% coverage on domain layer)
 - ✅ Type checking passes with mypy --strict
@@ -1452,18 +1380,105 @@ GOOGLE_API_KEY=...
 - API usage examples
 - License and contributing
 
-#### 9.2. Production Docker Optimization
+#### 9.2. Docker Containerization
 
 **Spec Reference**: Section 10 - Deployment Considerations
 
-**Note**: Basic Dockerfile and docker-compose.yml were created in Phase 0. This phase focuses on production optimization.
+**Create `Dockerfile`:**
 
-**Tasks:**
-- Optimize Docker image size (multi-stage build already in place)
-- Add production-specific environment variables
-- Configure resource limits (memory, CPU)
-- Set up Docker secrets for API keys (instead of env vars)
-- Add production health checks with more aggressive timeouts
+```dockerfile
+# Multi-stage build for minimal production image
+FROM python:3.11-slim as builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy dependency files
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -e .
+
+# Production stage
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /app /app
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Expose API port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health')"
+
+# Run the application
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+**Create `.dockerignore`:**
+
+```
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.git/
+.github/
+*.md
+tests/
+.env
+.env.local
+```
+
+**Create `docker-compose.yml` for Local Development:**
+
+```yaml
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - LOG_LEVEL=INFO
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    volumes:
+      - ./src:/app/src  # Hot reload in development
+      - ./logs:/app/logs
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+```
 
 **Update docker-compose.yml for Production:**
 ```yaml
@@ -1557,9 +1572,77 @@ open http://localhost:8000
 - Google Cloud Run
 - Limitations: May need to adjust timeout values
 
-#### 9.5. Continuous Deployment Pipeline
+#### 9.5. Add Docker Build to CI Pipeline
 
-**Note**: CI pipeline was created in Phase 0. This phase adds CD (deployment) pipeline.
+**Update `.github/workflows/ci.yml`** to add Docker build verification:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install pytest pytest-cov black ruff mypy
+
+    - name: Run linting (black)
+      run: black --check src/ tests/
+
+    - name: Run linting (ruff)
+      run: ruff check src/ tests/
+
+    - name: Run type checking (mypy)
+      run: mypy src/ --strict
+
+    - name: Run tests with coverage
+      run: pytest tests/ --cov=src --cov-report=xml --cov-report=term --cov-fail-under=80
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: docker build -t agentic-tictactoe:${{ github.sha }} .
+
+    - name: Test Docker image
+      run: |
+        docker run --rm agentic-tictactoe:${{ github.sha }} python -c "import src; print('Import successful')"
+```
+
+#### 9.6. Continuous Deployment Pipeline
+
+**Note**: CI pipeline was enhanced above. This adds CD (deployment) pipeline.
 
 **Files to Create:**
 - `.github/workflows/deploy.yml`
@@ -1636,8 +1719,8 @@ jobs:
 
 **Phase 9 Deliverables:**
 - ✅ Complete documentation (README, API docs, deployment guide)
-- ✅ Production Docker optimization (Phase 0 had basic setup)
-- ✅ CI pipeline verified (from Phase 0)
+- ✅ Docker containerization (Dockerfile, docker-compose.yml, .dockerignore)
+- ✅ Docker build added to CI pipeline
 - ✅ CD pipeline configured for automatic deployment
 - ✅ Production deployment ready
 - ✅ Monitoring and alerting set up
@@ -1779,7 +1862,7 @@ Use this checklist to verify each phase is complete:
 | Phase | Duration | Cumulative |
 |-------|----------|------------|
 | Phase 0: Project Setup + Basic CI | 1 day | 1 day |
-| Phase 1: Domain Models + Enhanced CI/CD + Docker | 3-5 days | 6 days |
+| Phase 1: Domain Models + Enhanced CI/CD | 3-5 days | 6 days |
 | Phase 2: Game Engine | 3-4 days | 10 days |
 | Phase 3: Agent System | 5-7 days | 17 days |
 | Phase 4: REST API | 3-4 days | 21 days |
@@ -1793,8 +1876,8 @@ Use this checklist to verify each phase is complete:
 **Notes:**
 - Timeline assumes one developer working full-time
 - **Phase 0** is lightweight (1 day) - basic CI to get started quickly
-- **Phase 1** includes CI/CD enhancement + Docker + domain models
-- Phase 9 is shorter because Docker and CI were done in Phase 1
+- **Phase 1** includes CI/CD enhancement (coverage, type checking) + domain models
+- **Phase 9** adds Docker containerization and deployment automation
 - Adjust based on your experience level
 - Phases 0-4 are minimum viable product (MVP) - **21 days (~3 weeks)**
 - Phases 5-9 are production-ready system - **40 days (~6 weeks)**
@@ -1802,7 +1885,7 @@ Use this checklist to verify each phase is complete:
 
 **Key Milestones:**
 - ✅ Day 1: Basic CI running, can start coding immediately
-- ✅ Day 6: Production-grade CI/CD + Docker + domain models complete
+- ✅ Day 6: Production-grade CI/CD (coverage, type checking) + domain models complete
 - ✅ Day 10: Game engine complete, can play human vs human
 - ✅ Day 21: MVP complete - API-driven game with rule-based AI
 - ✅ Day 25: LLM-enhanced AI intelligence
