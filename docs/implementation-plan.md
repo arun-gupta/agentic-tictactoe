@@ -128,11 +128,56 @@ jobs:
 
 **Why minimal?** This gets CI working immediately without blocking your work. You can commit code even if linting isn't perfect yet.
 
+**0.4. Set Up Basic Pre-commit Hooks (Optional but Recommended)**
+
+Create `.pre-commit-config.yaml` with **minimal** hooks for fast local feedback:
+
+```yaml
+repos:
+  - repo: https://github.com/psf/black
+    rev: 23.11.0
+    hooks:
+      - id: black
+        language_version: python3.11
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.6
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-merge-conflict
+```
+
+**Install pre-commit:**
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+**Basic Pre-commit Features:**
+- ✅ Auto-format code with black (runs before commit)
+- ✅ Lint with ruff (auto-fixes issues)
+- ✅ Remove trailing whitespace
+- ✅ Fix end-of-file newlines
+- ✅ Check YAML syntax
+- ⏸️ No type checking yet (Phase 1)
+- ⏸️ No test running yet (Phase 1)
+
+**Note**: Pre-commit hooks can be skipped with `git commit --no-verify` if needed. CI will still catch issues.
+
 **Acceptance Criteria (Phase 0):**
 - ✅ Project builds and installs successfully
 - ✅ GitHub Actions basic CI pipeline runs on push/PR
 - ✅ `pytest` runs (even with no tests yet)
 - ✅ `black` and `ruff` linting runs (non-blocking)
+- ✅ Pre-commit hooks installed (optional, but recommended)
 - ⏸️ Docker setup deferred to Phase 1
 - ⏸️ Coverage reporting deferred to Phase 1
 - ⏸️ Type checking deferred to Phase 1
@@ -211,7 +256,35 @@ jobs:
 - ✅ All checks now blocking (must pass)
 - ⏸️ Docker build deferred to Phase 9 (when containerization is needed)
 
-**Update `.pre-commit-config.yaml` (if not done in Phase 0):**
+**Enhance Pre-commit Hooks**
+
+**Update `.pre-commit-config.yaml`** from Phase 0 by **adding** the `local` repo section with mypy and pytest hooks.
+
+**What to Add:**
+
+Add this new section to your existing `.pre-commit-config.yaml` file (after the `pre-commit-hooks` repo section):
+
+```yaml
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: system
+        types: [python]
+        args: [--strict]
+```
+
+**Complete Updated `.pre-commit-config.yaml` (for reference):**
+
+The full file should now contain all hooks from Phase 0 **plus** the new local hooks:
 
 ```yaml
 repos:
@@ -251,6 +324,24 @@ repos:
         types: [python]
         args: [--strict]
 ```
+
+**After updating the config file:**
+
+```bash
+# Update pre-commit hooks (pulls new hook definitions)
+pre-commit autoupdate
+
+# Reinstall hooks to pick up changes
+pre-commit install --overwrite
+```
+
+**Enhanced Pre-commit Features:**
+- ✅ All basic hooks from Phase 0 (black, ruff, file fixes) - **unchanged**
+- ✅ **NEW**: Type checking with mypy (strict mode)
+- ✅ **NEW**: Run tests before commit
+- ✅ All checks can be skipped with `--no-verify` if needed
+
+**Note**: Pre-commit hooks provide fast local feedback. CI/CD is the final quality gate and will catch issues even if pre-commit is skipped.
 
 #### 1.1. Core Game Entities
 
