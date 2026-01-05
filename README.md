@@ -46,11 +46,16 @@ The system is designed to follow a layered architecture:
 
 - **Language**: Python 3.11+
 - **Web Framework**: FastAPI
+- **ASGI Server**: Uvicorn
+- **Data Validation**: Pydantic v2
 - **UI Framework**: Streamlit
-- **LLM Integration**: LiteLLM (OpenAI, Anthropic, Google Gemini)
-- **Testing**: pytest, pytest-cov, mypy
+- **LLM Integration**: LiteLLM (OpenAI, Anthropic, Google Gemini SDKs)
+- **Testing**: pytest, pytest-cov, pytest-asyncio, mypy
 - **Code Quality**: black, ruff, pre-commit hooks
-- **Deployment**: Docker, Kubernetes, GitHub Actions CI/CD
+- **Coverage**: Codecov
+- **API Documentation**: OpenAPI/Swagger (built into FastAPI)
+- **Persistence**: JSON file-based storage
+- **Deployment**: Docker, Kubernetes Helm charts, GitHub Actions CI/CD
 
 ## Project Status
 
