@@ -75,9 +75,122 @@ agentic-tictactoe/
 - Create placeholder files for main modules
 - Set up logging configuration (Section 17)
 
-**0.3. Set Up GitHub Actions CI/CD**
+**0.3. Set Up Basic GitHub Actions CI Pipeline**
 
-Create `.github/workflows/ci.yml` with the following pipeline:
+Create `.github/workflows/ci.yml` with a **minimal** pipeline to get started:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install pytest black ruff
+
+    - name: Run linting (black)
+      run: black --check src/ tests/ || true  # Don't fail on first run
+
+    - name: Run linting (ruff)
+      run: ruff check src/ tests/ || true  # Don't fail on first run
+
+    - name: Run tests
+      run: pytest tests/ -v || echo "No tests yet"
+```
+
+**Basic Pipeline Features:**
+- ✅ Runs on every push and PR
+- ✅ Sets up Python 3.11
+- ✅ Installs minimal dependencies
+- ✅ Runs basic linting (won't fail build initially)
+- ✅ Runs tests (if any exist)
+- ⏸️ No coverage reporting yet (Phase 1)
+- ⏸️ No type checking yet (Phase 1)
+- ⏸️ No Docker build yet (Phase 1)
+
+**Why minimal?** This gets CI working immediately without blocking your work. You can commit code even if linting isn't perfect yet.
+
+**0.4. Configure Basic Pre-commit Hooks (Optional)**
+
+Create `.pre-commit-config.yaml` with minimal hooks:
+
+```yaml
+repos:
+  - repo: https://github.com/psf/black
+    rev: 23.11.0
+    hooks:
+      - id: black
+        language_version: python3.11
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.6
+    hooks:
+      - id: ruff
+        args: [--fix]  # Auto-fix issues
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+```
+
+Install pre-commit hooks:
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+**Note**: This is optional for Phase 0. You can skip it and add it later in Phase 1.
+
+**Acceptance Criteria (Phase 0):**
+- ✅ Project builds and installs successfully
+- ✅ GitHub Actions basic CI pipeline runs on push/PR
+- ✅ `pytest` runs (even with no tests yet)
+- ✅ `black` and `ruff` linting runs (non-blocking)
+- ⏸️ Docker setup deferred to Phase 1
+- ⏸️ Coverage reporting deferred to Phase 1
+- ⏸️ Type checking deferred to Phase 1
+
+**Spec References:**
+- Section 7: Project Structure
+- Section 14.1: Recommended Python Stack
+- Section 11: Testing Strategy
+
+---
+
+### Phase 1: Domain Models (Foundation Layer)
+
+**Duration**: 3-5 days
+
+**Goal**: Implement all domain models with validation and testing, and enhance CI/CD pipeline
+
+**Why First**: Domain models are the foundation - they're used by everything else. They have no dependencies and can be fully tested in isolation.
+
+#### 1.0. Enhance CI/CD Pipeline
+
+**Before implementing domain models**, upgrade the CI/CD pipeline from Phase 0:
+
+**Update `.github/workflows/ci.yml`:**
 
 ```yaml
 name: CI
@@ -113,10 +226,10 @@ jobs:
       run: ruff check src/ tests/
 
     - name: Run type checking (mypy)
-      run: mypy src/
+      run: mypy src/ --strict
 
     - name: Run tests with coverage
-      run: pytest tests/ --cov=src --cov-report=xml --cov-report=term
+      run: pytest tests/ --cov=src --cov-report=xml --cov-report=term --cov-fail-under=80
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -143,19 +256,67 @@ jobs:
         docker run --rm agentic-tictactoe:${{ github.sha }} python -c "import src; print('Import successful')"
 ```
 
-**Pipeline Features:**
-- ✅ Runs on every push and PR
-- ✅ Tests on Python 3.11
-- ✅ Linting with black and ruff
-- ✅ Type checking with mypy
-- ✅ Tests with coverage reporting
-- ✅ Coverage upload to Codecov
-- ✅ Docker build verification (main branch only)
-- ✅ Fast feedback (fails on first error)
+**Create `Dockerfile`:**
 
-**0.4. Configure Pre-commit Hooks**
+```dockerfile
+FROM python:3.11-slim
 
-Create `.pre-commit-config.yaml`:
+WORKDIR /app
+
+# Install dependencies
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+
+RUN pip install --no-cache-dir -e .
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8000
+
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+**Create `.dockerignore`:**
+
+```
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+.git/
+tests/
+```
+
+**Create `docker-compose.yml`:**
+
+```yaml
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - LOG_LEVEL=INFO
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+**Enhanced Pipeline Features:**
+- ✅ Strict type checking with mypy
+- ✅ Coverage threshold enforced (80%)
+- ✅ Coverage reporting to Codecov
+- ✅ Docker build on main branch
+- ✅ All checks now blocking (must pass)
+
+**Update `.pre-commit-config.yaml` (if not done in Phase 0):**
 
 ```yaml
 repos:
@@ -177,7 +338,6 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-      - id: check-added-large-files
       - id: check-merge-conflict
 
   - repo: local
@@ -188,137 +348,14 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: system
+        types: [python]
+        args: [--strict]
 ```
-
-Install pre-commit hooks:
-```bash
-pip install pre-commit
-pre-commit install
-```
-
-**0.5. Create Initial Dockerfile**
-
-Create `Dockerfile`:
-
-```dockerfile
-# Multi-stage build for minimal production image
-FROM python:3.11-slim as builder
-
-WORKDIR /app
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy dependency files
-COPY pyproject.toml README.md ./
-COPY src/ ./src/
-
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -e .
-
-# Production stage
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /app /app
-
-# Create non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
-
-# Expose API port
-EXPOSE 8000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health')"
-
-# Run the application
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-Create `.dockerignore`:
-
-```
-.venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.pytest_cache/
-.coverage
-htmlcov/
-.mypy_cache/
-.ruff_cache/
-.git/
-.github/
-*.md
-tests/
-.env
-.env.local
-```
-
-**0.6. Create docker-compose.yml for Local Development**
-
-```yaml
-version: '3.8'
-
-services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      - LOG_LEVEL=INFO
-      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-    volumes:
-      - ./src:/app/src  # Hot reload in development
-      - ./logs:/app/logs
-    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-```
-
-**Acceptance Criteria:**
-- ✅ Project builds and installs successfully
-- ✅ GitHub Actions CI pipeline runs on push/PR
-- ✅ `pytest` runs (even with no tests yet) and pipeline passes
-- ✅ `mypy` type checking passes in CI
-- ✅ `black` and `ruff` linting passes in CI
-- ✅ Pre-commit hooks prevent committing bad code
-- ✅ Docker image builds successfully
-- ✅ `docker-compose up` starts the application
-- ✅ Code coverage report generated and uploaded
-
-**Spec References:**
-- Section 7: Project Structure
-- Section 14.1: Recommended Python Stack
-- Section 11: Testing Strategy
-
----
-
-### Phase 1: Domain Models (Foundation Layer)
-
-**Duration**: 3-5 days
-
-**Goal**: Implement all domain models with validation and testing
-
-**Why First**: Domain models are the foundation - they're used by everything else. They have no dependencies and can be fully tested in isolation.
 
 #### 1.1. Core Game Entities
 
@@ -446,9 +483,12 @@ services:
 **Test Coverage**: AC-2.12.1 through AC-2.12.8 (8 acceptance criteria)
 
 **Phase 1 Deliverables:**
+- ✅ Enhanced CI/CD pipeline with coverage and type checking
+- ✅ Docker and docker-compose setup complete
 - ✅ All domain models implemented with full validation
 - ✅ 84 unit tests passing (100% coverage on domain layer)
-- ✅ Type checking passes with mypy
+- ✅ Type checking passes with mypy --strict
+- ✅ Coverage reporting to Codecov
 - ✅ No dependencies on other modules (pure domain logic)
 
 **Spec References:**
@@ -1738,34 +1778,36 @@ Use this checklist to verify each phase is complete:
 
 | Phase | Duration | Cumulative |
 |-------|----------|------------|
-| Phase 0: Project Setup + CI/CD + Docker | 2-3 days | 3 days |
-| Phase 1: Domain Models | 3-5 days | 8 days |
-| Phase 2: Game Engine | 3-4 days | 12 days |
-| Phase 3: Agent System | 5-7 days | 19 days |
-| Phase 4: REST API | 3-4 days | 23 days |
-| Phase 5: LLM Integration | 3-4 days | 27 days |
-| Phase 6: Web UI | 4-6 days | 33 days |
-| Phase 7: Testing & QA | 3-4 days | 37 days |
-| Phase 8: Config & Observability | 2-3 days | 40 days |
-| Phase 9: Documentation & Deployment | 1-2 days | 42 days |
-| Phase 10: MCP Mode (Optional) | 3-5 days | 47 days |
+| Phase 0: Project Setup + Basic CI | 1 day | 1 day |
+| Phase 1: Domain Models + Enhanced CI/CD + Docker | 3-5 days | 6 days |
+| Phase 2: Game Engine | 3-4 days | 10 days |
+| Phase 3: Agent System | 5-7 days | 17 days |
+| Phase 4: REST API | 3-4 days | 21 days |
+| Phase 5: LLM Integration | 3-4 days | 25 days |
+| Phase 6: Web UI | 4-6 days | 31 days |
+| Phase 7: Testing & QA | 3-4 days | 35 days |
+| Phase 8: Config & Observability | 2-3 days | 38 days |
+| Phase 9: Documentation & Deployment | 1-2 days | 40 days |
+| Phase 10: MCP Mode (Optional) | 3-5 days | 45 days |
 
 **Notes:**
 - Timeline assumes one developer working full-time
-- Phase 0 is longer because it includes CI/CD pipeline and Docker setup
-- Phase 9 is shorter because Docker and CI were done in Phase 0
+- **Phase 0** is lightweight (1 day) - basic CI to get started quickly
+- **Phase 1** includes CI/CD enhancement + Docker + domain models
+- Phase 9 is shorter because Docker and CI were done in Phase 1
 - Adjust based on your experience level
-- Phases 0-4 are minimum viable product (MVP) - **23 days (~3 weeks)**
-- Phases 5-9 are production-ready system - **42 days (~6 weeks)**
+- Phases 0-4 are minimum viable product (MVP) - **21 days (~3 weeks)**
+- Phases 5-9 are production-ready system - **40 days (~6 weeks)**
 - Phase 10 is optional enhancement
 
 **Key Milestones:**
-- ✅ Day 3: CI/CD pipeline running, Docker working
-- ✅ Day 12: Game engine complete, can play human vs human
-- ✅ Day 23: MVP complete - API-driven game with rule-based AI
-- ✅ Day 27: LLM-enhanced AI intelligence
-- ✅ Day 33: Full UI with all features
-- ✅ Day 42: Production-ready system
+- ✅ Day 1: Basic CI running, can start coding immediately
+- ✅ Day 6: Production-grade CI/CD + Docker + domain models complete
+- ✅ Day 10: Game engine complete, can play human vs human
+- ✅ Day 21: MVP complete - API-driven game with rule-based AI
+- ✅ Day 25: LLM-enhanced AI intelligence
+- ✅ Day 31: Full UI with all features
+- ✅ Day 40: Production-ready system
 
 ---
 
