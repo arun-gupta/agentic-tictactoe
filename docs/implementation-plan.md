@@ -942,6 +942,17 @@ pre-commit install --overwrite
 - Automatically supports all providers
 - Simpler error handling
 
+**Test Coverage**: LLM Provider Abstraction (Section 16)
+- Provider interface contract validation
+- OpenAI provider implementation (model support, error handling, retries)
+- Anthropic provider implementation (model support, error handling)
+- Google Gemini provider implementation (model support, error handling)
+- LiteLLM unified provider (multi-provider support)
+- Error handling and retry logic
+- Token usage and latency tracking
+
+**Test Files**: `tests/unit/llm/test_providers.py`
+
 #### 5.2. Agent LLM Integration
 
 **Spec Reference**: Section 16.3 - LLM Usage Patterns
@@ -963,6 +974,15 @@ pre-commit install --overwrite
 **5.2.3. Executor (No LLM)**
 - Executor remains rule-based (no LLM needed for validation/execution)
 - Keeps execution fast and deterministic
+
+**Test Coverage**: Agent LLM Integration (Section 16.3)
+- Scout LLM enhancement (prompt engineering, response parsing, fallback)
+- Strategist LLM enhancement (prompt engineering, response parsing, fallback)
+- Executor remains rule-based (no LLM calls)
+- Fallback to rule-based logic on LLM failure/timeout
+- LLM response parsing into domain models (BoardAnalysis, Strategy)
+
+**Test Files**: `tests/unit/agents/test_scout_llm.py`, `tests/unit/agents/test_strategist_llm.py`, `tests/integration/test_llm_fallback.py`
 
 #### 5.3. Configuration and Settings
 
@@ -987,6 +1007,16 @@ ANTHROPIC_API_KEY=sk-ant-...
 GOOGLE_API_KEY=...
 ```
 
+**Test Coverage**: LLM Configuration (Section 9, Section 16)
+- Load provider from environment variables
+- Support `.env` file for local development
+- Configuration hierarchy (env vars > .env file > defaults)
+- Runtime provider switching
+- Model selection per provider (one model per provider constraint)
+- API key validation and error handling
+
+**Test Files**: `tests/unit/config/test_llm_config.py`
+
 #### 5.4. Metrics and Tracking
 
 **Spec Reference**: Section 12.1 - LLM Provider Metadata and Experimentation Tracking
@@ -1001,12 +1031,22 @@ GOOGLE_API_KEY=...
 - Store in game session metadata
 - Enable post-game analysis (Section 6 - US-015)
 
+**Test Coverage**: LLM Metrics and Tracking (Section 12.1)
+- LLM call tracking per agent (Scout, Strategist)
+- Metadata recording (prompt, response, tokens, latency, model, provider)
+- Game session metadata storage
+- Post-game analysis data availability
+- Metrics export format validation
+
+**Test Files**: `tests/unit/metrics/test_llm_metrics.py`, `tests/integration/test_llm_tracking.py`
+
 **Phase 5 Deliverables:**
 - ✅ LLM providers integrated (OpenAI, Anthropic, Google)
 - ✅ Scout and Strategist enhanced with LLM intelligence
 - ✅ Fallback to rule-based logic still works
 - ✅ Configuration supports provider switching
 - ✅ Metrics tracked for all LLM calls
+- ✅ Comprehensive test coverage for LLM integration (provider abstraction, agent integration, configuration, metrics)
 
 **Spec References:**
 - Section 16: LLM Integration
@@ -1346,6 +1386,17 @@ GOOGLE_API_KEY=...
 - Logging levels
 - Feature flags (e.g., enable LLM, enable metrics)
 
+**Test Coverage**: Configuration Management (Section 9)
+- Environment-based configuration (dev, staging, prod)
+- Configuration validation on startup
+- Environment variables support
+- Config file support (YAML/JSON)
+- Configuration hierarchy (env vars > config file > defaults)
+- Hot-reload for non-critical settings
+- Configuration error handling
+
+**Test Files**: `tests/unit/config/test_settings.py`, `tests/integration/test_config_loading.py`
+
 #### 8.2. Logging
 
 **Spec Reference**: Section 17 - Metrics and Observability - Log Format Specification
@@ -1362,6 +1413,16 @@ GOOGLE_API_KEY=...
 - LLM calls (prompt, response, tokens)
 - Errors and exceptions
 - State transitions
+
+**Test Coverage**: Logging (Section 17 - Log Format Specification)
+- Structured logging (JSON format validation)
+- Log levels (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- Contextual logging (request ID, game ID, agent ID)
+- Log rotation and retention
+- Log event types (API requests/responses, agent execution, LLM calls, errors, state transitions)
+- Log format compliance (timestamp, level, message, context)
+
+**Test Files**: `tests/unit/test_logging.py`, `tests/integration/test_logging_integration.py`
 
 #### 8.3. Metrics
 
@@ -1393,6 +1454,16 @@ GOOGLE_API_KEY=...
 - Prometheus format (optional)
 - CloudWatch/DataDog integration (optional)
 
+**Test Coverage**: Metrics Collection (Section 17 - Metrics Format Specification)
+- Agent metrics collection (execution time, success/failure rates, timeout counts, fallback usage)
+- Game metrics collection (total games, win/loss/draw counts, average duration, moves per game)
+- System metrics collection (API request rate, response times, error rates, LLM token usage)
+- Metrics export formats (JSON API endpoint validation)
+- Metrics aggregation (min, max, avg, p95, p99)
+- Metrics format compliance
+
+**Test Files**: `tests/unit/metrics/test_collector.py`, `tests/unit/metrics/test_exporter.py`, `tests/integration/test_metrics_api.py`
+
 #### 8.4. Health Checks
 
 **Implementation:**
@@ -1400,11 +1471,21 @@ GOOGLE_API_KEY=...
 - Readiness probe: `/ready` (already implemented in Phase 4)
 - Deep health check: `/health/deep` (check all dependencies)
 
+**Test Coverage**: Health Checks (Section 10 - Deployment Considerations)
+- Liveness probe (`/health`) response format and status codes
+- Readiness probe (`/ready`) dependency checking
+- Deep health check (`/health/deep`) all dependencies validation
+- Health check error scenarios
+- Health check response time requirements
+
+**Test Files**: `tests/integration/test_health_checks.py`
+
 **Phase 8 Deliverables:**
 - ✅ Configuration system supporting multiple environments
 - ✅ Structured logging with JSON format
 - ✅ Comprehensive metrics collection
 - ✅ Health check endpoints ready for orchestration
+- ✅ Comprehensive test coverage for configuration, logging, metrics, and health checks
 
 **Spec References:**
 - Section 9: Configuration Management
@@ -1813,6 +1894,16 @@ jobs:
 - Protocol message definitions (JSON-RPC)
 - Transport layer (HTTP, WebSocket, or stdio)
 
+**Test Coverage**: MCP Protocol Implementation (Section 15.2 - Mode 2: Distributed MCP)
+- MCP client implementation (protocol compliance, message serialization)
+- MCP server implementation (request handling, response formatting)
+- Protocol message definitions (JSON-RPC validation)
+- Transport layer (HTTP, WebSocket, stdio)
+- Protocol error handling
+- Connection management
+
+**Test Files**: `tests/unit/mcp/test_client.py`, `tests/unit/mcp/test_server.py`, `tests/unit/mcp/test_protocol.py`
+
 #### 10.2. Agent MCP Adaptation
 
 **Tasks:**
@@ -1820,6 +1911,16 @@ jobs:
 - Wrap Strategist agent as MCP server
 - Wrap Executor agent as MCP server
 - Coordinator communicates via MCP protocol
+
+**Test Coverage**: Agent MCP Adaptation (Section 15.2)
+- Scout agent MCP server wrapper (tool exposure, request handling)
+- Strategist agent MCP server wrapper (tool exposure, request handling)
+- Executor agent MCP server wrapper (tool exposure, request handling)
+- Coordinator MCP client communication
+- Agent behavior consistency (local vs MCP mode)
+- Distributed agent coordination
+
+**Test Files**: `tests/integration/test_mcp_agents.py`, `tests/integration/test_mcp_coordinator.py`
 
 #### 10.3. Mode Switching
 
@@ -1829,11 +1930,22 @@ jobs:
 - Same interface regardless of mode
 - Runtime mode switching (optional)
 
+**Test Coverage**: Mode Switching (Section 15 - Agent Mode Architecture)
+- Configuration-based mode selection (`AGENT_MODE=local` vs `AGENT_MODE=mcp`)
+- Factory pattern implementation (local agent creation, MCP agent creation)
+- Interface consistency (same interface regardless of mode)
+- Runtime mode switching (if implemented)
+- Fallback from MCP to local mode on failure
+- Mode switching error handling
+
+**Test Files**: `tests/integration/test_mode_switching.py`, `tests/integration/test_mcp_fallback.py`
+
 **Phase 10 Deliverables:**
 - ✅ MCP protocol implementation
 - ✅ Agents runnable as MCP servers
 - ✅ Coordinator communicates via MCP
 - ✅ Mode switching between local and MCP
+- ✅ Comprehensive test coverage for MCP protocol, agent adaptation, and mode switching
 
 **Spec References:**
 - Section 15: Agent Mode Architecture
@@ -1872,11 +1984,13 @@ Use this checklist to verify each phase is complete:
 - [ ] All `AC-5.X.Y` acceptance criteria covered
 
 ### Phase 5: LLM Integration
-- [ ] LLM provider abstraction works
+- [ ] LLM provider abstraction works (all providers tested)
 - [ ] Scout enhanced with LLM analysis
 - [ ] Strategist enhanced with LLM recommendations
 - [ ] Fallback to rule-based logic works
 - [ ] Configuration supports provider switching
+- [ ] LLM metrics tracked correctly
+- [ ] All LLM integration tests passing (provider, agent integration, config, metrics)
 
 ### Phase 6: Web UI
 - [ ] All 25 user stories implemented
@@ -1897,6 +2011,10 @@ Use this checklist to verify each phase is complete:
 - [ ] Structured logging outputs JSON
 - [ ] Metrics collected and exportable
 - [ ] Health checks return correct status
+- [ ] All configuration tests passing
+- [ ] All logging tests passing
+- [ ] All metrics tests passing
+- [ ] All health check tests passing
 
 ### Phase 9: Documentation & Deployment
 - [ ] README complete with usage examples
@@ -1909,6 +2027,9 @@ Use this checklist to verify each phase is complete:
 - [ ] MCP protocol implemented
 - [ ] Agents runnable as MCP servers
 - [ ] Mode switching works (local ↔ MCP)
+- [ ] All MCP protocol tests passing
+- [ ] All agent MCP adaptation tests passing
+- [ ] All mode switching tests passing
 
 ---
 
