@@ -4,21 +4,158 @@
 
 This document defines the visual design for the Tic-Tac-Toe Multi-Agent Game UI. It complements the functional requirements in [spec.md Section 6](./spec.md#6-web-ui-functional-requirements) by providing visual specifications, layouts, styling, and animations.
 
-## Design Frames
+## Figma Design Integration
+
+### Figma File Reference
+
+**Primary Figma File**: [Tic-Tac-Toe Multi-Agent Game Design](https://www.figma.com/file/[FILE_ID]/Tic-Tac-Toe-Multi-Agent-Game)  
+**Design System File**: [Design System & Tokens](https://www.figma.com/file/[DESIGN_SYSTEM_ID]/Design-System) (if separate)
+
+**Access Requirements**:
+- Designers: Full edit access
+- Developers: View-only access (comment permissions recommended)
+- Stakeholders: View-only access via share link
+
+**File Organization**:
+- **Pages**: Organized by feature area (Game Board, Metrics, Configuration, States)
+- **Frames**: Named with user story IDs for traceability (e.g., `US-001-Game-Board`, `US-008-Metrics-Panel`)
+- **Components**: Reusable UI components in dedicated component library page
+- **Design Tokens**: Centralized in Variables/Design Tokens section
+
+### Design Frames
 
 Visual designs are provided as exported PNG frames from Figma, located in `docs/ui/frames/`.
 
 **Frame Index:**
 - `game-board.png` - Game board and move history panel (US-001 through US-007)
+  - **Figma Frame**: `US-001-Game-Board` (Page: Game Board)
   - Game board: 3x3 grid with cell states and game status (US-001, US-002, US-003, US-004, US-005)
   - Move history: Chronological move list in same panel (US-006, US-007)
 - `metrics-panel.png` - Agent insights and post-game metrics panel (US-008 through US-018)
+  - **Figma Frame**: `US-008-Metrics-Panel` (Page: Metrics)
   - Agent insights: Real-time agent status and analysis (US-008, US-009, US-010, US-011, US-012)
   - Post-game metrics: Performance data and LLM interactions (US-013, US-014, US-015, US-016, US-017, US-018)
 - `config-panel.png` - Configuration panel (US-019, US-020, US-021)
+  - **Figma Frame**: `US-019-Config-Panel` (Page: Configuration)
   - LLM provider and model selection (US-019)
   - Agent mode configuration (US-020)
   - Game settings (US-021)
+
+**Frame Export Requirements**:
+- Format: PNG @2x resolution (for high-DPI displays)
+- Export settings: Include "id" in filename (e.g., `game-board-US-001.png`)
+- Export location: `docs/ui/frames/` directory
+- Naming convention: `{component-name}-{user-story-id}.png`
+
+### Design Tokens Export
+
+**Figma Variables/Design Tokens**:
+Design tokens (colors, typography, spacing, shadows, etc.) MUST be exported from Figma and synchronized with code.
+
+**Export Methods**:
+
+1. **Figma Tokens Plugin** (Recommended):
+   - Install [Figma Tokens](https://www.figma.com/community/plugin/843461159747178946/Figma-Tokens) plugin
+   - Export tokens as JSON: `docs/ui/design-tokens.json`
+   - Generate CSS variables: `docs/ui/tokens.css`
+   - Auto-sync with codebase on design updates
+
+2. **Style Dictionary**:
+   - Use [Style Dictionary](https://amzn.github.io/style-dictionary/) to transform Figma tokens
+   - Generate platform-specific outputs (CSS, SCSS, JavaScript, etc.)
+   - Output location: `src/styles/tokens/`
+
+3. **Manual Export**:
+   - Export color palette, typography, spacing from Figma Variables
+   - Document in `docs/ui/design-tokens.md`
+   - Update CSS variables in code manually
+
+**Token Categories**:
+- **Colors**: Primary, secondary, semantic (success, error, warning), game-specific (X, O)
+- **Typography**: Font families, sizes, weights, line heights
+- **Spacing**: Base unit (4px or 8px), scale (0.5x, 1x, 2x, 3x, 4x)
+- **Shadows**: Elevation levels (0-5)
+- **Border Radius**: Component-specific radius values
+- **Animations**: Duration, easing functions, keyframes
+
+**Token Sync Workflow**:
+1. Designer updates tokens in Figma Variables
+2. Export tokens using Figma Tokens plugin
+3. Commit `design-tokens.json` to repository
+4. CI/CD pipeline generates CSS/SCSS from tokens
+5. Developers pull updated tokens automatically
+
+### Component Specifications
+
+**Figma Component Links**:
+Each UI component in Figma MUST be linked to its specification in this document.
+
+**Component Mapping**:
+- **Game Board Cell**: Figma component `Cell` → [Component Specifications: Game Board Panel](#component-specifications)
+- **Agent Status Indicator**: Figma component `AgentStatus` → [Component Specifications: Agent Insights Panel](#component-specifications)
+- **Move History Item**: Figma component `MoveHistoryItem` → [Component Specifications: Move History](#component-specifications)
+- **Configuration Panel**: Figma component `ConfigPanel` → [Component Specifications: Configuration Panel](#component-specifications)
+
+**Component Properties**:
+- **Variants**: Document all component variants (states: default, hover, active, disabled, error)
+- **Auto Layout**: Use Figma Auto Layout for responsive behavior
+- **Constraints**: Document responsive constraints (left, right, top, bottom, center, scale)
+- **Component Properties**: Document all Figma component properties (boolean, text, instance swap)
+
+### Design-to-Code Workflow
+
+**1. Design Handoff Process**:
+- Designer marks frames as "Ready for Development" in Figma
+- Designer adds comments with implementation notes
+- Designer exports assets (icons, images) to `docs/ui/assets/`
+- Developer reviews Figma file and comments
+- Developer implements component matching Figma specifications
+
+**2. Design Review Process**:
+- Developer implements component based on Figma
+- Developer creates PR with screenshots comparing implementation vs Figma
+- Designer reviews PR and approves or requests changes
+- Designer can use Figma Dev Mode to inspect implementation
+
+**3. Design Updates**:
+- Designer updates Figma file
+- Designer exports updated frames to `docs/ui/frames/`
+- Designer updates design tokens if changed
+- Designer notifies team via issue/PR comment
+- Developer updates implementation to match new design
+
+**4. Version Control**:
+- **Figma File Versions**: Use Figma version history for design iterations
+- **Code Versions**: Git commits reference Figma file version/URL
+- **Design Tokens**: Versioned in `design-tokens.json` with changelog
+- **Frame Exports**: Commit PNG frames to repository for historical reference
+
+### Figma Dev Mode Integration
+
+**For Developers**:
+- Use Figma Dev Mode to inspect spacing, colors, typography, and CSS properties
+- Copy CSS/React code snippets directly from Figma
+- View component specifications and constraints
+- Access design tokens and variables
+
+**Best Practices**:
+- Always reference Figma frame when implementing new components
+- Use Figma measurements for spacing and sizing (avoid guessing)
+- Verify color values match Figma (use color picker tool)
+- Check responsive behavior matches Figma constraints
+
+### Design System Maintenance
+
+**Design System Updates**:
+- Changes to design system MUST be documented in Figma file changelog
+- Design system updates MUST trigger design token export
+- Breaking changes MUST be communicated to development team
+- Design system version MUST be tracked (e.g., `v1.0.0`)
+
+**Design System Components**:
+- All reusable components MUST be in Figma component library
+- Component variants MUST cover all states (default, hover, active, disabled, error, loading)
+- Component documentation MUST include usage guidelines and code examples
 
 ## Design System
 

@@ -147,25 +147,25 @@ Features marked as non-goals may be reconsidered in future versions if there is 
 | `col` | integer | 0 ≤ col ≤ 2 | `E_POSITION_OUT_OF_BOUNDS` | Given col=3 or col=-1, when Position created, then reject with E_POSITION_OUT_OF_BOUNDS |
 
 **Acceptance Criteria:**
-- Given row=0, col=0, when Position is created, then position is valid
-- Given row=3, col=0, when Position is created, then validation error `E_POSITION_OUT_OF_BOUNDS` is raised
-- Given row=-1, col=0, when Position is created, then validation error `E_POSITION_OUT_OF_BOUNDS` is raised
-- Given Position(row=1, col=2), when hashed, then produces consistent hash value for use in dictionaries/sets
-- Given Position(row=1, col=2) and Position(row=1, col=2), when compared, then positions are equal
+- **AC-2.1.1**: Given row=0, col=0, when Position is created, then position is valid
+- **AC-2.1.2**: Given row=3, col=0, when Position is created, then validation error `E_POSITION_OUT_OF_BOUNDS` is raised
+- **AC-2.1.3**: Given row=-1, col=0, when Position is created, then validation error `E_POSITION_OUT_OF_BOUNDS` is raised
+- **AC-2.1.4**: Given Position(row=1, col=2), when hashed, then produces consistent hash value for use in dictionaries/sets
+- **AC-2.1.5**: Given Position(row=1, col=2) and Position(row=1, col=2), when compared, then positions are equal
 
 **Board**: A 3x3 grid of symbols (X, O, or empty). Board MUST provide methods: `get_cell(position)` returns symbol at position, `set_cell(position, symbol)` sets symbol at position, `is_empty(position)` returns boolean, `get_empty_positions()` returns list of Position objects. Board MUST validate size is exactly 3x3.
 
 **Acceptance Criteria:**
-- Given a 3x3 board structure, when Board is created, then board is valid
-- Given a 2x2 board structure, when Board is created, then validation error `E_INVALID_BOARD_SIZE` is raised
-- Given a 4x4 board structure, when Board is created, then validation error `E_INVALID_BOARD_SIZE` is raised
-- Given Board with empty cells, when `get_empty_positions()` is called, then returns list of all (row, col) tuples where cell is empty
-- Given Board with all cells occupied, when `get_empty_positions()` is called, then returns empty list
-- Given Position(1, 1) and symbol 'X', when `set_cell(position, 'X')` is called, then cell at (1, 1) contains 'X'
-- Given Position(1, 1), when `get_cell(position)` is called, then returns current symbol ('X', 'O', or EMPTY)
-- Given Position(3, 3), when `get_cell(position)` is called, then raises error `E_POSITION_OUT_OF_BOUNDS`
-- Given Position(1, 1) with no symbol set, when `is_empty(position)` is called, then returns True
-- Given Position(1, 1) with 'X' set, when `is_empty(position)` is called, then returns False
+- **AC-2.2.1**: Given a 3x3 board structure, when Board is created, then board is valid
+- **AC-2.2.2**: Given a 2x2 board structure, when Board is created, then validation error `E_INVALID_BOARD_SIZE` is raised
+- **AC-2.2.3**: Given a 4x4 board structure, when Board is created, then validation error `E_INVALID_BOARD_SIZE` is raised
+- **AC-2.2.4**: Given Board with empty cells, when `get_empty_positions()` is called, then returns list of all (row, col) tuples where cell is empty
+- **AC-2.2.5**: Given Board with all cells occupied, when `get_empty_positions()` is called, then returns empty list
+- **AC-2.2.6**: Given Position(1, 1) and symbol 'X', when `set_cell(position, 'X')` is called, then cell at (1, 1) contains 'X'
+- **AC-2.2.7**: Given Position(1, 1), when `get_cell(position)` is called, then returns current symbol ('X', 'O', or EMPTY)
+- **AC-2.2.8**: Given Position(3, 3), when `get_cell(position)` is called, then raises error `E_POSITION_OUT_OF_BOUNDS`
+- **AC-2.2.9**: Given Position(1, 1) with no symbol set, when `is_empty(position)` is called, then returns True
+- **AC-2.2.10**: Given Position(1, 1) with 'X' set, when `is_empty(position)` is called, then returns False
 
 **Game State**: Complete game state including:
 - Current board
@@ -179,16 +179,16 @@ Features marked as non-goals may be reconsidered in future versions if there is 
 GameState MUST provide helper methods: `get_current_player()` returns player symbol (X or O) based on move_number (even=player, odd=AI), `get_opponent()` returns the opposite symbol.
 
 **Acceptance Criteria:**
-- Given valid Board, player='X', AI='O', when GameState is created, then game state is valid with move_number=0
-- Given GameState with move_number=0, when `get_current_player()` is called, then returns player symbol 'X'
-- Given GameState with move_number=1, when `get_current_player()` is called, then returns AI symbol 'O'
-- Given GameState with three X's in a row, when game state is evaluated, then `is_game_over=True` and `winner='X'`
-- Given GameState with three O's in a column, when game state is evaluated, then `is_game_over=True` and `winner='O'`
-- Given GameState with three X's on diagonal, when game state is evaluated, then `is_game_over=True` and `winner='X'`
-- Given GameState with all 9 cells occupied and no winner, when game state is evaluated, then `is_game_over=True` and `is_draw=True`
-- Given GameState with 5 moves and no winner, when game state is evaluated, then `is_game_over=False`
-- Given GameState with player='X', when `get_opponent()` is called, then returns 'O'
-- Given invalid board (size ≠ 3x3), when GameState is created, then validation error `E_INVALID_BOARD_SIZE` is raised
+- **AC-2.3.1**: Given valid Board, player='X', AI='O', when GameState is created, then game state is valid with move_number=0
+- **AC-2.3.2**: Given GameState with move_number=0, when `get_current_player()` is called, then returns player symbol 'X'
+- **AC-2.3.3**: Given GameState with move_number=1, when `get_current_player()` is called, then returns AI symbol 'O'
+- **AC-2.3.4**: Given GameState with three X's in a row, when game state is evaluated, then `is_game_over=True` and `winner='X'`
+- **AC-2.3.5**: Given GameState with three O's in a column, when game state is evaluated, then `is_game_over=True` and `winner='O'`
+- **AC-2.3.6**: Given GameState with three X's on diagonal, when game state is evaluated, then `is_game_over=True` and `winner='X'`
+- **AC-2.3.7**: Given GameState with all 9 cells occupied and no winner, when game state is evaluated, then `is_game_over=True` and `is_draw=True`
+- **AC-2.3.8**: Given GameState with 5 moves and no winner, when game state is evaluated, then `is_game_over=False`
+- **AC-2.3.9**: Given GameState with player='X', when `get_opponent()` is called, then returns 'O'
+- **AC-2.3.10**: Given invalid board (size ≠ 3x3), when GameState is created, then validation error `E_INVALID_BOARD_SIZE` is raised
 
 ### Agent Domain Models
 
@@ -204,10 +204,10 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 | `severity` | string | Must be 'critical' | N/A | Always 'critical' for Tic-Tac-Toe (no validation needed) |
 
 **Acceptance Criteria:**
-- Given opponent has two O's in row 0 with position (0,2) empty, when Threat is created, then `position=(0,2)`, `line_type='row'`, `line_index=0`, `severity='critical'`
-- Given opponent has two O's in column 1, when Threat is created, then `line_type='column'` and `line_index=1`
-- Given opponent has two O's on main diagonal, when Threat is created, then `line_type='diagonal'` and `line_index=0`
-- Given threat with invalid position (3, 3), when Threat is created, then validation error `E_POSITION_OUT_OF_BOUNDS` is raised
+- **AC-2.4.1**: Given opponent has two O's in row 0 with position (0,2) empty, when Threat is created, then `position=(0,2)`, `line_type='row'`, `line_index=0`, `severity='critical'`
+- **AC-2.4.2**: Given opponent has two O's in column 1, when Threat is created, then `line_type='column'` and `line_index=1`
+- **AC-2.4.3**: Given opponent has two O's on main diagonal, when Threat is created, then `line_type='diagonal'` and `line_index=0`
+- **AC-2.4.4**: Given threat with invalid position (3, 3), when Threat is created, then validation error `E_POSITION_OUT_OF_BOUNDS` is raised
 
 **Opportunity**: Represents a winning opportunity where AI can win on this move. Opportunity MUST contain: position (Position object), line_type (string: 'row', 'column', or 'diagonal'), line_index (integer 0-2), confidence (float 0.0 to 1.0).
 
@@ -221,10 +221,10 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 | `confidence` | float | 0.0 ≤ confidence ≤ 1.0, precision: 2 decimal places | `E_INVALID_CONFIDENCE` | Given confidence=1.5 or confidence=-0.1, when Opportunity created, then reject with E_INVALID_CONFIDENCE |
 
 **Acceptance Criteria:**
-- Given AI has two X's in row 1 with position (1,2) empty, when Opportunity is created, then `position=(1,2)`, `line_type='row'`, `line_index=1`, `confidence=1.0`
-- Given AI has one X in center with corners available, when Opportunity is created for fork, then `confidence >= 0.7`
-- Given confidence value 1.5, when Opportunity is created, then validation error `E_INVALID_CONFIDENCE` is raised (must be 0.0-1.0)
-- Given confidence value -0.1, when Opportunity is created, then validation error `E_INVALID_CONFIDENCE` is raised
+- **AC-2.5.1**: Given AI has two X's in row 1 with position (1,2) empty, when Opportunity is created, then `position=(1,2)`, `line_type='row'`, `line_index=1`, `confidence=1.0`
+- **AC-2.5.2**: Given AI has one X in center with corners available, when Opportunity is created for fork, then `confidence >= 0.7`
+- **AC-2.5.3**: Given confidence value 1.5, when Opportunity is created, then validation error `E_INVALID_CONFIDENCE` is raised (must be 0.0-1.0)
+- **AC-2.5.4**: Given confidence value -0.1, when Opportunity is created, then validation error `E_INVALID_CONFIDENCE` is raised
 
 **Strategic Move**: A position recommendation with position, move type (center/corner/edge/fork/block_fork), priority (1-10 numeric value), and reasoning (required string explanation).
 
@@ -238,11 +238,11 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 | `reasoning` | string | Required, non-empty (length > 0), max length 1000 characters | `E_MISSING_REASONING` | Given reasoning='' or reasoning=null, when StrategicMove created, then reject with E_MISSING_REASONING |
 
 **Acceptance Criteria:**
-- Given empty board, when StrategicMove for center is created, then `position=(1,1)`, `move_type='center'`, `priority >= 8`
-- Given move_type='corner', when StrategicMove is created, then position is one of: (0,0), (0,2), (2,0), (2,2)
-- Given move_type='edge', when StrategicMove is created, then position is one of: (0,1), (1,0), (1,2), (2,1)
-- Given priority value 11, when StrategicMove is created, then validation error `E_INVALID_PRIORITY` is raised (must be 1-10)
-- Given priority value 0, when StrategicMove is created, then validation error `E_INVALID_PRIORITY` is raised
+- **AC-2.6.1**: Given empty board, when StrategicMove for center is created, then `position=(1,1)`, `move_type='center'`, `priority >= 8`
+- **AC-2.6.2**: Given move_type='corner', when StrategicMove is created, then position is one of: (0,0), (0,2), (2,0), (2,2)
+- **AC-2.6.3**: Given move_type='edge', when StrategicMove is created, then position is one of: (0,1), (1,0), (1,2), (2,1)
+- **AC-2.6.4**: Given priority value 11, when StrategicMove is created, then validation error `E_INVALID_PRIORITY` is raised (must be 1-10)
+- **AC-2.6.5**: Given priority value 0, when StrategicMove is created, then validation error `E_INVALID_PRIORITY` is raised
 
 **Board Analysis**: Scout agent output containing:
 - List of threats
@@ -263,15 +263,15 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 | `board_evaluation_score` | float | -1.0 ≤ board_evaluation_score ≤ 1.0, precision: 2 decimal places | `E_INVALID_EVAL_SCORE` | Given board_evaluation_score=1.5 or board_evaluation_score=-1.5, when BoardAnalysis created, then reject with E_INVALID_EVAL_SCORE |
 
 **Acceptance Criteria:**
-- Given board with opponent about to win, when BoardAnalysis is created, then `threats` list contains at least one Threat
-- Given board with AI about to win, when BoardAnalysis is created, then `opportunities` list contains at least one Opportunity with winning position
-- Given empty board (move 0-2), when BoardAnalysis is created, then `game_phase='opening'`
-- Given board with 3-6 moves, when BoardAnalysis is created, then `game_phase='midgame'`
-- Given board with 7-9 moves, when BoardAnalysis is created, then `game_phase='endgame'`
-- Given board evaluation score 1.5, when BoardAnalysis is created, then validation error `E_INVALID_EVAL_SCORE` is raised (must be -1.0 to 1.0)
-- Given favorable board for AI, when BoardAnalysis is created, then `board_evaluation_score > 0.0`
-- Given favorable board for opponent, when BoardAnalysis is created, then `board_evaluation_score < 0.0`
-- Given balanced board, when BoardAnalysis is created, then `board_evaluation_score ≈ 0.0` (within ±0.2)
+- **AC-2.7.1**: Given board with opponent about to win, when BoardAnalysis is created, then `threats` list contains at least one Threat
+- **AC-2.7.2**: Given board with AI about to win, when BoardAnalysis is created, then `opportunities` list contains at least one Opportunity with winning position
+- **AC-2.7.3**: Given empty board (move 0-2), when BoardAnalysis is created, then `game_phase='opening'`
+- **AC-2.7.4**: Given board with 3-6 moves, when BoardAnalysis is created, then `game_phase='midgame'`
+- **AC-2.7.5**: Given board with 7-9 moves, when BoardAnalysis is created, then `game_phase='endgame'`
+- **AC-2.7.6**: Given board evaluation score 1.5, when BoardAnalysis is created, then validation error `E_INVALID_EVAL_SCORE` is raised (must be -1.0 to 1.0)
+- **AC-2.7.7**: Given favorable board for AI, when BoardAnalysis is created, then `board_evaluation_score > 0.0`
+- **AC-2.7.8**: Given favorable board for opponent, when BoardAnalysis is created, then `board_evaluation_score < 0.0`
+- **AC-2.7.9**: Given balanced board, when BoardAnalysis is created, then `board_evaluation_score ≈ 0.0` (within ±0.2)
 
 **Move Priority**: Enum defining priority levels for move recommendations with numeric values (see Priority System below for details):
 - IMMEDIATE_WIN (priority: 100) - AI has exactly 2 symbols in a line with exactly 1 empty cell (will win on this move)
@@ -284,15 +284,15 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 - RANDOM_VALID (priority: 10) - Any valid empty cell when no strategic patterns detected (fallback)
 
 **Acceptance Criteria:**
-- Given MovePriority.IMMEDIATE_WIN, when accessed, then numeric value equals 100
-- Given MovePriority.BLOCK_THREAT, when accessed, then numeric value equals 90
-- Given MovePriority.FORCE_WIN, when accessed, then numeric value equals 80
-- Given MovePriority.PREVENT_FORK, when accessed, then numeric value equals 70
-- Given MovePriority.CENTER_CONTROL, when accessed, then numeric value equals 50
-- Given MovePriority.CORNER_CONTROL, when accessed, then numeric value equals 40
-- Given MovePriority.EDGE_PLAY, when accessed, then numeric value equals 30
-- Given MovePriority.RANDOM_VALID, when accessed, then numeric value equals 10
-- Given two moves with IMMEDIATE_WIN (100) and BLOCK_THREAT (90), when comparing priorities, then IMMEDIATE_WIN > BLOCK_THREAT
+- **AC-2.8.1**: Given MovePriority.IMMEDIATE_WIN, when accessed, then numeric value equals 100
+- **AC-2.8.2**: Given MovePriority.BLOCK_THREAT, when accessed, then numeric value equals 90
+- **AC-2.8.3**: Given MovePriority.FORCE_WIN, when accessed, then numeric value equals 80
+- **AC-2.8.4**: Given MovePriority.PREVENT_FORK, when accessed, then numeric value equals 70
+- **AC-2.8.5**: Given MovePriority.CENTER_CONTROL, when accessed, then numeric value equals 50
+- **AC-2.8.6**: Given MovePriority.CORNER_CONTROL, when accessed, then numeric value equals 40
+- **AC-2.8.7**: Given MovePriority.EDGE_PLAY, when accessed, then numeric value equals 30
+- **AC-2.8.8**: Given MovePriority.RANDOM_VALID, when accessed, then numeric value equals 10
+- **AC-2.8.9**: Given two moves with IMMEDIATE_WIN (100) and BLOCK_THREAT (90), when comparing priorities, then IMMEDIATE_WIN > BLOCK_THREAT
 
 **Move Recommendation**: Strategist output with position (required Position), priority (required MovePriority enum), confidence (required 0.0-1.0), reasoning (required string), and outcome_description (optional string describing what this move achieves).
 
@@ -307,12 +307,12 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 | `outcome_description` | string | Optional, if present: max length 500 characters | N/A | Optional field (no validation if absent) |
 
 **Acceptance Criteria:**
-- Given position (1,1), priority IMMEDIATE_WIN, confidence 1.0, when MoveRecommendation is created, then recommendation is valid
-- Given confidence value 1.5, when MoveRecommendation is created, then validation error `E_INVALID_CONFIDENCE` is raised (must be 0.0-1.0)
-- Given confidence value -0.1, when MoveRecommendation is created, then validation error `E_INVALID_CONFIDENCE` is raised
-- Given invalid position (3,3), when MoveRecommendation is created, then validation error `E_POSITION_OUT_OF_BOUNDS` is raised
-- Given priority IMMEDIATE_WIN and empty reasoning, when MoveRecommendation is created, then validation error `E_MISSING_REASONING` is raised
-- Given high-priority move (IMMEDIATE_WIN), when comparing with low-priority move (EDGE_PLAY), then high-priority move ranks higher
+- **AC-2.9.1**: Given position (1,1), priority IMMEDIATE_WIN, confidence 1.0, when MoveRecommendation is created, then recommendation is valid
+- **AC-2.9.2**: Given confidence value 1.5, when MoveRecommendation is created, then validation error `E_INVALID_CONFIDENCE` is raised (must be 0.0-1.0)
+- **AC-2.9.3**: Given confidence value -0.1, when MoveRecommendation is created, then validation error `E_INVALID_CONFIDENCE` is raised
+- **AC-2.9.4**: Given invalid position (3,3), when MoveRecommendation is created, then validation error `E_POSITION_OUT_OF_BOUNDS` is raised
+- **AC-2.9.5**: Given priority IMMEDIATE_WIN and empty reasoning, when MoveRecommendation is created, then validation error `E_MISSING_REASONING` is raised
+- **AC-2.9.6**: Given high-priority move (IMMEDIATE_WIN), when comparing with low-priority move (EDGE_PLAY), then high-priority move ranks higher
 
 **Strategy**: Strategist output containing:
 - Primary move recommendation (highest priority)
@@ -330,13 +330,13 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 | `risk_assessment` | string | Required, must be one of: 'low', 'medium', 'high' | `E_INVALID_RISK_LEVEL` | Given risk_assessment='invalid', when Strategy created, then reject with E_INVALID_RISK_LEVEL |
 
 **Acceptance Criteria:**
-- Given multiple move recommendations, when Strategy is created, then primary_move has highest priority among all recommendations
-- Given alternatives with priorities [80, 50, 40], when Strategy is created, then alternatives list is sorted [80, 50, 40] (descending)
-- Given alternatives with priorities [40, 80, 50], when Strategy is created, then alternatives list is sorted [80, 50, 40] (descending)
-- Given risk_assessment='low', when Strategy is created, then risk_assessment is 'low'
-- Given risk_assessment='invalid', when Strategy is created, then validation error `E_INVALID_RISK_LEVEL` is raised (must be low/medium/high)
-- Given empty alternatives list and primary move, when Strategy is created, then strategy is valid (alternatives optional)
-- Given no primary move, when Strategy is created, then validation error `E_MISSING_PRIMARY_MOVE` is raised
+- **AC-2.10.1**: Given multiple move recommendations, when Strategy is created, then primary_move has highest priority among all recommendations
+- **AC-2.10.2**: Given alternatives with priorities [80, 50, 40], when Strategy is created, then alternatives list is sorted [80, 50, 40] (descending)
+- **AC-2.10.3**: Given alternatives with priorities [40, 80, 50], when Strategy is created, then alternatives list is sorted [80, 50, 40] (descending)
+- **AC-2.10.4**: Given risk_assessment='low', when Strategy is created, then risk_assessment is 'low'
+- **AC-2.10.5**: Given risk_assessment='invalid', when Strategy is created, then validation error `E_INVALID_RISK_LEVEL` is raised (must be low/medium/high)
+- **AC-2.10.6**: Given empty alternatives list and primary move, when Strategy is created, then strategy is valid (alternatives optional)
+- **AC-2.10.7**: Given no primary move, when Strategy is created, then validation error `E_MISSING_PRIMARY_MOVE` is raised
 
 **Move Execution**: Executor output with position, success status, validation errors, execution time, reasoning, and actual priority used.
 
@@ -352,13 +352,13 @@ GameState MUST provide helper methods: `get_current_player()` returns player sym
 | `actual_priority_used` | MovePriority enum | Optional, if present: must be valid MovePriority enum value | `E_INVALID_PRIORITY` | Given actual_priority_used=invalid_enum_value, when MoveExecution created, then reject with E_INVALID_PRIORITY |
 
 **Acceptance Criteria:**
-- Given valid move execution, when MoveExecution is created, then success=True, validation_errors=empty list
-- Given invalid move (cell occupied), when MoveExecution is created, then success=False, validation_errors contains `E_CELL_OCCUPIED`
-- Given invalid move (out of bounds), when MoveExecution is created, then success=False, validation_errors contains `E_POSITION_OUT_OF_BOUNDS`
-- Given multiple validation errors, when MoveExecution is created, then validation_errors list contains all error codes
-- Given execution time 1234ms, when MoveExecution is created, then execution_time_ms=1234
-- Given negative execution time, when MoveExecution is created, then validation error `E_INVALID_EXECUTION_TIME` is raised
-- Given priority used differs from recommended, when MoveExecution is created, then actual_priority_used reflects priority that was executed
+- **AC-2.11.1**: Given valid move execution, when MoveExecution is created, then success=True, validation_errors=empty list
+- **AC-2.11.2**: Given invalid move (cell occupied), when MoveExecution is created, then success=False, validation_errors contains `E_CELL_OCCUPIED`
+- **AC-2.11.3**: Given invalid move (out of bounds), when MoveExecution is created, then success=False, validation_errors contains `E_POSITION_OUT_OF_BOUNDS`
+- **AC-2.11.4**: Given multiple validation errors, when MoveExecution is created, then validation_errors list contains all error codes
+- **AC-2.11.5**: Given execution time 1234ms, when MoveExecution is created, then execution_time_ms=1234
+- **AC-2.11.6**: Given negative execution time, when MoveExecution is created, then validation error `E_INVALID_EXECUTION_TIME` is raised
+- **AC-2.11.7**: Given priority used differs from recommended, when MoveExecution is created, then actual_priority_used reflects priority that was executed
 
 ### Result Wrappers
 
@@ -385,14 +385,14 @@ AgentResult MUST provide factory methods: `AgentResult.success(data, execution_t
 | `metadata` | object | Optional, if present: key-value pairs, max 50 keys, each value max 200 characters | N/A | Object validation (optional field, no error code if absent) |
 
 **Acceptance Criteria:**
-- Given successful agent output with data, when AgentResult.success() is called, then success=True, error_message=None, data is populated
-- Given failed agent execution, when AgentResult.error() is called, then success=False, error_message is populated, data=None
-- Given execution time 2500ms, when AgentResult is created, then execution_time_ms=2500
-- Given negative execution time, when AgentResult is created, then validation error `E_INVALID_EXECUTION_TIME` is raised
-- Given timestamp, when AgentResult is created, then timestamp is ISO 8601 format (e.g., "2025-01-15T10:30:00Z")
-- Given metadata dictionary {"model": "gpt-4o", "provider": "openai"}, when AgentResult is created, then metadata contains both key-value pairs
-- Given success result without data, when AgentResult.success() is called, then validation error `E_MISSING_DATA` is raised
-- Given error result without error_message, when AgentResult.error() is called, then validation error `E_MISSING_ERROR_MESSAGE` is raised
+- **AC-2.12.1**: Given successful agent output with data, when AgentResult.success() is called, then success=True, error_message=None, data is populated
+- **AC-2.12.2**: Given failed agent execution, when AgentResult.error() is called, then success=False, error_message is populated, data=None
+- **AC-2.12.3**: Given execution time 2500ms, when AgentResult is created, then execution_time_ms=2500
+- **AC-2.12.4**: Given negative execution time, when AgentResult is created, then validation error `E_INVALID_EXECUTION_TIME` is raised
+- **AC-2.12.5**: Given timestamp, when AgentResult is created, then timestamp is ISO 8601 format (e.g., "2025-01-15T10:30:00Z")
+- **AC-2.12.6**: Given metadata dictionary {"model": "gpt-4o", "provider": "openai"}, when AgentResult is created, then metadata contains both key-value pairs
+- **AC-2.12.7**: Given success result without data, when AgentResult.success() is called, then validation error `E_MISSING_DATA` is raised
+- **AC-2.12.8**: Given error result without error_message, when AgentResult.error() is called, then validation error `E_MISSING_ERROR_MESSAGE` is raised
 
 ---
 
@@ -472,16 +472,16 @@ The following domain models have formal JSON Schema (OpenAPI 3.1) definitions fo
 - Scout MUST always return BoardAnalysis containing at minimum: threats list, opportunities list, strategic_moves list (may be empty), game_phase, board_evaluation_score
 
 **Acceptance Criteria:**
-- Given board with opponent two-in-a-row, when Scout.analyze() is called, then BoardAnalysis contains Threat with blocking position
-- Given board with AI two-in-a-row, when Scout.analyze() is called, then BoardAnalysis contains Opportunity with winning position
-- Given empty board, when Scout.analyze() is called, then BoardAnalysis recommends center position (1,1) as StrategicMove
-- Given board with 0-2 moves, when Scout.analyze() is called, then game_phase='opening'
-- Given board with 3-6 moves, when Scout.analyze() is called, then game_phase='midgame'
-- Given board with 7-9 moves, when Scout.analyze() is called, then game_phase='endgame'
-- Given LLM timeout (>5s), when Scout.analyze() is called, then returns rule-based BoardAnalysis (fallback)
-- Given invalid board (size ≠ 3x3), when Scout.analyze() is called, then returns AgentResult.error() with code `E_INVALID_BOARD_SIZE`
-- Given favorable AI board position, when Scout.analyze() is called, then board_evaluation_score > 0.0
-- Given execution time, when Scout.analyze() completes, then AgentResult.execution_time_ms is recorded
+- **AC-3.1.1**: Given board with opponent two-in-a-row, when Scout.analyze() is called, then BoardAnalysis contains Threat with blocking position
+- **AC-3.1.2**: Given board with AI two-in-a-row, when Scout.analyze() is called, then BoardAnalysis contains Opportunity with winning position
+- **AC-3.1.3**: Given empty board, when Scout.analyze() is called, then BoardAnalysis recommends center position (1,1) as StrategicMove
+- **AC-3.1.4**: Given board with 0-2 moves, when Scout.analyze() is called, then game_phase='opening'
+- **AC-3.1.5**: Given board with 3-6 moves, when Scout.analyze() is called, then game_phase='midgame'
+- **AC-3.1.6**: Given board with 7-9 moves, when Scout.analyze() is called, then game_phase='endgame'
+- **AC-3.1.7**: Given LLM timeout (>5s), when Scout.analyze() is called, then returns rule-based BoardAnalysis (fallback)
+- **AC-3.1.8**: Given invalid board (size ≠ 3x3), when Scout.analyze() is called, then returns AgentResult.error() with code `E_INVALID_BOARD_SIZE`
+- **AC-3.1.9**: Given favorable AI board position, when Scout.analyze() is called, then board_evaluation_score > 0.0
+- **AC-3.1.10**: Given execution time, when Scout.analyze() completes, then AgentResult.execution_time_ms is recorded
 
 **Strategist Agent**: Converts Scout analysis into a strategy:
 - Strategist MUST select moves in this priority order (highest to lowest):
@@ -498,14 +498,14 @@ The following domain models have formal JSON Schema (OpenAPI 3.1) definitions fo
 - Strategist MUST provide game_plan (string) and risk_assessment (low/medium/high) for the strategy
 
 **Acceptance Criteria:**
-- Given BoardAnalysis with Threat, when Strategist.plan() is called, then primary_move blocks threat with priority=BLOCK_THREAT (90)
-- Given BoardAnalysis with Opportunity to win, when Strategist.plan() is called, then primary_move takes win with priority=IMMEDIATE_WIN (100)
-- Given BoardAnalysis with both Threat and Opportunity, when Strategist.plan() is called, then primary_move takes win (IMMEDIATE_WIN > BLOCK_THREAT)
-- Given BoardAnalysis with multiple strategic positions, when Strategist.plan() is called, then alternatives list sorted by priority descending
-- Given BoardAnalysis with no clear moves, when Strategist.plan() is called, then recommends center/corner with reasoning
-- Given LLM timeout (>5s), when Strategist.plan() is called, then returns rule-based Strategy using Scout's highest priority opportunity
-- Given empty BoardAnalysis (no threats/opportunities), when Strategist.plan() is called, then returns Strategy with CENTER_CONTROL priority
-- Given execution time, when Strategist.plan() completes, then AgentResult.execution_time_ms is recorded
+- **AC-3.2.1**: Given BoardAnalysis with Threat, when Strategist.plan() is called, then primary_move blocks threat with priority=BLOCK_THREAT (90)
+- **AC-3.2.2**: Given BoardAnalysis with Opportunity to win, when Strategist.plan() is called, then primary_move takes win with priority=IMMEDIATE_WIN (100)
+- **AC-3.2.3**: Given BoardAnalysis with both Threat and Opportunity, when Strategist.plan() is called, then primary_move takes win (IMMEDIATE_WIN > BLOCK_THREAT)
+- **AC-3.2.4**: Given BoardAnalysis with multiple strategic positions, when Strategist.plan() is called, then alternatives list sorted by priority descending
+- **AC-3.2.5**: Given BoardAnalysis with no clear moves, when Strategist.plan() is called, then recommends center/corner with reasoning
+- **AC-3.2.6**: Given LLM timeout (>5s), when Strategist.plan() is called, then returns rule-based Strategy using Scout's highest priority opportunity
+- **AC-3.2.7**: Given empty BoardAnalysis (no threats/opportunities), when Strategist.plan() is called, then returns Strategy with CENTER_CONTROL priority
+- **AC-3.2.8**: Given execution time, when Strategist.plan() completes, then AgentResult.execution_time_ms is recorded
 
 **Executor Agent**: Executes the recommended move:
 - Executor MUST validate move (bounds check: row/col in range 0-2, empty cell check, game rules: game not over)
@@ -514,13 +514,13 @@ The following domain models have formal JSON Schema (OpenAPI 3.1) definitions fo
 - Executor MUST return MoveExecution with execution_time_ms (milliseconds) and actual_priority_used (MovePriority enum value)
 
 **Acceptance Criteria:**
-- Given Strategy with valid move (empty cell, in bounds), when Executor.execute() is called, then returns MoveExecution with success=True
-- Given Strategy with occupied cell move, when Executor.execute() is called, then returns MoveExecution with success=False, validation_errors contains `E_CELL_OCCUPIED`
-- Given Strategy with out-of-bounds move (3,3), when Executor.execute() is called, then returns MoveExecution with success=False, validation_errors contains `E_POSITION_OUT_OF_BOUNDS`
-- Given Strategy with game-over state, when Executor.execute() is called, then returns MoveExecution with success=False, validation_errors contains `E_GAME_ALREADY_OVER`
-- Given multiple validation errors, when Executor.execute() is called, then MoveExecution.validation_errors contains all error codes
-- Given execution time, when Executor.execute() completes, then MoveExecution.execution_time_ms is recorded
-- Given valid move execution, when Executor.execute() completes, then MoveExecution.actual_priority_used matches Strategy.primary_move.priority
+- **AC-3.3.1**: Given Strategy with valid move (empty cell, in bounds), when Executor.execute() is called, then returns MoveExecution with success=True
+- **AC-3.3.2**: Given Strategy with occupied cell move, when Executor.execute() is called, then returns MoveExecution with success=False, validation_errors contains `E_CELL_OCCUPIED`
+- **AC-3.3.3**: Given Strategy with out-of-bounds move (3,3), when Executor.execute() is called, then returns MoveExecution with success=False, validation_errors contains `E_POSITION_OUT_OF_BOUNDS`
+- **AC-3.3.4**: Given Strategy with game-over state, when Executor.execute() is called, then returns MoveExecution with success=False, validation_errors contains `E_GAME_ALREADY_OVER`
+- **AC-3.3.5**: Given multiple validation errors, when Executor.execute() is called, then MoveExecution.validation_errors contains all error codes
+- **AC-3.3.6**: Given execution time, when Executor.execute() completes, then MoveExecution.execution_time_ms is recorded
+- **AC-3.3.7**: Given valid move execution, when Executor.execute() completes, then MoveExecution.actual_priority_used matches Strategy.primary_move.priority
 
 ### Agent Interface Contract
 
@@ -532,11 +532,11 @@ All agents implement a protocol with a single primary method:
 Agents are stateless; all context comes from inputs. Results include execution metadata (timing, success/failure).
 
 **Acceptance Criteria:**
-- Given GameState input, when any agent method is called, then agent does not modify GameState (stateless)
-- Given repeated calls with same GameState, when agent method is called, then returns consistent results (deterministic for rule-based checks, LLM-based responses may vary but MUST follow same priority rules)
-- Given AgentResult output, when method completes, then AgentResult contains execution_time_ms, timestamp, success status
-- Given agent method failure, when error occurs, then returns AgentResult.error() with error message and code
-- Given agent method success, when completed, then returns AgentResult.success() with typed domain data (BoardAnalysis/Strategy/MoveExecution)
+- **AC-3.4.1**: Given GameState input, when any agent method is called, then agent does not modify GameState (stateless)
+- **AC-3.4.2**: Given repeated calls with same GameState, when agent method is called, then returns consistent results (deterministic for rule-based checks, LLM-based responses may vary but MUST follow same priority rules)
+- **AC-3.4.3**: Given AgentResult output, when method completes, then AgentResult contains execution_time_ms, timestamp, success status
+- **AC-3.4.4**: Given agent method failure, when error occurs, then returns AgentResult.error() with error message and code
+- **AC-3.4.5**: Given agent method success, when completed, then returns AgentResult.success() with typed domain data (BoardAnalysis/Strategy/MoveExecution)
 
 ### Agent Timeout Configuration
 
@@ -682,21 +682,21 @@ The Move Priority System defines a strict ordering for move selection with numer
 - Executor MUST perform final validation before execution (bounds, empty cell, game not over)
 
 **Acceptance Criteria:**
-- Given AI has 2 symbols in a line with 1 empty cell, when evaluating moves, then IMMEDIATE_WIN (100) is assigned to that position
-- Given opponent has 2 symbols in a line with 1 empty cell, when evaluating moves, then BLOCK_THREAT (90) is assigned to blocking position
-- Given move creates 2 unblocked winning lines simultaneously, when evaluating moves, then FORCE_WIN (80) is assigned
-- Given opponent's move would create 2 winning threats, when evaluating moves, then PREVENT_FORK (70) is assigned to blocking position
-- Given center (1,1) is empty and no threats/wins exist, when evaluating moves, then CENTER_CONTROL (50) is assigned to (1,1)
-- Given corner (0,0/0,2/2,0/2,2) is empty and no higher priorities exist, when evaluating moves, then CORNER_CONTROL (40) is assigned
-- Given edge (0,1/1,0/1,2/2,1) is empty and no higher priorities exist, when evaluating moves, then EDGE_PLAY (30) is assigned
-- Given no strategic pattern detected, when evaluating moves, then RANDOM_VALID (10) is assigned to any empty cell
-- Given multiple moves with same priority, when selecting move, then move with higher confidence score is selected
-- Given multiple moves with same priority and confidence, when selecting move, then center > corner > edge preference is applied
-- Given two corners with same priority, when selecting move, then corner with more open lines is preferred
-- Given all tiebreakers equal, when selecting move, then deterministic position ordering (0,0 < 0,1 < ... < 2,2) is applied
-- Given occupied cell, when filtering moves, then cell is excluded from recommendations
-- Given out-of-bounds position, when filtering moves, then position is excluded from recommendations
-- Given highest priority move is invalid, when selecting move, then next highest valid priority is selected
+- **AC-3.5.1**: Given AI has 2 symbols in a line with 1 empty cell, when evaluating moves, then IMMEDIATE_WIN (100) is assigned to that position
+- **AC-3.5.2**: Given opponent has 2 symbols in a line with 1 empty cell, when evaluating moves, then BLOCK_THREAT (90) is assigned to blocking position
+- **AC-3.5.3**: Given move creates 2 unblocked winning lines simultaneously, when evaluating moves, then FORCE_WIN (80) is assigned
+- **AC-3.5.4**: Given opponent's move would create 2 winning threats, when evaluating moves, then PREVENT_FORK (70) is assigned to blocking position
+- **AC-3.5.5**: Given center (1,1) is empty and no threats/wins exist, when evaluating moves, then CENTER_CONTROL (50) is assigned to (1,1)
+- **AC-3.5.6**: Given corner (0,0/0,2/2,0/2,2) is empty and no higher priorities exist, when evaluating moves, then CORNER_CONTROL (40) is assigned
+- **AC-3.5.7**: Given edge (0,1/1,0/1,2/2,1) is empty and no higher priorities exist, when evaluating moves, then EDGE_PLAY (30) is assigned
+- **AC-3.5.8**: Given no strategic pattern detected, when evaluating moves, then RANDOM_VALID (10) is assigned to any empty cell
+- **AC-3.5.9**: Given multiple moves with same priority, when selecting move, then move with higher confidence score is selected
+- **AC-3.5.10**: Given multiple moves with same priority and confidence, when selecting move, then center > corner > edge preference is applied
+- **AC-3.5.11**: Given two corners with same priority, when selecting move, then corner with more open lines is preferred
+- **AC-3.5.12**: Given all tiebreakers equal, when selecting move, then deterministic position ordering (0,0 < 0,1 < ... < 2,2) is applied
+- **AC-3.5.13**: Given occupied cell, when filtering moves, then cell is excluded from recommendations
+- **AC-3.5.14**: Given out-of-bounds position, when filtering moves, then position is excluded from recommendations
+- **AC-3.5.15**: Given highest priority move is invalid, when selecting move, then next highest valid priority is selected
 
 ### Agent Pipeline Flow
 
@@ -939,81 +939,81 @@ Each step MUST validate conditions before proceeding. Each failure branch MUST e
 **Acceptance Criteria:**
 
 **Pre-flight Validation:**
-- Given GameState with board size ≠ 3×3, when pipeline starts, then returns error without calling agents, error_code=`E_INVALID_BOARD_SIZE`
-- Given GameState with is_game_over=True, when pipeline starts, then returns error without calling agents, error_code=`E_GAME_ALREADY_OVER`
-- Given valid GameState, when pipeline starts, then proceeds to Step 1
+- **AC-3.6.1**: Given GameState with board size ≠ 3×3, when pipeline starts, then returns error without calling agents, error_code=`E_INVALID_BOARD_SIZE`
+- **AC-3.6.2**: Given GameState with is_game_over=True, when pipeline starts, then returns error without calling agents, error_code=`E_GAME_ALREADY_OVER`
+- **AC-3.6.3**: Given valid GameState, when pipeline starts, then proceeds to Step 1
 
 **Scout Analysis Success:**
-- Given Scout returns AgentResult.success=True with valid BoardAnalysis, when Scout succeeds, then BoardAnalysis is stored and pipeline proceeds to Step 3
-- Given Scout.analyze() completes within timeout, when Scout succeeds, then execution_time_ms is recorded
+- **AC-3.6.4**: Given Scout returns AgentResult.success=True with valid BoardAnalysis, when Scout succeeds, then BoardAnalysis is stored and pipeline proceeds to Step 3
+- **AC-3.6.5**: Given Scout.analyze() completes within timeout, when Scout succeeds, then execution_time_ms is recorded
 
 **Scout Failure - Timeout:**
-- Given Scout call exceeds 5s timeout (local mode), when timeout occurs, then retries up to 3 times with exponential backoff (1s, 2s, 4s delays)
-- Given all 3 Scout retries timeout, when retries exhausted, then executes Fallback Rule Set 1 (rule-based BoardAnalysis), sets fallback_active=True, logs error_code=`E_LLM_TIMEOUT`, agent_name="scout", retry_count=3
-- Given Scout timeout on retry attempt 2, when Scout responds successfully, then uses Scout response, cancels remaining retries, proceeds to Step 3
+- **AC-3.6.6**: Given Scout call exceeds 5s timeout (local mode), when timeout occurs, then retries up to 3 times with exponential backoff (1s, 2s, 4s delays)
+- **AC-3.6.7**: Given all 3 Scout retries timeout, when retries exhausted, then executes Fallback Rule Set 1 (rule-based BoardAnalysis), sets fallback_active=True, logs error_code=`E_LLM_TIMEOUT`, agent_name="scout", retry_count=3
+- **AC-3.6.8**: Given Scout timeout on retry attempt 2, when Scout responds successfully, then uses Scout response, cancels remaining retries, proceeds to Step 3
 
 **Scout Failure - Parse Error:**
-- Given Scout returns error_code=`E_LLM_PARSE_ERROR`, when parse error occurs, then retries up to 2 times with prompt refinement
-- Given all 2 Scout retries fail with parse error, when retries exhausted, then executes Fallback Rule Set 1, sets fallback_active=True, logs error_code=`E_LLM_PARSE_ERROR`, agent_name="scout", retry_count=2
+- **AC-3.6.9**: Given Scout returns error_code=`E_LLM_PARSE_ERROR`, when parse error occurs, then retries up to 2 times with prompt refinement
+- **AC-3.6.10**: Given all 2 Scout retries fail with parse error, when retries exhausted, then executes Fallback Rule Set 1, sets fallback_active=True, logs error_code=`E_LLM_PARSE_ERROR`, agent_name="scout", retry_count=2
 
 **Scout Failure - Other Errors:**
-- Given Scout returns AgentResult.success=False with error_code NOT in {`E_LLM_TIMEOUT`, `E_LLM_PARSE_ERROR`}, when Scout fails, then retries exactly 1 time with same inputs
-- Given Scout retry fails, when second failure occurs, then executes Fallback Rule Set 1, sets fallback_active=True, logs error_code=`E_SCOUT_FAILED`, agent_name="scout", retry_count=1
+- **AC-3.6.11**: Given Scout returns AgentResult.success=False with error_code NOT in {`E_LLM_TIMEOUT`, `E_LLM_PARSE_ERROR`}, when Scout fails, then retries exactly 1 time with same inputs
+- **AC-3.6.12**: Given Scout retry fails, when second failure occurs, then executes Fallback Rule Set 1, sets fallback_active=True, logs error_code=`E_SCOUT_FAILED`, agent_name="scout", retry_count=1
 
 **Fallback Rule Set 1:**
-- Given Scout fails, when Fallback Rule Set 1 executes, then BoardAnalysis contains: opportunities list with IMMEDIATE_WIN (priority 100) if AI has 2-in-a-row, threats/opportunities list with BLOCK_THREAT (priority 90) if opponent has 2-in-a-row, strategic_moves list with center (1,1) priority 50 if center is empty, strategic_moves list with corner priority 40 if corners available, at least 1 strategic_move (may be priority 10 fallback)
-- Given empty board, when Fallback Rule Set 1 executes, then strategic_moves contains center (1,1) with priority 50, confidence 0.75
+- **AC-3.6.13**: Given Scout fails, when Fallback Rule Set 1 executes, then BoardAnalysis contains: opportunities list with IMMEDIATE_WIN (priority 100) if AI has 2-in-a-row, threats/opportunities list with BLOCK_THREAT (priority 90) if opponent has 2-in-a-row, strategic_moves list with center (1,1) priority 50 if center is empty, strategic_moves list with corner priority 40 if corners available, at least 1 strategic_move (may be priority 10 fallback)
+- **AC-3.6.14**: Given empty board, when Fallback Rule Set 1 executes, then strategic_moves contains center (1,1) with priority 50, confidence 0.75
 
 **Strategist Planning Success:**
-- Given Strategist returns AgentResult.success=True with valid Strategy containing primary_move, when Strategist succeeds, then Strategy.primary_move.position is validated (bounds 0-2, cell is empty)
-- Given Strategist.primary_move is valid, when validation succeeds, then Strategy is stored and pipeline proceeds to Step 4
-- Given Strategist.primary_move is invalid (occupied or out-of-bounds), when validation fails, then executes Fallback Rule Set 2 (Scout opportunity fallback), logs warning, proceeds to Step 4
+- **AC-3.6.15**: Given Strategist returns AgentResult.success=True with valid Strategy containing primary_move, when Strategist succeeds, then Strategy.primary_move.position is validated (bounds 0-2, cell is empty)
+- **AC-3.6.16**: Given Strategist.primary_move is valid, when validation succeeds, then Strategy is stored and pipeline proceeds to Step 4
+- **AC-3.6.17**: Given Strategist.primary_move is invalid (occupied or out-of-bounds), when validation fails, then executes Fallback Rule Set 2 (Scout opportunity fallback), logs warning, proceeds to Step 4
 
 **Strategist Failure - Timeout:**
-- Given Strategist call exceeds 5s timeout (local mode), when timeout occurs, then retries up to 3 times with exponential backoff (1s, 2s, 4s delays)
-- Given all 3 Strategist retries timeout, when retries exhausted, then executes Fallback Rule Set 2, sets fallback_active=True, logs error_code=`E_LLM_TIMEOUT`, agent_name="strategist", retry_count=3
+- **AC-3.6.18**: Given Strategist call exceeds 5s timeout (local mode), when timeout occurs, then retries up to 3 times with exponential backoff (1s, 2s, 4s delays)
+- **AC-3.6.19**: Given all 3 Strategist retries timeout, when retries exhausted, then executes Fallback Rule Set 2, sets fallback_active=True, logs error_code=`E_LLM_TIMEOUT`, agent_name="strategist", retry_count=3
 
 **Strategist Failure - Other Errors:**
-- Given Strategist returns AgentResult.success=False, when Strategist fails, then retries exactly 1 time with same inputs
-- Given Strategist retry fails, when second failure occurs, then executes Fallback Rule Set 2, sets fallback_active=True, logs error_code=`E_STRATEGIST_FAILED`, agent_name="strategist", retry_count=1
+- **AC-3.6.20**: Given Strategist returns AgentResult.success=False, when Strategist fails, then retries exactly 1 time with same inputs
+- **AC-3.6.21**: Given Strategist retry fails, when second failure occurs, then executes Fallback Rule Set 2, sets fallback_active=True, logs error_code=`E_STRATEGIST_FAILED`, agent_name="strategist", retry_count=1
 
 **Fallback Rule Set 2:**
-- Given Strategist fails, when Fallback Rule Set 2 executes, then selects highest priority opportunity from BoardAnalysis.opportunities (IMMEDIATE_WIN=100 > BLOCK_THREAT=90). If multiple opportunities have same priority, selects one with highest confidence. If opportunities list is empty, selects highest priority strategic_move from BoardAnalysis.strategic_moves
-- Given BoardAnalysis has no opportunities or strategic_moves, when Fallback Rule Set 2 executes, then selects first empty cell in position order (0,0 < 0,1 < ... < 2,2)
-- Given Fallback Rule Set 2 selects move, when move is selected, then creates Strategy with primary_move=selected_move, alternatives=[], game_plan="Fallback: Using Scout analysis", risk_assessment="medium"
+- **AC-3.6.22**: Given Strategist fails, when Fallback Rule Set 2 executes, then selects highest priority opportunity from BoardAnalysis.opportunities (IMMEDIATE_WIN=100 > BLOCK_THREAT=90). If multiple opportunities have same priority, selects one with highest confidence. If opportunities list is empty, selects highest priority strategic_move from BoardAnalysis.strategic_moves
+- **AC-3.6.23**: Given BoardAnalysis has no opportunities or strategic_moves, when Fallback Rule Set 2 executes, then selects first empty cell in position order (0,0 < 0,1 < ... < 2,2)
+- **AC-3.6.24**: Given Fallback Rule Set 2 selects move, when move is selected, then creates Strategy with primary_move=selected_move, alternatives=[], game_plan="Fallback: Using Scout analysis", risk_assessment="medium"
 
 **Executor Execution Success:**
-- Given Executor returns AgentResult.success=True with MoveExecution.success=True and valid position, when Executor succeeds, then MoveExecution.position is validated (bounds 0-2, cell is empty)
-- Given Executor.position is valid, when validation succeeds, then position is extracted and pipeline proceeds to Step 5
+- **AC-3.6.25**: Given Executor returns AgentResult.success=True with MoveExecution.success=True and valid position, when Executor succeeds, then MoveExecution.position is validated (bounds 0-2, cell is empty)
+- **AC-3.6.26**: Given Executor.position is valid, when validation succeeds, then position is extracted and pipeline proceeds to Step 5
 
 **Executor Failure - Validation Error:**
-- Given Executor returns MoveExecution.success=False with validation_errors containing `E_CELL_OCCUPIED` or `E_POSITION_OUT_OF_BOUNDS`, when Executor reports validation failure, then executes Fallback Rule Set 3, logs warning, proceeds to Step 5
+- **AC-3.6.27**: Given Executor returns MoveExecution.success=False with validation_errors containing `E_CELL_OCCUPIED` or `E_POSITION_OUT_OF_BOUNDS`, when Executor reports validation failure, then executes Fallback Rule Set 3, logs warning, proceeds to Step 5
 
 **Executor Failure - Timeout:**
-- Given Executor call exceeds 3s timeout (local mode), when timeout occurs, then retries up to 3 times with exponential backoff (1s, 2s, 4s delays)
-- Given all 3 Executor retries timeout, when retries exhausted, then executes Fallback Rule Set 3, sets fallback_active=True, logs error_code=`E_LLM_TIMEOUT`, agent_name="executor", retry_count=3
+- **AC-3.6.28**: Given Executor call exceeds 3s timeout (local mode), when timeout occurs, then retries up to 3 times with exponential backoff (1s, 2s, 4s delays)
+- **AC-3.6.29**: Given all 3 Executor retries timeout, when retries exhausted, then executes Fallback Rule Set 3, sets fallback_active=True, logs error_code=`E_LLM_TIMEOUT`, agent_name="executor", retry_count=3
 
 **Executor Failure - Other Errors:**
-- Given Executor returns AgentResult.success=False, when Executor fails, then retries exactly 1 time with same inputs
-- Given Executor retry fails, when second failure occurs, then executes Fallback Rule Set 3, sets fallback_active=True, logs error_code=`E_EXECUTOR_FAILED`, agent_name="executor", retry_count=1
+- **AC-3.6.30**: Given Executor returns AgentResult.success=False, when Executor fails, then retries exactly 1 time with same inputs
+- **AC-3.6.31**: Given Executor retry fails, when second failure occurs, then executes Fallback Rule Set 3, sets fallback_active=True, logs error_code=`E_EXECUTOR_FAILED`, agent_name="executor", retry_count=1
 
 **Fallback Rule Set 3:**
-- Given Executor fails, when Fallback Rule Set 3 executes, then extracts Strategy.primary_move.position and validates (bounds 0-2, cell is empty)
-- Given Strategy.primary_move is valid, when validation passes, then uses Strategy.primary_move.position as final move position
-- Given Strategy.primary_move is invalid, when validation fails, then checks Strategy.alternatives list for first valid alternative (bounds AND empty cell check)
-- Given valid alternative found, when alternative is valid, then uses alternative move position
-- Given no valid alternatives, when all alternatives are invalid, then selects first empty cell in position order (0,0 < 0,1 < ... < 2,2)
+- **AC-3.6.32**: Given Executor fails, when Fallback Rule Set 3 executes, then extracts Strategy.primary_move.position and validates (bounds 0-2, cell is empty)
+- **AC-3.6.33**: Given Strategy.primary_move is valid, when validation passes, then uses Strategy.primary_move.position as final move position
+- **AC-3.6.34**: Given Strategy.primary_move is invalid, when validation fails, then checks Strategy.alternatives list for first valid alternative (bounds AND empty cell check)
+- **AC-3.6.35**: Given valid alternative found, when alternative is valid, then uses alternative move position
+- **AC-3.6.36**: Given no valid alternatives, when all alternatives are invalid, then selects first empty cell in position order (0,0 < 0,1 < ... < 2,2)
 
 **Move Application:**
-- Given final position passes validation (bounds 0-2, cell is empty, game not over), when validation succeeds, then calls game_engine.make_move(position, ai_symbol)
-- Given make_move returns success, when move is applied, then move is recorded in move_history, move_count is incremented, GameState is updated
-- Given final position fails validation, when validation fails, then pipeline returns error with error_code=`E_MOVE_OUT_OF_BOUNDS` (if bounds invalid) OR `E_CELL_OCCUPIED` (if occupied) OR `E_GAME_ALREADY_OVER` (if game over), move is NOT applied
+- **AC-3.6.37**: Given final position passes validation (bounds 0-2, cell is empty, game not over), when validation succeeds, then calls game_engine.make_move(position, ai_symbol)
+- **AC-3.6.38**: Given make_move returns success, when move is applied, then move is recorded in move_history, move_count is incremented, GameState is updated
+- **AC-3.6.39**: Given final position fails validation, when validation fails, then pipeline returns error with error_code=`E_MOVE_OUT_OF_BOUNDS` (if bounds invalid) OR `E_CELL_OCCUPIED` (if occupied) OR `E_GAME_ALREADY_OVER` (if game over), move is NOT applied
 
 **Pipeline Timeout:**
-- Given pipeline total execution time exceeds 15 seconds, when timeout check occurs, then pipeline aborts current agent call, executes fastest available fallback (Fallback Rule Set 1/2/3 based on current step), logs warning with error_code=`E_LLM_TIMEOUT`, continues with fallback move application
+- **AC-3.6.40**: Given pipeline total execution time exceeds 15 seconds, when timeout check occurs, then pipeline aborts current agent call, executes fastest available fallback (Fallback Rule Set 1/2/3 based on current step), logs warning with error_code=`E_LLM_TIMEOUT`, continues with fallback move application
 
 **Response Building:**
-- Given pipeline completes successfully, when move is applied, then returns MoveResponse with success=True, position=applied_move_position, updated_game_state, ai_move_execution, fallback_used=fallback_active flag, total_execution_time_ms=sum of all agent execution times
+- **AC-3.6.41**: Given pipeline completes successfully, when move is applied, then returns MoveResponse with success=True, position=applied_move_position, updated_game_state, ai_move_execution, fallback_used=fallback_active flag, total_execution_time_ms=sum of all agent execution times
 
 ---
 
@@ -1270,16 +1270,16 @@ A player wins when they have three of their symbols in any of these 8 winning li
 **Win Detection Algorithm**: After each move, check all 8 lines for three matching symbols.
 
 **Acceptance Criteria:**
-- Given board with X at (0,0), (0,1), (0,2), when checking win, then winner=X (Row 0)
-- Given board with O at (1,0), (1,1), (1,2), when checking win, then winner=O (Row 1)
-- Given board with X at (2,0), (2,1), (2,2), when checking win, then winner=X (Row 2)
-- Given board with O at (0,0), (1,0), (2,0), when checking win, then winner=O (Col 0)
-- Given board with X at (0,1), (1,1), (2,1), when checking win, then winner=X (Col 1)
-- Given board with O at (0,2), (1,2), (2,2), when checking win, then winner=O (Col 2)
-- Given board with X at (0,0), (1,1), (2,2), when checking win, then winner=X (Diagonal main)
-- Given board with O at (0,2), (1,1), (2,0), when checking win, then winner=O (Diagonal anti)
-- Given board with 2 X's and 1 O in any line, when checking win, then winner=None (no win)
-- Given move completes winning line, when win detection runs, then IsGameOver=true and Winner is set immediately
+- **AC-4.1.1.1**: Given board with X at (0,0), (0,1), (0,2), when checking win, then winner=X (Row 0)
+- **AC-4.1.1.2**: Given board with O at (1,0), (1,1), (1,2), when checking win, then winner=O (Row 1)
+- **AC-4.1.1.3**: Given board with X at (2,0), (2,1), (2,2), when checking win, then winner=X (Row 2)
+- **AC-4.1.1.4**: Given board with O at (0,0), (1,0), (2,0), when checking win, then winner=O (Col 0)
+- **AC-4.1.1.5**: Given board with X at (0,1), (1,1), (2,1), when checking win, then winner=X (Col 1)
+- **AC-4.1.1.6**: Given board with O at (0,2), (1,2), (2,2), when checking win, then winner=O (Col 2)
+- **AC-4.1.1.7**: Given board with X at (0,0), (1,1), (2,2), when checking win, then winner=X (Diagonal main)
+- **AC-4.1.1.8**: Given board with O at (0,2), (1,1), (2,0), when checking win, then winner=O (Diagonal anti)
+- **AC-4.1.1.9**: Given board with 2 X's and 1 O in any line, when checking win, then winner=None (no win)
+- **AC-4.1.1.10**: Given move completes winning line, when win detection runs, then IsGameOver=true and Winner is set immediately
 
 #### Draw Conditions
 
@@ -1339,12 +1339,12 @@ Cell (1,2): Placing X completes column 2 → Game continues (X can still win)
 - More complex to implement but prevents meaningless final moves
 
 **Acceptance Criteria:**
-- Given MoveCount=9 and no winning line exists, when checking draw, then Winner=DRAW and IsGameOver=true (mandatory complete draw)
-- Given MoveCount=8 and no empty cell allows any player to win, when checking inevitable draw, then Winner=DRAW and IsGameOver=true (optional)
-- Given MoveCount=7 and at least one empty cell allows a win, when checking draw, then game continues (no draw yet)
-- Given MoveCount<9 and winning moves remain, when checking draw, then Winner=None and IsGameOver=false
-- Given board state matching Example 1 (inevitable draw at move 8), when checking draw, then Winner=DRAW
-- Given board state matching Example 2 (winnable at move 7), when checking draw, then Winner=None
+- **AC-4.1.2.1**: Given MoveCount=9 and no winning line exists, when checking draw, then Winner=DRAW and IsGameOver=true (mandatory complete draw)
+- **AC-4.1.2.2**: Given MoveCount=8 and no empty cell allows any player to win, when checking inevitable draw, then Winner=DRAW and IsGameOver=true (optional)
+- **AC-4.1.2.3**: Given MoveCount=7 and at least one empty cell allows a win, when checking draw, then game continues (no draw yet)
+- **AC-4.1.2.4**: Given MoveCount<9 and winning moves remain, when checking draw, then Winner=None and IsGameOver=false
+- **AC-4.1.2.5**: Given board state matching Example 1 (inevitable draw at move 8), when checking draw, then Winner=DRAW
+- **AC-4.1.2.6**: Given board state matching Example 2 (winnable at move 7), when checking draw, then Winner=None
 
 #### Illegal Move Conditions
 
@@ -1369,16 +1369,16 @@ A move at position (row, col) by player P is legal if and only if ALL of the fol
 6. P ∈ {X, O}
 
 **Acceptance Criteria:**
-- Given row=-1, col=1, when validating move, then error=`E_MOVE_OUT_OF_BOUNDS`
-- Given row=3, col=1, when validating move, then error=`E_MOVE_OUT_OF_BOUNDS`
-- Given row=1, col=-1, when validating move, then error=`E_MOVE_OUT_OF_BOUNDS`
-- Given row=1, col=3, when validating move, then error=`E_MOVE_OUT_OF_BOUNDS`
-- Given Board[1][1]=X, when attempting move at (1,1), then error=`E_CELL_OCCUPIED`
-- Given IsGameOver=true, when attempting move, then error=`E_GAME_ALREADY_OVER`
-- Given player='Z', when validating move, then error=`E_INVALID_PLAYER`
-- Given CurrentPlayer=X and attempting move with player=O, when validating move, then error=`E_INVALID_TURN`
-- Given row=1, col=1, Board[1][1]=EMPTY, IsGameOver=false, player=CurrentPlayer, when validating move, then move is legal (no error)
-- Given all 6 invariants satisfied, when validating move, then returns success and allows move execution
+- **AC-4.1.3.1**: Given row=-1, col=1, when validating move, then error=`E_MOVE_OUT_OF_BOUNDS`
+- **AC-4.1.3.2**: Given row=3, col=1, when validating move, then error=`E_MOVE_OUT_OF_BOUNDS`
+- **AC-4.1.3.3**: Given row=1, col=-1, when validating move, then error=`E_MOVE_OUT_OF_BOUNDS`
+- **AC-4.1.3.4**: Given row=1, col=3, when validating move, then error=`E_MOVE_OUT_OF_BOUNDS`
+- **AC-4.1.3.5**: Given Board[1][1]=X, when attempting move at (1,1), then error=`E_CELL_OCCUPIED`
+- **AC-4.1.3.6**: Given IsGameOver=true, when attempting move, then error=`E_GAME_ALREADY_OVER`
+- **AC-4.1.3.7**: Given player='Z', when validating move, then error=`E_INVALID_PLAYER`
+- **AC-4.1.3.8**: Given CurrentPlayer=X and attempting move with player=O, when validating move, then error=`E_INVALID_TURN`
+- **AC-4.1.3.9**: Given row=1, col=1, Board[1][1]=EMPTY, IsGameOver=false, player=CurrentPlayer, when validating move, then move is legal (no error)
+- **AC-4.1.3.10**: Given all 6 invariants satisfied, when validating move, then returns success and allows move execution
 
 #### Game State Transitions
 
@@ -1411,15 +1411,15 @@ IF MoveCount is odd THEN CurrentPlayer MUST be O
 ```
 
 **Acceptance Criteria:**
-- Given MoveCount=0 (new game), when starting game, then CurrentPlayer=X
-- Given MoveCount=0 and CurrentPlayer=X, when X makes move, then MoveCount=1 and CurrentPlayer=O
-- Given MoveCount=1 and CurrentPlayer=O, when O makes move, then MoveCount=2 and CurrentPlayer=X
-- Given MoveCount=2 (even), when verifying turn, then CurrentPlayer=X
-- Given MoveCount=3 (odd), when verifying turn, then CurrentPlayer=O
-- Given MoveCount=4 (even), when verifying turn, then CurrentPlayer=X
-- Given MoveCount=5 (odd), when verifying turn, then CurrentPlayer=O
-- Given valid move by CurrentPlayer, when move completes, then CurrentPlayer switches to opponent
-- Given X attempts move when CurrentPlayer=O, when validating turn, then error=`E_INVALID_TURN`
+- **AC-4.1.4.1**: Given MoveCount=0 (new game), when starting game, then CurrentPlayer=X
+- **AC-4.1.4.2**: Given MoveCount=0 and CurrentPlayer=X, when X makes move, then MoveCount=1 and CurrentPlayer=O
+- **AC-4.1.4.3**: Given MoveCount=1 and CurrentPlayer=O, when O makes move, then MoveCount=2 and CurrentPlayer=X
+- **AC-4.1.4.4**: Given MoveCount=2 (even), when verifying turn, then CurrentPlayer=X
+- **AC-4.1.4.5**: Given MoveCount=3 (odd), when verifying turn, then CurrentPlayer=O
+- **AC-4.1.4.6**: Given MoveCount=4 (even), when verifying turn, then CurrentPlayer=X
+- **AC-4.1.4.7**: Given MoveCount=5 (odd), when verifying turn, then CurrentPlayer=O
+- **AC-4.1.4.8**: Given valid move by CurrentPlayer, when move completes, then CurrentPlayer switches to opponent
+- **AC-4.1.4.9**: Given X attempts move when CurrentPlayer=O, when validating turn, then error=`E_INVALID_TURN`
 
 #### Game Termination Conditions
 
@@ -1454,16 +1454,16 @@ A valid game state must satisfy ALL of the following:
 8. **No Post-Termination Moves**: IF IsGameOver = true on move N THEN no symbols placed after move N
 
 **Acceptance Criteria:**
-- Given count(X)=5 and count(O)=3, when validating state, then error=`E_INVALID_SYMBOL_BALANCE` (|5-3|=2 > 1)
-- Given count(X)=3 and count(O)=3, when validating state, then CurrentPlayer must be X
-- Given count(X)=4 and count(O)=3, when validating state, then CurrentPlayer must be O
-- Given count(X)=3, count(O)=3, CurrentPlayer=O, when validating state, then error=`E_INVALID_TURN`
-- Given board with X winning line and O winning line, when validating state, then error=`E_MULTIPLE_WINNERS`
-- Given winner=X detected, when validating state, then IsGameOver must be true
-- Given winner=X and IsGameOver=false, when validating state, then error=`E_WIN_NOT_FINALIZED`
-- Given MoveCount=9 and no winner, when validating state, then Winner must be DRAW
-- Given IsGameOver=true on move 5 with winner=X, when checking board, then symbols at moves 6-9 must not exist
-- Given valid state satisfying all 8 rules, when validating state, then validation passes with no errors
+- **AC-4.1.5.1**: Given count(X)=5 and count(O)=3, when validating state, then error=`E_INVALID_SYMBOL_BALANCE` (|5-3|=2 > 1)
+- **AC-4.1.5.2**: Given count(X)=3 and count(O)=3, when validating state, then CurrentPlayer must be X
+- **AC-4.1.5.3**: Given count(X)=4 and count(O)=3, when validating state, then CurrentPlayer must be O
+- **AC-4.1.5.4**: Given count(X)=3, count(O)=3, CurrentPlayer=O, when validating state, then error=`E_INVALID_TURN`
+- **AC-4.1.5.5**: Given board with X winning line and O winning line, when validating state, then error=`E_MULTIPLE_WINNERS`
+- **AC-4.1.5.6**: Given winner=X detected, when validating state, then IsGameOver must be true
+- **AC-4.1.5.7**: Given winner=X and IsGameOver=false, when validating state, then error=`E_WIN_NOT_FINALIZED`
+- **AC-4.1.5.8**: Given MoveCount=9 and no winner, when validating state, then Winner must be DRAW
+- **AC-4.1.5.9**: Given IsGameOver=true on move 5 with winner=X, when checking board, then symbols at moves 6-9 must not exist
+- **AC-4.1.5.10**: Given valid state satisfying all 8 rules, when validating state, then validation passes with no errors
 
 ### Game Engine Interface
 
@@ -1479,19 +1479,19 @@ The engine exposes methods to:
 The engine is stateless regarding agent coordination; it only manages game rules and state.
 
 **Acceptance Criteria:**
-- Given valid position (1,1) and player=X (CurrentPlayer), when make_move() is called, then returns success and board updated
-- Given invalid position (3,3), when make_move() is called, then returns failure with error code `E_MOVE_OUT_OF_BOUNDS`
-- Given occupied position, when make_move() is called, then returns failure with error code `E_CELL_OCCUPIED`
-- Given board with winning line for X, when check_winner() is called, then returns X
-- Given board with no winning lines, when check_winner() is called, then returns None
-- Given MoveCount=9 and no winner, when check_draw() is called, then returns true
-- Given MoveCount<9, when check_draw() is called, then returns false
-- Given board with 5 empty cells, when get_available_moves() is called, then returns list of 5 Position objects
-- Given board with all cells occupied, when get_available_moves() is called, then returns empty list
-- Given valid move, when validate_move() is called, then returns true with no error code
-- Given invalid move, when validate_move() is called, then returns false with specific error code
-- Given game in progress, when reset_game() is called, then MoveCount=0, Board=all EMPTY, CurrentPlayer=X, IsGameOver=false
-- Given any game state, when get_current_state() is called, then returns complete GameState domain model with all properties
+- **AC-4.1.6.1**: Given valid position (1,1) and player=X (CurrentPlayer), when make_move() is called, then returns success and board updated
+- **AC-4.1.6.2**: Given invalid position (3,3), when make_move() is called, then returns failure with error code `E_MOVE_OUT_OF_BOUNDS`
+- **AC-4.1.6.3**: Given occupied position, when make_move() is called, then returns failure with error code `E_CELL_OCCUPIED`
+- **AC-4.1.6.4**: Given board with winning line for X, when check_winner() is called, then returns X
+- **AC-4.1.6.5**: Given board with no winning lines, when check_winner() is called, then returns None
+- **AC-4.1.6.6**: Given MoveCount=9 and no winner, when check_draw() is called, then returns true
+- **AC-4.1.6.7**: Given MoveCount<9, when check_draw() is called, then returns false
+- **AC-4.1.6.8**: Given board with 5 empty cells, when get_available_moves() is called, then returns list of 5 Position objects
+- **AC-4.1.6.9**: Given board with all cells occupied, when get_available_moves() is called, then returns empty list
+- **AC-4.1.6.10**: Given valid move, when validate_move() is called, then returns true with no error code
+- **AC-4.1.6.11**: Given invalid move, when validate_move() is called, then returns false with specific error code
+- **AC-4.1.6.12**: Given game in progress, when reset_game() is called, then MoveCount=0, Board=all EMPTY, CurrentPlayer=X, IsGameOver=false
+- **AC-4.1.6.13**: Given any game state, when get_current_state() is called, then returns complete GameState domain model with all properties
 
 ---
 
@@ -1584,10 +1584,10 @@ interface AgentService {
 - GET /api/game/history - Get move history
 
 **Acceptance Criteria for GET /health:**
-- Given server is running, when GET /health is called, then returns 200 OK with JSON response containing status="healthy", timestamp (ISO 8601), uptime_seconds (float, precision: 2 decimal places)
-- Given server is running, when GET /health is called, then response MUST complete within 100ms (no external dependencies checked)
-- Given server is shutting down, when GET /health is called, then returns 503 Service Unavailable with status="unhealthy"
-- Given health check fails, when GET /health is called, then returns 503 Service Unavailable with error details
+- **AC-5.1.1**: Given server is running, when GET /health is called, then returns 200 OK with JSON response containing status="healthy", timestamp (ISO 8601), uptime_seconds (float, precision: 2 decimal places)
+- **AC-5.1.2**: Given server is running, when GET /health is called, then response MUST complete within 100ms (no external dependencies checked)
+- **AC-5.1.3**: Given server is shutting down, when GET /health is called, then returns 503 Service Unavailable with status="unhealthy"
+- **AC-5.1.4**: Given health check fails, when GET /health is called, then returns 503 Service Unavailable with error details
 
 **Health Check Response Schema:**
 ```json
@@ -1600,12 +1600,12 @@ interface AgentService {
 ```
 
 **Acceptance Criteria for GET /ready:**
-- Given server is ready to accept requests (all dependencies available, configuration valid), when GET /ready is called, then returns 200 OK with JSON response containing status="ready", checks object with dependency statuses
-- Given LLM API keys are configured, when GET /ready is called, then checks.llm_configuration="ok"
-- Given LLM API keys are missing, when GET /ready is called, then checks.llm_configuration="error", returns 503 Service Unavailable
-- Given configuration file is invalid, when GET /ready is called, then checks.configuration="error", returns 503 Service Unavailable
-- Given server is not ready, when GET /ready is called, then returns 503 Service Unavailable with status="not_ready" and specific check failures
-- Given readiness check fails, when game endpoints are called, then game endpoints MUST return 503 Service Unavailable with message="Service not ready. Check /ready endpoint."
+- **AC-5.2.1**: Given server is ready to accept requests (all dependencies available, configuration valid), when GET /ready is called, then returns 200 OK with JSON response containing status="ready", checks object with dependency statuses
+- **AC-5.2.2**: Given LLM API keys are configured, when GET /ready is called, then checks.llm_configuration="ok"
+- **AC-5.2.3**: Given LLM API keys are missing, when GET /ready is called, then checks.llm_configuration="error", returns 503 Service Unavailable
+- **AC-5.2.4**: Given configuration file is invalid, when GET /ready is called, then checks.configuration="error", returns 503 Service Unavailable
+- **AC-5.2.5**: Given server is not ready, when GET /ready is called, then returns 503 Service Unavailable with status="not_ready" and specific check failures
+- **AC-5.2.6**: Given readiness check fails, when game endpoints are called, then game endpoints MUST return 503 Service Unavailable with message="Service not ready. Check /ready endpoint."
 
 **Readiness Check Response Schema:**
 ```json
@@ -1640,35 +1640,35 @@ interface AgentService {
 ```
 
 **Game Availability Requirement:**
-- Given GET /ready returns 503 (not ready), when any game endpoint (POST /api/game/move, GET /api/game/status, POST /api/game/reset, GET /api/game/history) is called, then endpoint MUST return 503 Service Unavailable with error_code=`E_SERVICE_NOT_READY`, message="Service not ready. Check /ready endpoint."
-- Given GET /ready returns 200 (ready), when game endpoints are called, then game endpoints process requests normally
-- Given server startup, when server starts, then GET /ready MUST return 503 until all readiness checks pass, game endpoints MUST return 503 until /ready returns 200
+- **AC-5.3.1**: Given GET /ready returns 503 (not ready), when any game endpoint (POST /api/game/move, GET /api/game/status, POST /api/game/reset, GET /api/game/history) is called, then endpoint MUST return 503 Service Unavailable with error_code=`E_SERVICE_NOT_READY`, message="Service not ready. Check /ready endpoint."
+- **AC-5.3.2**: Given GET /ready returns 200 (ready), when game endpoints are called, then game endpoints process requests normally
+- **AC-5.3.3**: Given server startup, when server starts, then GET /ready MUST return 503 until all readiness checks pass, game endpoints MUST return 503 until /ready returns 200
 
 **Acceptance Criteria for POST /api/game/move:**
-- Given valid MoveRequest with row=1, col=1, player=X, when POST /api/game/move, then returns 200 with MoveResponse containing updated GameState
-- Given invalid MoveRequest with row=3, col=1, when POST /api/game/move, then returns 400 with error_code `E_MOVE_OUT_OF_BOUNDS` and error response schema (status="failure", error_code, message, timestamp, details)
-- Given MoveRequest for occupied cell, when POST /api/game/move, then returns 400 with error_code `E_CELL_OCCUPIED` and error response schema
-- Given MoveRequest when game is over, when POST /api/game/move, then returns 400 with error_code `E_GAME_ALREADY_OVER` and error response schema
-- Given valid player move that doesn't end game, when POST /api/game/move, then response includes AI move execution details
-- Given valid player move that completes winning line, when POST /api/game/move, then response has IsGameOver=true and winner set
-- Given malformed JSON in request body, when POST /api/game/move, then returns 422 Unprocessable Entity
-- Given server error during processing, when POST /api/game/move, then returns 500 with error message
+- **AC-5.4.1**: Given valid MoveRequest with row=1, col=1, player=X, when POST /api/game/move, then returns 200 with MoveResponse containing updated GameState
+- **AC-5.4.2**: Given invalid MoveRequest with row=3, col=1, when POST /api/game/move, then returns 400 with error_code `E_MOVE_OUT_OF_BOUNDS` and error response schema (status="failure", error_code, message, timestamp, details)
+- **AC-5.4.3**: Given MoveRequest for occupied cell, when POST /api/game/move, then returns 400 with error_code `E_CELL_OCCUPIED` and error response schema
+- **AC-5.4.4**: Given MoveRequest when game is over, when POST /api/game/move, then returns 400 with error_code `E_GAME_ALREADY_OVER` and error response schema
+- **AC-5.4.5**: Given valid player move that doesn't end game, when POST /api/game/move, then response includes AI move execution details
+- **AC-5.4.6**: Given valid player move that completes winning line, when POST /api/game/move, then response has IsGameOver=true and winner set
+- **AC-5.4.7**: Given malformed JSON in request body, when POST /api/game/move, then returns 422 Unprocessable Entity
+- **AC-5.4.8**: Given server error during processing, when POST /api/game/move, then returns 500 with error message
 
 **Acceptance Criteria for GET /api/game/status:**
-- Given active game, when GET /api/game/status, then returns 200 with GameStatusResponse containing current GameState
-- Given no active game, when GET /api/game/status, then returns 404 Not Found
-- Given game with active AI processing, when GET /api/game/status, then response includes agent_status with active_agent field
-- Given completed game, when GET /api/game/status, then response includes metrics dictionary with game outcome
+- **AC-5.5.1**: Given active game, when GET /api/game/status, then returns 200 with GameStatusResponse containing current GameState
+- **AC-5.5.2**: Given no active game, when GET /api/game/status, then returns 404 Not Found
+- **AC-5.5.3**: Given game with active AI processing, when GET /api/game/status, then response includes agent_status with active_agent field
+- **AC-5.5.4**: Given completed game, when GET /api/game/status, then response includes metrics dictionary with game outcome
 
 **Acceptance Criteria for POST /api/game/reset:**
-- Given any game state, when POST /api/game/reset, then returns 200 with new GameState (MoveCount=0, Board=EMPTY, CurrentPlayer=X)
-- Given game with move history, when POST /api/game/reset, then move_history is cleared
-- Given game reset completes, when POST /api/game/reset, then response includes game_id for new game
+- **AC-5.6.1**: Given any game state, when POST /api/game/reset, then returns 200 with new GameState (MoveCount=0, Board=EMPTY, CurrentPlayer=X)
+- **AC-5.6.2**: Given game with move history, when POST /api/game/reset, then move_history is cleared
+- **AC-5.6.3**: Given game reset completes, when POST /api/game/reset, then response includes game_id for new game
 
 **Acceptance Criteria for GET /api/game/history:**
-- Given game with 5 moves, when GET /api/game/history, then returns 200 with array of 5 MoveHistory objects in chronological order
-- Given game with no moves, when GET /api/game/history, then returns 200 with empty array
-- Given each move in history, when GET /api/game/history, then each entry includes: player, position, timestamp, move_number
+- **AC-5.7.1**: Given game with 5 moves, when GET /api/game/history, then returns 200 with array of 5 MoveHistory objects in chronological order
+- **AC-5.7.2**: Given game with no moves, when GET /api/game/history, then returns 200 with empty array
+- **AC-5.7.3**: Given each move in history, when GET /api/game/history, then each entry includes: player, position, timestamp, move_number
 
 **Agent Status**:
 - GET /api/agents/scout/status - Get Scout agent status and metrics
@@ -1676,11 +1676,11 @@ interface AgentService {
 - GET /api/agents/executor/status - Get Executor agent status and metrics
 
 **Acceptance Criteria for Agent Status Endpoints:**
-- Given agent is idle, when GET /api/agents/{agent}/status, then returns 200 with status="idle"
-- Given agent is processing, when GET /api/agents/{agent}/status, then returns 200 with status="processing" and elapsed_time_ms
-- Given agent completed successfully, when GET /api/agents/{agent}/status, then response includes execution_time_ms and success=true
-- Given agent failed/timed out, when GET /api/agents/{agent}/status, then response includes error_message and success=false
-- Given invalid agent name, when GET /api/agents/{invalid}/status, then returns 404 Not Found
+- **AC-5.8.1**: Given agent is idle, when GET /api/agents/{agent}/status, then returns 200 with status="idle"
+- **AC-5.8.2**: Given agent is processing, when GET /api/agents/{agent}/status, then returns 200 with status="processing" and elapsed_time_ms
+- **AC-5.8.3**: Given agent completed successfully, when GET /api/agents/{agent}/status, then response includes execution_time_ms and success=true
+- **AC-5.8.4**: Given agent failed/timed out, when GET /api/agents/{agent}/status, then response includes error_message and success=false
+- **AC-5.8.5**: Given invalid agent name, when GET /api/agents/{invalid}/status, then returns 404 Not Found
 
 **MCP Protocol** (optional, for distributed mode):
 - POST /mcp/{agent_id}/tools/list - List available tools for agent
@@ -1948,9 +1948,9 @@ This section defines **what** the UI must do (functional requirements). Visual d
 ### User Stories: Game Board
 
 **US-001: Display Game Board**
-- As a player, I MUST see a 3x3 grid representing the game board
-- The board MUST display current cell states (EMPTY, X, or O)
-- The board MUST update immediately when game state changes
+- **AC-US001.1**: As a player, I MUST see a 3x3 grid representing the game board
+- **AC-US001.2**: The board MUST display current cell states (EMPTY, X, or O)
+- **AC-US001.3**: The board MUST update immediately when game state changes
 
 **US-002: Make Player Move**
 - As a player, I MUST be able to click any empty cell to make a move
@@ -1960,30 +1960,30 @@ This section defines **what** the UI must do (functional requirements). Visual d
 **Acceptance Criteria for Board Interaction:**
 
 **Click Handling on Empty Cells:**
-- Given game is waiting for player input (CurrentPlayer=player_symbol, IsGameOver=false), when player clicks empty cell at position (row, col), then UI MUST send POST /api/game/move request with row and col, board MUST be disabled (opacity=0.6, cursor=not-allowed) during API call, board MUST re-enable after response received
-- Given empty cell at (1,1), when player clicks cell, then click event MUST be processed, API request MUST be sent within 50ms of click, cell MUST show loading indicator (spinner or pulse animation) until response received
+- **AC-US002.1**: Given game is waiting for player input (CurrentPlayer=player_symbol, IsGameOver=false), when player clicks empty cell at position (row, col), then UI MUST send POST /api/game/move request with row and col, board MUST be disabled (opacity=0.6, cursor=not-allowed) during API call, board MUST re-enable after response received
+- **AC-US002.2**: Given empty cell at (1,1), when player clicks cell, then click event MUST be processed, API request MUST be sent within 50ms of click, cell MUST show loading indicator (spinner or pulse animation) until response received
 
 **Click Handling on Occupied Cells (Guard):**
-- Given game is waiting for player input (CurrentPlayer=player_symbol, IsGameOver=false), when player clicks non-empty cell (cell contains 'X' or 'O'), then click MUST be ignored (no API request sent), UI MUST display toast notification with message="Cell occupied", severity="warning", toast MUST auto-dismiss after 3 seconds, board state MUST remain unchanged
-- Given occupied cell at (0,0) with 'X', when player clicks cell, then no POST /api/game/move request is sent, toast notification appears within 100ms, toast shows warning icon and "Cell occupied" message
+- **AC-US002.3**: Given game is waiting for player input (CurrentPlayer=player_symbol, IsGameOver=false), when player clicks non-empty cell (cell contains 'X' or 'O'), then click MUST be ignored (no API request sent), UI MUST display toast notification with message="Cell occupied", severity="warning", toast MUST auto-dismiss after 3 seconds, board state MUST remain unchanged
+- **AC-US002.4**: Given occupied cell at (0,0) with 'X', when player clicks cell, then no POST /api/game/move request is sent, toast notification appears within 100ms, toast shows warning icon and "Cell occupied" message
 
 **Click Handling During AI Turn (Guard):**
-- Given game is in AI turn (CurrentPlayer=ai_symbol OR active_agent is not null), when player clicks any cell (empty or occupied), then click MUST be ignored (no API request sent), board MUST remain disabled (opacity=0.6, cursor=not-allowed), no toast notification shown
-- Given AI is processing (active_agent="scout" or "strategist" or "executor"), when player clicks cell at (1,1), then no POST /api/game/move request is sent, board remains disabled, no visual feedback for click
+- **AC-US002.5**: Given game is in AI turn (CurrentPlayer=ai_symbol OR active_agent is not null), when player clicks any cell (empty or occupied), then click MUST be ignored (no API request sent), board MUST remain disabled (opacity=0.6, cursor=not-allowed), no toast notification shown
+- **AC-US002.6**: Given AI is processing (active_agent="scout" or "strategist" or "executor"), when player clicks cell at (1,1), then no POST /api/game/move request is sent, board remains disabled, no visual feedback for click
 
 **Click Handling When Game Over (Guard):**
-- Given game is over (IsGameOver=true), when player clicks any cell, then click MUST be ignored (no API request sent), board MUST remain disabled (opacity=0.6, cursor=not-allowed), no toast notification shown
-- Given game over with winner='X', when player clicks cell at (1,1), then no POST /api/game/move request is sent, board remains disabled
+- **AC-US002.7**: Given game is over (IsGameOver=true), when player clicks any cell, then click MUST be ignored (no API request sent), board MUST remain disabled (opacity=0.6, cursor=not-allowed), no toast notification shown
+- **AC-US002.8**: Given game over with winner='X', when player clicks cell at (1,1), then no POST /api/game/move request is sent, board remains disabled
 
 **API Error Handling:**
-- Given player clicks empty cell, when POST /api/game/move returns 400 with error_code=`E_CELL_OCCUPIED`, then UI MUST display toast notification with message="Cell already occupied", severity="error", toast MUST auto-dismiss after 5 seconds, board MUST re-enable (opacity=1.0, cursor=pointer)
-- Given player clicks empty cell, when POST /api/game/move returns 400 with error_code=`E_MOVE_OUT_OF_BOUNDS`, then UI MUST display toast notification with message="Position out of bounds (0-2 only)", severity="error", toast MUST auto-dismiss after 5 seconds
-- Given player clicks empty cell, when POST /api/game/move returns 400 with error_code=`E_GAME_ALREADY_OVER`, then UI MUST display toast notification with message="Game is already over", severity="info", toast MUST auto-dismiss after 5 seconds
-- Given player clicks empty cell, when POST /api/game/move returns 500 (server error), then UI MUST display toast notification with message="Server error. Please try again.", severity="error", toast MUST auto-dismiss after 5 seconds, board MUST re-enable
+- **AC-US002.9**: Given player clicks empty cell, when POST /api/game/move returns 400 with error_code=`E_CELL_OCCUPIED`, then UI MUST display toast notification with message="Cell already occupied", severity="error", toast MUST auto-dismiss after 5 seconds, board MUST re-enable (opacity=1.0, cursor=pointer)
+- **AC-US002.10**: Given player clicks empty cell, when POST /api/game/move returns 400 with error_code=`E_MOVE_OUT_OF_BOUNDS`, then UI MUST display toast notification with message="Position out of bounds (0-2 only)", severity="error", toast MUST auto-dismiss after 5 seconds
+- **AC-US002.11**: Given player clicks empty cell, when POST /api/game/move returns 400 with error_code=`E_GAME_ALREADY_OVER`, then UI MUST display toast notification with message="Game is already over", severity="info", toast MUST auto-dismiss after 5 seconds
+- **AC-US002.12**: Given player clicks empty cell, when POST /api/game/move returns 500 (server error), then UI MUST display toast notification with message="Server error. Please try again.", severity="error", toast MUST auto-dismiss after 5 seconds, board MUST re-enable
 
 **US-003: View Last Move**
-- As a player, I MUST see which move was made most recently
-- The last move indicator MUST update after each player or AI move
+- **AC-US003.1**: As a player, I MUST see which move was made most recently
+- **AC-US003.2**: The last move indicator MUST update after each player or AI move
 
 **US-004: View Current Turn**
 - As a player, I MUST know whose turn it is (player or AI)
@@ -1992,35 +1992,35 @@ This section defines **what** the UI must do (functional requirements). Visual d
 **Acceptance Criteria for Current Turn Indicator:**
 
 **Visibility and Accuracy:**
-- Given game is active (IsGameOver=false), when board is rendered, then current turn indicator MUST be visible (display not 'none', opacity=1.0), indicator MUST show correct player symbol ('X' or 'O') matching CurrentPlayer from GameState, indicator MUST be visible within 100ms after board render completes
-- Given CurrentPlayer='X', when board is rendered, then turn indicator displays "X's Turn" or "Player X's Turn" with color #e94560 (Player X color), indicator is visible within 100ms
-- Given CurrentPlayer='O', when board is rendered, then turn indicator displays "O's Turn" or "AI's Turn" with color #00adb5 (Player O/AI color), indicator is visible within 100ms
+- **AC-US004.1**: Given game is active (IsGameOver=false), when board is rendered, then current turn indicator MUST be visible (display not 'none', opacity=1.0), indicator MUST show correct player symbol ('X' or 'O') matching CurrentPlayer from GameState, indicator MUST be visible within 100ms after board render completes
+- **AC-US004.2**: Given CurrentPlayer='X', when board is rendered, then turn indicator displays "X's Turn" or "Player X's Turn" with color #e94560 (Player X color), indicator is visible within 100ms
+- **AC-US004.3**: Given CurrentPlayer='O', when board is rendered, then turn indicator displays "O's Turn" or "AI's Turn" with color #00adb5 (Player O/AI color), indicator is visible within 100ms
 
 **Update Timing:**
-- Given player makes move, when POST /api/game/move returns success with updated GameState, then current turn indicator MUST update to show new CurrentPlayer within 100ms of response received, indicator MUST reflect AI turn (CurrentPlayer=ai_symbol) immediately
-- Given AI makes move, when game state updates (CurrentPlayer switches to player_symbol), then current turn indicator MUST update to show player turn within 100ms of state update, indicator MUST reflect player turn (CurrentPlayer=player_symbol) immediately
+- **AC-US004.4**: Given player makes move, when POST /api/game/move returns success with updated GameState, then current turn indicator MUST update to show new CurrentPlayer within 100ms of response received, indicator MUST reflect AI turn (CurrentPlayer=ai_symbol) immediately
+- **AC-US004.5**: Given AI makes move, when game state updates (CurrentPlayer switches to player_symbol), then current turn indicator MUST update to show player turn within 100ms of state update, indicator MUST reflect player turn (CurrentPlayer=player_symbol) immediately
 
 **Game Over State:**
-- Given game is over (IsGameOver=true), when board is rendered, then current turn indicator MUST display "Game Over" or winner message ("X Wins", "O Wins", "Draw"), indicator MUST be visible, turn indicator MUST NOT show "X's Turn" or "O's Turn" when game is over
-- Given game over with winner='X', when board is rendered, then turn indicator displays "X Wins" with color #e94560, indicator is visible within 100ms
+- **AC-US004.6**: Given game is over (IsGameOver=true), when board is rendered, then current turn indicator MUST display "Game Over" or winner message ("X Wins", "O Wins", "Draw"), indicator MUST be visible, turn indicator MUST NOT show "X's Turn" or "O's Turn" when game is over
+- **AC-US004.7**: Given game over with winner='X', when board is rendered, then turn indicator displays "X Wins" with color #e94560, indicator is visible within 100ms
 
 **State Consistency:**
-- Given CurrentPlayer='X' from GameState, when turn indicator is displayed, then indicator text MUST match CurrentPlayer exactly, indicator color MUST match player symbol color (#e94560 for X, #00adb5 for O), indicator MUST NOT show stale/previous turn information
+- **AC-US004.8**: Given CurrentPlayer='X' from GameState, when turn indicator is displayed, then indicator text MUST match CurrentPlayer exactly, indicator color MUST match player symbol color (#e94560 for X, #00adb5 for O), indicator MUST NOT show stale/previous turn information
 
 **US-005: View Game Status**
-- As a player, I MUST see the current move number
-- As a player, I MUST see if the game is over
-- As a player, I MUST see who won (X, O, or DRAW) when game ends
+- **AC-US005.1**: As a player, I MUST see the current move number
+- **AC-US005.2**: As a player, I MUST see if the game is over
+- **AC-US005.3**: As a player, I MUST see who won (X, O, or DRAW) when game ends
 
 ### User Stories: Move History
 
 **US-006: View Move History**
-- As a player, I MUST see a chronological list of all moves made
-- Each move entry MUST show: player/AI indicator, move number, position, timestamp
+- **AC-US006.1**: As a player, I MUST see a chronological list of all moves made
+- **AC-US006.2**: Each move entry MUST show: player/AI indicator, move number, position, timestamp
 
 **US-007: View Move Details**
-- As a player, I MUST be able to expand any move to see agent reasoning
-- Agent reasoning MUST show Scout analysis, Strategist strategy, and Executor execution details
+- **AC-US007.1**: As a player, I MUST be able to expand any move to see agent reasoning
+- **AC-US007.2**: Agent reasoning MUST show Scout analysis, Strategist strategy, and Executor execution details
 
 ### User Stories: Agent Insights
 
@@ -2032,128 +2032,128 @@ This section defines **what** the UI must do (functional requirements). Visual d
 **Acceptance Criteria for Agent Insights Panel:**
 
 **Scout Agent Metrics Panel (Required Fields):**
-- Given Scout agent completes analysis, when Agent Insights Panel displays Scout metrics, then panel MUST show execution_time (float, precision: 2 decimal places, unit: milliseconds), panel MUST show confidence (float, 0.0-1.0, precision: 2 decimal places) from highest priority opportunity or strategic move, panel MUST show priority (integer, 1-10 or enum value) from highest priority move, panel MUST NOT show optional fields as empty/null (only required fields displayed)
-- Given Scout returns BoardAnalysis with opportunities list containing priority=100, confidence=0.95, when Scout metrics panel is displayed, then execution_time is shown (e.g., "1234.56 ms"), confidence is shown (e.g., "0.95"), priority is shown (e.g., "100" or "IMMEDIATE_WIN"), no optional/empty fields are displayed
+- **AC-US008.1**: Given Scout agent completes analysis, when Agent Insights Panel displays Scout metrics, then panel MUST show execution_time (float, precision: 2 decimal places, unit: milliseconds), panel MUST show confidence (float, 0.0-1.0, precision: 2 decimal places) from highest priority opportunity or strategic move, panel MUST show priority (integer, 1-10 or enum value) from highest priority move, panel MUST NOT show optional fields as empty/null (only required fields displayed)
+- **AC-US008.2**: Given Scout returns BoardAnalysis with opportunities list containing priority=100, confidence=0.95, when Scout metrics panel is displayed, then execution_time is shown (e.g., "1234.56 ms"), confidence is shown (e.g., "0.95"), priority is shown (e.g., "100" or "IMMEDIATE_WIN"), no optional/empty fields are displayed
 
 **Strategist Agent Metrics Panel (Required Fields):**
-- Given Strategist agent completes planning, when Agent Insights Panel displays Strategist metrics, then panel MUST show execution_time (float, precision: 2 decimal places, unit: milliseconds), panel MUST show confidence (float, 0.0-1.0, precision: 2 decimal places) from primary_move, panel MUST show priority (integer, 1-10 or enum value) from primary_move, panel MUST NOT show optional fields as empty/null (only required fields displayed)
-- Given Strategist returns Strategy with primary_move.priority=90, primary_move.confidence=0.90, when Strategist metrics panel is displayed, then execution_time is shown (e.g., "2345.67 ms"), confidence is shown (e.g., "0.90"), priority is shown (e.g., "90" or "BLOCK_THREAT"), no optional/empty fields are displayed
+- **AC-US008.3**: Given Strategist agent completes planning, when Agent Insights Panel displays Strategist metrics, then panel MUST show execution_time (float, precision: 2 decimal places, unit: milliseconds), panel MUST show confidence (float, 0.0-1.0, precision: 2 decimal places) from primary_move, panel MUST show priority (integer, 1-10 or enum value) from primary_move, panel MUST NOT show optional fields as empty/null (only required fields displayed)
+- **AC-US008.4**: Given Strategist returns Strategy with primary_move.priority=90, primary_move.confidence=0.90, when Strategist metrics panel is displayed, then execution_time is shown (e.g., "2345.67 ms"), confidence is shown (e.g., "0.90"), priority is shown (e.g., "90" or "BLOCK_THREAT"), no optional/empty fields are displayed
 
 **Executor Agent Metrics Panel (Required Fields):**
-- Given Executor agent completes execution, when Agent Insights Panel displays Executor metrics, then panel MUST show execution_time (float, precision: 2 decimal places, unit: milliseconds), panel MUST show confidence (float, 0.0-1.0, precision: 2 decimal places) from MoveExecution (if available), panel MUST show priority (integer, 1-10 or enum value) from actual_priority_used, panel MUST NOT show optional fields as empty/null (only required fields displayed)
-- Given Executor returns MoveExecution with actual_priority_used=80, execution_time_ms=567.89, when Executor metrics panel is displayed, then execution_time is shown (e.g., "567.89 ms"), priority is shown (e.g., "80" or "FORCE_WIN"), confidence is shown if available from MoveExecution, no optional/empty fields are displayed
+- **AC-US008.5**: Given Executor agent completes execution, when Agent Insights Panel displays Executor metrics, then panel MUST show execution_time (float, precision: 2 decimal places, unit: milliseconds), panel MUST show confidence (float, 0.0-1.0, precision: 2 decimal places) from MoveExecution (if available), panel MUST show priority (integer, 1-10 or enum value) from actual_priority_used, panel MUST NOT show optional fields as empty/null (only required fields displayed)
+- **AC-US008.6**: Given Executor returns MoveExecution with actual_priority_used=80, execution_time_ms=567.89, when Executor metrics panel is displayed, then execution_time is shown (e.g., "567.89 ms"), priority is shown (e.g., "80" or "FORCE_WIN"), confidence is shown if available from MoveExecution, no optional/empty fields are displayed
 
 **Panel Visibility:**
-- Given agent is processing (active_agent="scout" or "strategist" or "executor"), when Agent Insights Panel is displayed, then panel for active agent MUST be visible (display not 'none'), panel MUST show loading indicator (spinner or progress bar), panel MUST show "Processing..." or agent name with "Processing" status
-- Given all agents completed, when Agent Insights Panel is displayed, then all three agent panels (Scout, Strategist, Executor) MUST be visible, each panel MUST show required fields (execution_time, confidence, priority), panels MUST NOT show loading indicators
+- **AC-US008.7**: Given agent is processing (active_agent="scout" or "strategist" or "executor"), when Agent Insights Panel is displayed, then panel for active agent MUST be visible (display not 'none'), panel MUST show loading indicator (spinner or progress bar), panel MUST show "Processing..." or agent name with "Processing" status
+- **AC-US008.8**: Given all agents completed, when Agent Insights Panel is displayed, then all three agent panels (Scout, Strategist, Executor) MUST be visible, each panel MUST show required fields (execution_time, confidence, priority), panels MUST NOT show loading indicators
 
 **Field Format Requirements:**
-- Given execution_time=1234.567, when displayed in metrics panel, then value MUST be formatted as "1234.57 ms" (2 decimal places, unit suffix)
-- Given confidence=0.95, when displayed in metrics panel, then value MUST be formatted as "0.95" or "95%" (2 decimal places or percentage)
-- Given priority=100, when displayed in metrics panel, then value MUST be formatted as "100" or "IMMEDIATE_WIN" (numeric or enum name)
+- **AC-US008.9**: Given execution_time=1234.567, when displayed in metrics panel, then value MUST be formatted as "1234.57 ms" (2 decimal places, unit suffix)
+- **AC-US008.10**: Given confidence=0.95, when displayed in metrics panel, then value MUST be formatted as "0.95" or "95%" (2 decimal places or percentage)
+- **AC-US008.11**: Given priority=100, when displayed in metrics panel, then value MUST be formatted as "100" or "IMMEDIATE_WIN" (numeric or enum name)
 
 **US-009: View Agent Processing Status**
-- As a player, I MUST see which agent is currently active
-- As a player, I MUST see loading indication while agents are processing
-- As a player, I MUST see estimated time remaining for AI move
+- **AC-US009.1**: As a player, I MUST see which agent is currently active
+- **AC-US009.2**: As a player, I MUST see loading indication while agents are processing
+- **AC-US009.3**: As a player, I MUST see estimated time remaining for AI move
 
 **US-010: View Agent Timeout Progress**
-- As a player, I MUST see progressive status updates as processing time increases:
-  - At 0-2s: Basic loading indication
-  - At 2-5s: Processing indication
-  - At 5-10s: Detailed progress with elapsed time
-  - At 10-15s: Warning indication with fallback preparation notice
-  - At 15s+: Automatic fallback execution with explanation
+- **AC-US010.1**: As a player, I MUST see progressive status updates as processing time increases:
+  - **AC-US010.1a**: At 0-2s: Basic loading indication
+  - **AC-US010.1b**: At 2-5s: Processing indication
+  - **AC-US010.1c**: At 5-10s: Detailed progress with elapsed time
+  - **AC-US010.1d**: At 10-15s: Warning indication with fallback preparation notice
+  - **AC-US010.1e**: At 15s+: Automatic fallback execution with explanation
 
 **US-011: Force Agent Fallback**
-- As a player, I MUST be able to force fallback after 10 seconds of waiting
-- The UI MUST provide a "Force Fallback" action
-- The UI MUST explain what fallback strategy will be used
+- **AC-US011.1**: As a player, I MUST be able to force fallback after 10 seconds of waiting
+- **AC-US011.2**: The UI MUST provide a "Force Fallback" action
+- **AC-US011.3**: The UI MUST explain what fallback strategy will be used
 
 **US-012: Retry Failed Agent**
-- As a player, I MUST be able to retry with a different model when agent fails
-- The UI MUST provide retry options on agent timeout/failure
+- **AC-US012.1**: As a player, I MUST be able to retry with a different model when agent fails
+- **AC-US012.2**: The UI MUST provide retry options on agent timeout/failure
 
 ### User Stories: Post-Game Metrics
 
 **US-013: View Metrics After Game**
-- As a player, I MUST be able to view detailed metrics after game completion
-- Metrics MUST only be available/displayed when game is over (win, loss, or draw)
+- **AC-US013.1**: As a player, I MUST be able to view detailed metrics after game completion
+- **AC-US013.2**: Metrics MUST only be available/displayed when game is over (win, loss, or draw)
 
 **US-014: View Agent Communication**
-- As a player, I MUST see coordinator requests to each agent
-- As a player, I MUST see agent responses and results
-- As a player, I MUST see input/output data structures for each agent call
+- **AC-US014.1**: As a player, I MUST see coordinator requests to each agent
+- **AC-US014.2**: As a player, I MUST see agent responses and results
+- **AC-US014.3**: As a player, I MUST see input/output data structures for each agent call
 
 **US-015: View LLM Interactions**
-- As a player, I MUST see LLM API calls made by each agent
-- As a player, I MUST see request prompts sent to LLM
-- As a player, I MUST see LLM responses received
-- As a player, I MUST see token usage per LLM call
-- As a player, I MUST see response times for each LLM interaction
-- As a player, I MUST see model/provider information for each call
+- **AC-US015.1**: As a player, I MUST see LLM API calls made by each agent
+- **AC-US015.2**: As a player, I MUST see request prompts sent to LLM
+- **AC-US015.3**: As a player, I MUST see LLM responses received
+- **AC-US015.4**: As a player, I MUST see token usage per LLM call
+- **AC-US015.5**: As a player, I MUST see response times for each LLM interaction
+- **AC-US015.6**: As a player, I MUST see model/provider information for each call
 
 **US-016: View Agent Configuration**
-- As a player, I MUST see agent mode used (local or distributed MCP)
-- As a player, I MUST see LLM framework used
-- As a player, I MUST see agent initialization details
-- As a player, I MUST see mode switching events (if any)
+- **AC-US016.1**: As a player, I MUST see agent mode used (local or distributed MCP)
+- **AC-US016.2**: As a player, I MUST see LLM framework used
+- **AC-US016.3**: As a player, I MUST see agent initialization details
+- **AC-US016.4**: As a player, I MUST see mode switching events (if any)
 
 **US-017: View Performance Summary**
-- As a player, I MUST see per-agent execution times (min, max, average)
-- As a player, I MUST see total LLM calls per agent
-- As a player, I MUST see total token usage
-- As a player, I MUST see success/failure rates
-- As a player, I MUST see error details (if any)
+- **AC-US017.1**: As a player, I MUST see per-agent execution times (min, max, average)
+- **AC-US017.2**: As a player, I MUST see total LLM calls per agent
+- **AC-US017.3**: As a player, I MUST see total token usage
+- **AC-US017.4**: As a player, I MUST see success/failure rates
+- **AC-US017.5**: As a player, I MUST see error details (if any)
 
 **US-018: View Game Summary**
-- As a player, I MUST see total moves
-- As a player, I MUST see game duration
-- As a player, I MUST see win/loss/draw outcome
-- As a player, I MUST see average move time
+- **AC-US018.1**: As a player, I MUST see total moves
+- **AC-US018.2**: As a player, I MUST see game duration
+- **AC-US018.3**: As a player, I MUST see win/loss/draw outcome
+- **AC-US018.4**: As a player, I MUST see average move time
 
 ### User Stories: Configuration
 
 **US-019: Select LLM Provider and Model**
-- As a player, I MUST be able to select LLM provider (OpenAI, Anthropic, Google Gemini)
-- As a player, I MUST be able to select model name
-- My LLM preferences MUST be saved and restored in future sessions
+- **AC-US019.1**: As a player, I MUST be able to select LLM provider (OpenAI, Anthropic, Google Gemini)
+- **AC-US019.2**: As a player, I MUST be able to select model name
+- **AC-US019.3**: My LLM preferences MUST be saved and restored in future sessions
 
 **US-020: Select Agent Mode**
-- As a player, I MUST be able to toggle between local mode and distributed MCP mode
-- As a player, I MUST be able to select LLM framework (LangChain, LiteLLM, Instructor, Direct SDKs)
+- **AC-US020.1**: As a player, I MUST be able to toggle between local mode and distributed MCP mode
+- **AC-US020.2**: As a player, I MUST be able to select LLM framework (LangChain, LiteLLM, Instructor, Direct SDKs)
 
 **US-021: Configure Game Settings**
-- As a player, I MUST be able to reset the game
-- As a player, I MUST be able to change player symbol (X or O)
-- As a player, I SHOULD be able to adjust difficulty (if implemented)
+- **AC-US021.1**: As a player, I MUST be able to reset the game
+- **AC-US021.2**: As a player, I MUST be able to change player symbol (X or O)
+- **AC-US021.3**: As a player, I SHOULD be able to adjust difficulty (if implemented)
 
 ### User Stories: Real-Time Updates
 
 **US-022: Automatic State Updates**
-- As a player, the UI MUST update automatically when I make a move
-- As a player, the UI MUST update automatically when AI makes a move
-- As a player, the UI MUST update automatically when game state changes
-- As a player, the UI MUST update automatically when agent metrics update
+- **AC-US022.1**: As a player, the UI MUST update automatically when I make a move
+- **AC-US022.2**: As a player, the UI MUST update automatically when AI makes a move
+- **AC-US022.3**: As a player, the UI MUST update automatically when game state changes
+- **AC-US022.4**: As a player, the UI MUST update automatically when agent metrics update
 
 **US-023: Performance Requirements**
-- The UI MUST prevent unnecessary re-renders
-- The UI MUST maintain user context across updates
-- Board updates MUST be reflected within 100ms of state change
-- Agent status updates MUST be reflected within 500ms
+- **AC-US023.1**: The UI MUST prevent unnecessary re-renders
+- **AC-US023.2**: The UI MUST maintain user context across updates
+- **AC-US023.3**: Board updates MUST be reflected within 100ms of state change
+- **AC-US023.4**: Agent status updates MUST be reflected within 500ms
 
 ### User Stories: Error Handling
 
 **US-024: Display Error Messages**
-- As a player, I MUST see clear error messages for invalid moves
-- As a player, I MUST see error messages for agent failures
-- As a player, I MUST see error messages for network issues
-- Error messages MUST follow the Failure Matrix specifications (Section 12)
+- **AC-US024.1**: As a player, I MUST see clear error messages for invalid moves
+- **AC-US024.2**: As a player, I MUST see error messages for agent failures
+- **AC-US024.3**: As a player, I MUST see error messages for network issues
+- **AC-US024.4**: Error messages MUST follow the Failure Matrix specifications (Section 12)
 
 **US-025: Fallback Indication**
-- As a player, I MUST be notified when fallback strategies are used
-- As a player, I MUST understand why fallback was triggered
-- As a player, I MUST see which fallback strategy was applied
+- **AC-US025.1**: As a player, I MUST be notified when fallback strategies are used
+- **AC-US025.2**: As a player, I MUST understand why fallback was triggered
+- **AC-US025.3**: As a player, I MUST see which fallback strategy was applied
 
 ### Definition of Done
 
@@ -2261,7 +2261,16 @@ Quality:
 
 Visual elements mentioned in Section 12 (Failure Matrix UI Indications) provide guidance for error state presentation but exact styling is documented in ui/ui-spec.md.
 
-**Figma Frames Location**: Exported PNG frames should be placed in `docs/ui/frames/` directory.
+### Figma Design Integration
+
+**Figma File**: Primary design file and design system are maintained in Figma. See [ui-spec.md Figma Design Integration](./ui/ui-spec.md#figma-design-integration) for:
+- Figma file links and access requirements
+- Design tokens export and synchronization workflow
+- Component specifications with Figma links
+- Design-to-code handoff process
+- Design review and version control procedures
+
+**Figma Frames Location**: Exported PNG frames are stored in `docs/ui/frames/` directory. Frame exports MUST be updated when designs change in Figma.
 
 ---
 
