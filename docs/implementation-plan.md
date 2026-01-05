@@ -128,40 +128,6 @@ jobs:
 
 **Why minimal?** This gets CI working immediately without blocking your work. You can commit code even if linting isn't perfect yet.
 
-**0.4. Configure Basic Pre-commit Hooks (Optional)**
-
-Create `.pre-commit-config.yaml` with minimal hooks:
-
-```yaml
-repos:
-  - repo: https://github.com/psf/black
-    rev: 23.11.0
-    hooks:
-      - id: black
-        language_version: python3.11
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.6
-    hooks:
-      - id: ruff
-        args: [--fix]  # Auto-fix issues
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-```
-
-Install pre-commit hooks:
-```bash
-pip install pre-commit
-pre-commit install
-```
-
-**Note**: This is optional for Phase 0. You can skip it and add it later in Phase 1.
-
 **Acceptance Criteria (Phase 0):**
 - ✅ Project builds and installs successfully
 - ✅ GitHub Actions basic CI pipeline runs on push/PR
