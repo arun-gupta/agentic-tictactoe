@@ -278,12 +278,12 @@ pre-commit install
 
 **Test Coverage**: AC-2.4.1 through AC-2.4.4 (4 acceptance criteria) ✅
 
-**1.1.2. Opportunity**
-- Implement `Opportunity` with position, line_type, line_index, confidence
-- Validate confidence is 0.0-1.0 (float)
-- Error code: `E_INVALID_CONFIDENCE`
+**1.1.2. Opportunity** ✅
+- ✅ Implement `Opportunity` with position, line_type, line_index, confidence
+- ✅ Validate confidence is 0.0-1.0 (float)
+- ✅ Error code: `E_INVALID_CONFIDENCE`
 
-**Test Coverage**: AC-2.5.1 through AC-2.5.4 (4 acceptance criteria)
+**Test Coverage**: AC-2.5.1 through AC-2.5.4 (4 acceptance criteria) ✅
 
 **1.1.3. StrategicMove**
 - Implement `StrategicMove` with position, move_type, priority, reasoning

@@ -1,13 +1,19 @@
 """Unit tests for agent domain models.
 
-Test Coverage: AC-2.4.1 through AC-2.4.4 (Threat acceptance criteria)
+Test Coverage:
+- AC-2.4.1 through AC-2.4.4 (Threat acceptance criteria)
+- AC-2.5.1 through AC-2.5.4 (Opportunity acceptance criteria)
 """
 
 import pytest
 from pydantic import ValidationError
 
-from src.domain.agent_models import Threat
-from src.domain.errors import E_INVALID_LINE_INDEX, E_POSITION_OUT_OF_BOUNDS
+from src.domain.agent_models import Opportunity, Threat
+from src.domain.errors import (
+    E_INVALID_CONFIDENCE,
+    E_INVALID_LINE_INDEX,
+    E_POSITION_OUT_OF_BOUNDS,
+)
 from src.domain.models import Position
 
 
@@ -100,3 +106,106 @@ class TestThreatValidation:
         position = Position(row=0, col=0)
         threat = Threat(position=position, line_type="row", line_index=0, severity="critical")
         assert threat.severity == "critical"
+
+
+class TestOpportunityCreation:
+    """Test Opportunity creation and validation."""
+
+    def test_ac_2_5_1_opportunity_row_1(self):
+        """AC-2.5.1: Given AI has two X's in row 1 with position (1,2) empty, when Opportunity is created, then position=(1,2), line_type='row', line_index=1, confidence=1.0."""
+        position = Position(row=1, col=2)
+        opportunity = Opportunity(position=position, line_type="row", line_index=1, confidence=1.0)
+        assert opportunity.position == position
+        assert opportunity.line_type == "row"
+        assert opportunity.line_index == 1
+        assert opportunity.confidence == 1.0
+
+    def test_ac_2_5_2_opportunity_fork_confidence(self):
+        """AC-2.5.2: Given AI has one X in center with corners available, when Opportunity is created for fork, then confidence >= 0.7."""
+        position = Position(row=0, col=0)
+        opportunity = Opportunity(position=position, line_type="row", line_index=0, confidence=0.75)
+        assert opportunity.confidence >= 0.7
+
+    def test_ac_2_5_3_invalid_confidence_too_high(self):
+        """AC-2.5.3: Given confidence value 1.5, when Opportunity is created, then validation error E_INVALID_CONFIDENCE is raised (must be 0.0-1.0)."""
+        position = Position(row=0, col=0)
+        with pytest.raises(ValidationError) as exc_info:
+            Opportunity(position=position, line_type="row", line_index=0, confidence=1.5)
+        error_str = str(exc_info.value)
+        assert E_INVALID_CONFIDENCE in error_str or "less than or equal to 1.0" in error_str
+
+    def test_ac_2_5_4_invalid_confidence_too_low(self):
+        """AC-2.5.4: Given confidence value -0.1, when Opportunity is created, then validation error E_INVALID_CONFIDENCE is raised."""
+        position = Position(row=0, col=0)
+        with pytest.raises(ValidationError) as exc_info:
+            Opportunity(position=position, line_type="row", line_index=0, confidence=-0.1)
+        error_str = str(exc_info.value)
+        assert E_INVALID_CONFIDENCE in error_str or "greater than or equal to 0.0" in error_str
+
+
+class TestOpportunityValidation:
+    """Test Opportunity field validation."""
+
+    def test_valid_confidence_values(self):
+        """Test that valid confidence values (0.0-1.0) are accepted."""
+        position = Position(row=0, col=0)
+        for confidence in [0.0, 0.5, 0.7, 1.0]:
+            opportunity = Opportunity(
+                position=position, line_type="row", line_index=0, confidence=confidence
+            )
+            assert opportunity.confidence == confidence
+
+    def test_confidence_rounding(self):
+        """Test that confidence values are rounded to 2 decimal places."""
+        position = Position(row=0, col=0)
+        opportunity = Opportunity(
+            position=position, line_type="row", line_index=0, confidence=0.123456
+        )
+        assert opportunity.confidence == 0.12
+
+    def test_invalid_line_type(self):
+        """Test that invalid line_type raises ValidationError."""
+        position = Position(row=0, col=0)
+        with pytest.raises(ValidationError):
+            Opportunity(position=position, line_type="invalid", line_index=0, confidence=1.0)
+
+    def test_invalid_line_index_too_high(self):
+        """Test that line_index > 2 raises validation error."""
+        position = Position(row=0, col=0)
+        with pytest.raises(ValidationError):
+            Opportunity(position=position, line_type="row", line_index=3, confidence=1.0)
+
+    def test_invalid_line_index_too_low(self):
+        """Test that line_index < 0 raises validation error."""
+        position = Position(row=0, col=0)
+        with pytest.raises(ValidationError):
+            Opportunity(position=position, line_type="row", line_index=-1, confidence=1.0)
+
+    def test_valid_line_types(self):
+        """Test that all valid line types are accepted."""
+        position = Position(row=0, col=0)
+        for line_type in ["row", "column", "diagonal"]:
+            opportunity = Opportunity(
+                position=position, line_type=line_type, line_index=0, confidence=1.0
+            )
+            assert opportunity.line_type == line_type
+
+    def test_opportunity_column(self):
+        """Test Opportunity with column line type."""
+        position = Position(row=1, col=1)
+        opportunity = Opportunity(
+            position=position, line_type="column", line_index=1, confidence=0.9
+        )
+        assert opportunity.line_type == "column"
+        assert opportunity.line_index == 1
+        assert opportunity.confidence == 0.9
+
+    def test_opportunity_diagonal(self):
+        """Test Opportunity with diagonal line type."""
+        position = Position(row=2, col=2)
+        opportunity = Opportunity(
+            position=position, line_type="diagonal", line_index=0, confidence=1.0
+        )
+        assert opportunity.line_type == "diagonal"
+        assert opportunity.line_index == 0
+        assert opportunity.confidence == 1.0
