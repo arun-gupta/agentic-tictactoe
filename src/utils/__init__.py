@@ -1,2 +1,1 @@
 """Utilities (configuration, validators)."""
-
