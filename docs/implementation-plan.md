@@ -340,14 +340,14 @@ pre-commit install
 - `src/domain/result.py` ✅
 - `tests/unit/domain/test_result.py` ✅
 
-**1.2.1. AgentResult**
-- Implement generic `AgentResult[T]` wrapper
-- Add factory methods: `AgentResult.success()`, `AgentResult.error()`
-- Track execution_time_ms, timestamp (ISO 8601), metadata
-- Validate timestamp format, execution time ≥ 0
-- Error codes: `E_MISSING_DATA`, `E_MISSING_ERROR_MESSAGE`, `E_INVALID_TIMESTAMP`
+**1.2.1. AgentResult** ✅
+- ✅ Implement generic `AgentResult[T]` wrapper
+- ✅ Add factory methods: `AgentResult.success()`, `AgentResult.error()`
+- ✅ Track execution_time_ms, timestamp (ISO 8601), error_code, metadata
+- ✅ Validate timestamp format, execution time ≥ 0
+- ✅ Error codes: `E_MISSING_DATA`, `E_MISSING_ERROR_MESSAGE`, `E_INVALID_EXECUTION_TIME`
 
-**Test Coverage**: AC-2.12.1 through AC-2.12.8 (8 acceptance criteria)
+**Test Coverage**: AC-2.12.1 through AC-2.12.8 (8 acceptance criteria) ✅
 
 #### 1.3. Enhance CI/CD Pipeline
 
