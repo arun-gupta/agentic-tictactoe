@@ -9,7 +9,7 @@ from typing import Any
 from pythonjsonlogger import jsonlogger  # type: ignore[import-untyped, name-defined]
 
 
-class StructuredJSONFormatter(jsonlogger.JsonFormatter):  # type: ignore[misc]
+class StructuredJSONFormatter(jsonlogger.JsonFormatter):  # type: ignore[misc, name-defined]
     """Custom JSON formatter for structured logging (Section 17)."""
 
     def add_fields(

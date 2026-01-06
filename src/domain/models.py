@@ -279,7 +279,7 @@ class GameState(BaseModel):
         """
         winner = self._check_win()
         if winner is not None:
-            return winner  # type: ignore[return-value]
+            return winner
         if self._check_draw():
             return "DRAW"
         return None

@@ -203,5 +203,5 @@ class AgentResult(BaseModel, Generic[T]):
 
 # Expose factory methods at class level to avoid Pydantic field shadowing
 # Using setattr to avoid mypy errors about assignment to class
-AgentResult.success = AgentResult._create_success
-AgentResult.error = AgentResult._create_error
+AgentResult.success = AgentResult._create_success  # type: ignore[attr-defined, assignment]
+AgentResult.error = AgentResult._create_error  # type: ignore[attr-defined, assignment]

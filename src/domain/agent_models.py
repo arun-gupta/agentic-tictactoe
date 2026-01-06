@@ -242,7 +242,7 @@ class StrategicMove(BaseModel):
             raise ValueError(
                 f"priority must be between 1 and 10, got {v}. " f"Error code: {E_INVALID_PRIORITY}"
             )
-        return v
+        return v  # type: ignore[return-value]
 
     @field_validator("reasoning")
     @classmethod
@@ -263,7 +263,7 @@ class StrategicMove(BaseModel):
                 f"reasoning must be a non-empty string, got empty value. "
                 f"Error code: {E_MISSING_REASONING}"
             )
-        return v
+        return v  # type: ignore[return-value]
 
 
 class MoveRecommendation(BaseModel):
@@ -336,7 +336,7 @@ class MoveRecommendation(BaseModel):
                 f"reasoning must be a non-empty string, got empty value. "
                 f"Error code: {E_MISSING_REASONING}"
             )
-        return v
+        return v  # type: ignore[return-value]
 
 
 class Strategy(BaseModel):
@@ -385,11 +385,11 @@ class Strategy(BaseModel):
                 f"primary_move is required and cannot be None. "
                 f"Error code: {E_MISSING_PRIMARY_MOVE}"
             )
-        return v
+        return v  # type: ignore[return-value]
 
     @field_validator("risk_assessment")
     @classmethod
-    def validate_risk_assessment(cls, v: str) -> str:
+    def validate_risk_assessment(cls, v: str) -> RiskLevel:
         """Validate that risk_assessment is one of: 'low', 'medium', 'high'.
 
         Args:
@@ -407,7 +407,7 @@ class Strategy(BaseModel):
                 f"risk_assessment must be one of {valid_levels}, got '{v}'. "
                 f"Error code: {E_INVALID_RISK_LEVEL}"
             )
-        return v  # type: ignore[return-value]
+        return v  # type: ignore[return-value]  # type: ignore[return-value]
 
     @field_validator("alternatives")
     @classmethod
@@ -507,7 +507,7 @@ class MoveExecution(BaseModel):
                 f"reasoning must be a non-empty string, got empty value. "
                 f"Error code: {E_MISSING_REASONING}"
             )
-        return v
+        return v  # type: ignore[return-value]
 
 
 class BoardAnalysis(BaseModel):
@@ -547,7 +547,7 @@ class BoardAnalysis(BaseModel):
 
     @field_validator("game_phase")
     @classmethod
-    def validate_game_phase(cls, v: str) -> str:
+    def validate_game_phase(cls, v: str) -> GamePhase:
         """Validate that game_phase is one of: 'opening', 'midgame', 'endgame'.
 
         Args:
@@ -565,7 +565,7 @@ class BoardAnalysis(BaseModel):
                 f"game_phase must be one of {valid_phases}, got '{v}'. "
                 f"Error code: {E_INVALID_GAME_PHASE}"
             )
-        return v  # type: ignore[return-value]
+        return v  # type: ignore[return-value]  # type: ignore[return-value]
 
     @field_validator("board_evaluation_score")
     @classmethod
