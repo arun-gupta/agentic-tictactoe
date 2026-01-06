@@ -3,7 +3,6 @@
 Tests AC-4.1.5.1 through AC-4.1.5.10 - State Validation Rules
 """
 
-
 from src.domain.errors import (
     E_INVALID_SYMBOL_BALANCE,
     E_INVALID_TURN,
