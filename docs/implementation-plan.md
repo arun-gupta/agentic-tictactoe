@@ -285,14 +285,14 @@ pre-commit install
 
 **Test Coverage**: AC-2.5.1 through AC-2.5.4 (4 acceptance criteria) ✅
 
-**1.1.3. StrategicMove**
-- Implement `StrategicMove` with position, move_type, priority, reasoning
-- Validate move_type is one of: 'center', 'corner', 'edge', 'fork', 'block_fork'
-- Validate priority is 1-10
-- Validate reasoning is non-empty string
-- Error codes: `E_INVALID_MOVE_TYPE`, `E_INVALID_PRIORITY`, `E_MISSING_REASONING`
+**1.1.3. StrategicMove** ✅
+- ✅ Implement `StrategicMove` with position, move_type, priority, reasoning
+- ✅ Validate move_type is one of: 'center', 'corner', 'edge', 'fork', 'block_fork'
+- ✅ Validate priority is 1-10
+- ✅ Validate reasoning is non-empty string
+- ✅ Error codes: `E_INVALID_MOVE_TYPE`, `E_INVALID_PRIORITY`, `E_MISSING_REASONING`
 
-**Test Coverage**: AC-2.6.1 through AC-2.6.5 (5 acceptance criteria)
+**Test Coverage**: AC-2.6.1 through AC-2.6.5 (5 acceptance criteria) ✅
 
 **1.1.4. BoardAnalysis**
 - Implement `BoardAnalysis` with threats, opportunities, strategic_moves

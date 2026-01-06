@@ -11,10 +11,14 @@ from pydantic import BaseModel, Field, field_validator
 from src.domain.errors import (
     E_INVALID_CONFIDENCE,
     E_INVALID_LINE_TYPE,
+    E_INVALID_MOVE_TYPE,
+    E_INVALID_PRIORITY,
+    E_MISSING_REASONING,
 )
 from src.domain.models import Position
 
 LineType = Literal["row", "column", "diagonal"]
+MoveType = Literal["center", "corner", "edge", "fork", "block_fork"]
 
 
 class Threat(BaseModel):
@@ -134,3 +138,94 @@ class Opportunity(BaseModel):
             )
         # Round to 2 decimal places as per spec
         return round(v, 2)
+
+
+class StrategicMove(BaseModel):
+    """Represents a strategic position recommendation.
+
+    StrategicMove contains a position recommendation with move type,
+    priority, and reasoning. Used by the Strategist agent to recommend moves.
+
+    Attributes:
+        position: The Position recommended for the move
+        move_type: Type of strategic move ('center', 'corner', 'edge', 'fork', 'block_fork')
+        priority: Priority ranking (1-10, higher is more important)
+        reasoning: Human-readable explanation for the move (required, non-empty)
+
+    Raises:
+        ValueError: If move_type is invalid (error code: E_INVALID_MOVE_TYPE)
+        ValueError: If priority is out of range (error code: E_INVALID_PRIORITY)
+        ValueError: If reasoning is empty (error code: E_MISSING_REASONING)
+    """
+
+    position: Position = Field(..., description="Recommended position for the move")
+    move_type: MoveType = Field(
+        ..., description="Type of strategic move ('center', 'corner', 'edge', 'fork', 'block_fork')"
+    )
+    priority: int = Field(..., ge=1, le=10, description="Priority ranking (1-10)")
+    reasoning: str = Field(
+        ..., min_length=1, max_length=1000, description="Human-readable explanation"
+    )
+
+    @field_validator("move_type")
+    @classmethod
+    def validate_move_type(cls, v: str) -> str:
+        """Validate that move_type is one of the valid values.
+
+        Args:
+            v: The move_type value to validate
+
+        Returns:
+            The validated move_type value
+
+        Raises:
+            ValueError: If move_type is not one of the valid values (error code: E_INVALID_MOVE_TYPE)
+        """
+        valid_types = ["center", "corner", "edge", "fork", "block_fork"]
+        if v not in valid_types:
+            raise ValueError(
+                f"move_type must be one of {valid_types}, got '{v}'. "
+                f"Error code: {E_INVALID_MOVE_TYPE}"
+            )
+        return v  # type: ignore[return-value]
+
+    @field_validator("priority")
+    @classmethod
+    def validate_priority(cls, v: int) -> int:
+        """Validate that priority is in range 1-10.
+
+        Args:
+            v: The priority value to validate
+
+        Returns:
+            The validated priority value
+
+        Raises:
+            ValueError: If priority is not in range 1-10 (error code: E_INVALID_PRIORITY)
+        """
+        if not (1 <= v <= 10):
+            raise ValueError(
+                f"priority must be between 1 and 10, got {v}. " f"Error code: {E_INVALID_PRIORITY}"
+            )
+        return v
+
+    @field_validator("reasoning")
+    @classmethod
+    def validate_reasoning(cls, v: str) -> str:
+        """Validate that reasoning is non-empty.
+
+        Args:
+            v: The reasoning value to validate
+
+        Returns:
+            The validated reasoning value
+
+        Raises:
+            ValueError: If reasoning is empty (error code: E_MISSING_REASONING)
+        """
+        if not v or not v.strip():
+            raise ValueError(
+                f"reasoning must be a non-empty string, got empty value. "
+                f"Error code: {E_MISSING_REASONING}"
+            )
+        return v
