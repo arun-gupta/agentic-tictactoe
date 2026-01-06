@@ -5,12 +5,19 @@ Test Coverage:
 - AC-2.5.1 through AC-2.5.4 (Opportunity acceptance criteria)
 - AC-2.6.1 through AC-2.6.5 (StrategicMove acceptance criteria)
 - AC-2.7.1 through AC-2.7.9 (BoardAnalysis acceptance criteria)
+- AC-2.8.1 through AC-2.8.9 (MovePriority acceptance criteria)
 """
 
 import pytest
 from pydantic import ValidationError
 
-from src.domain.agent_models import BoardAnalysis, Opportunity, StrategicMove, Threat
+from src.domain.agent_models import (
+    BoardAnalysis,
+    MovePriority,
+    Opportunity,
+    StrategicMove,
+    Threat,
+)
 from src.domain.errors import (
     E_INVALID_LINE_INDEX,
     E_POSITION_OUT_OF_BOUNDS,
@@ -592,3 +599,95 @@ class TestBoardAnalysisValidation:
         assert len(analysis.strategic_moves) == 1
         assert analysis.game_phase == "midgame"
         assert analysis.board_evaluation_score == 0.3
+
+
+class TestMovePriorityEnum:
+    """Test MovePriority enum definition and comparison."""
+
+    def test_ac_2_8_1_immediate_win_value(self):
+        """AC-2.8.1: Given MovePriority.IMMEDIATE_WIN, when accessed, then value equals 100."""
+        assert MovePriority.IMMEDIATE_WIN == 100
+        assert MovePriority.IMMEDIATE_WIN.value == 100
+
+    def test_ac_2_8_2_block_threat_value(self):
+        """AC-2.8.2: Given MovePriority.BLOCK_THREAT, when accessed, then value equals 90."""
+        assert MovePriority.BLOCK_THREAT == 90
+        assert MovePriority.BLOCK_THREAT.value == 90
+
+    def test_ac_2_8_3_force_win_value(self):
+        """AC-2.8.3: Given MovePriority.FORCE_WIN, when accessed, then value equals 80."""
+        assert MovePriority.FORCE_WIN == 80
+        assert MovePriority.FORCE_WIN.value == 80
+
+    def test_ac_2_8_4_prevent_fork_value(self):
+        """AC-2.8.4: Given MovePriority.PREVENT_FORK, when accessed, then value equals 70."""
+        assert MovePriority.PREVENT_FORK == 70
+        assert MovePriority.PREVENT_FORK.value == 70
+
+    def test_ac_2_8_5_center_control_value(self):
+        """AC-2.8.5: Given MovePriority.CENTER_CONTROL, when accessed, then value equals 50."""
+        assert MovePriority.CENTER_CONTROL == 50
+        assert MovePriority.CENTER_CONTROL.value == 50
+
+    def test_ac_2_8_6_corner_control_value(self):
+        """AC-2.8.6: Given MovePriority.CORNER_CONTROL, when accessed, then value equals 40."""
+        assert MovePriority.CORNER_CONTROL == 40
+        assert MovePriority.CORNER_CONTROL.value == 40
+
+    def test_ac_2_8_7_edge_play_value(self):
+        """AC-2.8.7: Given MovePriority.EDGE_PLAY, when accessed, then value equals 30."""
+        assert MovePriority.EDGE_PLAY == 30
+        assert MovePriority.EDGE_PLAY.value == 30
+
+    def test_ac_2_8_8_random_valid_value(self):
+        """AC-2.8.8: Given MovePriority.RANDOM_VALID, when accessed, then value equals 10."""
+        assert MovePriority.RANDOM_VALID == 10
+        assert MovePriority.RANDOM_VALID.value == 10
+
+    def test_ac_2_8_9_comparison_order(self):
+        """AC-2.8.9: Given all MovePriority values, when compared, then IMMEDIATE_WIN > BLOCK_THREAT > FORCE_WIN > PREVENT_FORK > CENTER_CONTROL > CORNER_CONTROL > EDGE_PLAY > RANDOM_VALID."""
+        assert MovePriority.IMMEDIATE_WIN > MovePriority.BLOCK_THREAT
+        assert MovePriority.BLOCK_THREAT > MovePriority.FORCE_WIN
+        assert MovePriority.FORCE_WIN > MovePriority.PREVENT_FORK
+        assert MovePriority.PREVENT_FORK > MovePriority.CENTER_CONTROL
+        assert MovePriority.CENTER_CONTROL > MovePriority.CORNER_CONTROL
+        assert MovePriority.CORNER_CONTROL > MovePriority.EDGE_PLAY
+        assert MovePriority.EDGE_PLAY > MovePriority.RANDOM_VALID
+
+    def test_all_priority_values(self):
+        """Test that all priority values are correctly defined."""
+        expected_values = {
+            MovePriority.IMMEDIATE_WIN: 100,
+            MovePriority.BLOCK_THREAT: 90,
+            MovePriority.FORCE_WIN: 80,
+            MovePriority.PREVENT_FORK: 70,
+            MovePriority.CENTER_CONTROL: 50,
+            MovePriority.CORNER_CONTROL: 40,
+            MovePriority.EDGE_PLAY: 30,
+            MovePriority.RANDOM_VALID: 10,
+        }
+        for priority, expected_value in expected_values.items():
+            assert priority == expected_value
+            assert priority.value == expected_value
+
+    def test_enum_comparison_with_int(self):
+        """Test that enum values can be compared with integers."""
+        assert MovePriority.IMMEDIATE_WIN > 90
+        assert MovePriority.BLOCK_THREAT == 90
+        assert MovePriority.RANDOM_VALID < 20
+
+    def test_enum_ordering(self):
+        """Test that enum values maintain correct ordering."""
+        priorities = [
+            MovePriority.IMMEDIATE_WIN,
+            MovePriority.BLOCK_THREAT,
+            MovePriority.FORCE_WIN,
+            MovePriority.PREVENT_FORK,
+            MovePriority.CENTER_CONTROL,
+            MovePriority.CORNER_CONTROL,
+            MovePriority.EDGE_PLAY,
+            MovePriority.RANDOM_VALID,
+        ]
+        # Verify descending order
+        for i in range(len(priorities) - 1):
+            assert priorities[i] > priorities[i + 1]

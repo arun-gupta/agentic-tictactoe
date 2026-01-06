@@ -302,12 +302,12 @@ pre-commit install
 
 **Test Coverage**: AC-2.7.1 through AC-2.7.9 (9 acceptance criteria) ✅
 
-**1.1.5. MovePriority (Enum)**
-- Implement `MovePriority` enum with 8 levels and numeric values
-- IMMEDIATE_WIN=100, BLOCK_THREAT=90, FORCE_WIN=80, etc.
-- Ensure enum values are comparable (higher priority > lower priority)
+**1.1.5. MovePriority (Enum)** ✅
+- ✅ Implement `MovePriority` enum with 8 levels and numeric values
+- ✅ IMMEDIATE_WIN=100, BLOCK_THREAT=90, FORCE_WIN=80, etc.
+- ✅ Ensure enum values are comparable (higher priority > lower priority)
 
-**Test Coverage**: AC-2.8.1 through AC-2.8.9 (9 acceptance criteria)
+**Test Coverage**: AC-2.8.1 through AC-2.8.9 (9 acceptance criteria) ✅
 
 **1.1.6. MoveRecommendation**
 - Implement `MoveRecommendation` with position, priority, confidence, reasoning

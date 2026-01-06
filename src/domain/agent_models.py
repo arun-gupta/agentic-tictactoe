@@ -4,6 +4,7 @@ This module contains domain models for agent analysis: Threat, Opportunity,
 StrategicMove, BoardAnalysis, and related models.
 """
 
+from enum import IntEnum
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -22,6 +23,33 @@ from src.domain.models import Position
 LineType = Literal["row", "column", "diagonal"]
 MoveType = Literal["center", "corner", "edge", "fork", "block_fork"]
 GamePhase = Literal["opening", "midgame", "endgame"]
+
+
+class MovePriority(IntEnum):
+    """Priority levels for move recommendations with numeric values.
+
+    Higher numeric values indicate higher priority moves. The enum values
+    are directly comparable using standard comparison operators.
+
+    Priority Levels (highest to lowest):
+    - IMMEDIATE_WIN (100): AI has exactly 2 symbols in a line with exactly 1 empty cell (will win on this move)
+    - BLOCK_THREAT (90): Opponent has exactly 2 symbols in a line with exactly 1 empty cell (must block to prevent opponent win)
+    - FORCE_WIN (80): Move creates exactly 2 unblocked lines each containing 2 AI symbols (fork that guarantees eventual win)
+    - PREVENT_FORK (70): Move blocks opponent from creating exactly 2 unblocked lines each containing 2 opponent symbols (prevents opponent fork)
+    - CENTER_CONTROL (50): Take center position (1,1) when available and no moves with priority >50 exist
+    - CORNER_CONTROL (40): Take corner position (0,0/0,2/2,0/2,2) when available and no moves with priority >40 exist
+    - EDGE_PLAY (30): Take edge position (0,1/1,0/1,2/2,1) when available and no moves with priority >30 exist
+    - RANDOM_VALID (10): Any valid empty cell when no strategic patterns detected (fallback)
+    """
+
+    IMMEDIATE_WIN = 100
+    BLOCK_THREAT = 90
+    FORCE_WIN = 80
+    PREVENT_FORK = 70
+    CENTER_CONTROL = 50
+    CORNER_CONTROL = 40
+    EDGE_PLAY = 30
+    RANDOM_VALID = 10
 
 
 class Threat(BaseModel):
