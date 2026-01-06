@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from pythonjsonlogger import jsonlogger  # type: ignore[import-untyped, name-defined]
+from pythonjsonlogger import jsonlogger
 
 
 class StructuredJSONFormatter(jsonlogger.JsonFormatter):  # type: ignore[misc, name-defined]

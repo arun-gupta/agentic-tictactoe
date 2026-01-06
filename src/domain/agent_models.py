@@ -102,7 +102,7 @@ class Threat(BaseModel):
                 f"line_type must be one of {valid_types}, got '{v}'. "
                 f"Error code: {E_INVALID_LINE_TYPE}"
             )
-        return v  # type: ignore[return-value]
+        return v
 
 
 class Opportunity(BaseModel):
@@ -150,7 +150,7 @@ class Opportunity(BaseModel):
                 f"line_type must be one of {valid_types}, got '{v}'. "
                 f"Error code: {E_INVALID_LINE_TYPE}"
             )
-        return v  # type: ignore[return-value]
+        return v
 
     @field_validator("confidence")
     @classmethod
@@ -222,7 +222,7 @@ class StrategicMove(BaseModel):
                 f"move_type must be one of {valid_types}, got '{v}'. "
                 f"Error code: {E_INVALID_MOVE_TYPE}"
             )
-        return v  # type: ignore[return-value]
+        return v
 
     @field_validator("priority")
     @classmethod
@@ -242,7 +242,7 @@ class StrategicMove(BaseModel):
             raise ValueError(
                 f"priority must be between 1 and 10, got {v}. " f"Error code: {E_INVALID_PRIORITY}"
             )
-        return v  # type: ignore[return-value]
+        return v
 
     @field_validator("reasoning")
     @classmethod
@@ -263,7 +263,7 @@ class StrategicMove(BaseModel):
                 f"reasoning must be a non-empty string, got empty value. "
                 f"Error code: {E_MISSING_REASONING}"
             )
-        return v  # type: ignore[return-value]
+        return v
 
 
 class MoveRecommendation(BaseModel):
@@ -336,7 +336,7 @@ class MoveRecommendation(BaseModel):
                 f"reasoning must be a non-empty string, got empty value. "
                 f"Error code: {E_MISSING_REASONING}"
             )
-        return v  # type: ignore[return-value]
+        return v
 
 
 class Strategy(BaseModel):
@@ -385,7 +385,7 @@ class Strategy(BaseModel):
                 f"primary_move is required and cannot be None. "
                 f"Error code: {E_MISSING_PRIMARY_MOVE}"
             )
-        return v  # type: ignore[return-value]
+        return v
 
     @field_validator("risk_assessment")
     @classmethod
@@ -407,7 +407,7 @@ class Strategy(BaseModel):
                 f"risk_assessment must be one of {valid_levels}, got '{v}'. "
                 f"Error code: {E_INVALID_RISK_LEVEL}"
             )
-        return v  # type: ignore[return-value]  # type: ignore[return-value]
+        return v  # type: ignore[return-value]
 
     @field_validator("alternatives")
     @classmethod
@@ -507,7 +507,7 @@ class MoveExecution(BaseModel):
                 f"reasoning must be a non-empty string, got empty value. "
                 f"Error code: {E_MISSING_REASONING}"
             )
-        return v  # type: ignore[return-value]
+        return v
 
 
 class BoardAnalysis(BaseModel):
@@ -565,7 +565,7 @@ class BoardAnalysis(BaseModel):
                 f"game_phase must be one of {valid_phases}, got '{v}'. "
                 f"Error code: {E_INVALID_GAME_PHASE}"
             )
-        return v  # type: ignore[return-value]  # type: ignore[return-value]
+        return v  # type: ignore[return-value]
 
     @field_validator("board_evaluation_score")
     @classmethod

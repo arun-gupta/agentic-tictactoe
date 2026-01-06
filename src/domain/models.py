@@ -237,7 +237,7 @@ class GameState(BaseModel):
             and self.board.cells[0][0] == self.board.cells[1][1]
             and self.board.cells[1][1] == self.board.cells[2][2]
         ):
-            return self.board.cells[0][0]  # type: ignore[return-value]
+            return self.board.cells[0][0]
 
         # Check anti-diagonal (0,2), (1,1), (2,0)
         if (
@@ -245,7 +245,7 @@ class GameState(BaseModel):
             and self.board.cells[0][2] == self.board.cells[1][1]
             and self.board.cells[1][1] == self.board.cells[2][0]
         ):
-            return self.board.cells[0][2]  # type: ignore[return-value]
+            return self.board.cells[0][2]
 
         return None
 
