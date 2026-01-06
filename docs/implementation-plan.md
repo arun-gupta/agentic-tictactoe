@@ -555,23 +555,23 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-4.1.2.1 through AC-4.1.2.6 (6 acceptance criteria) ✅
 
-#### 2.2. Move Validation
+#### 2.2. Move Validation ✅
 
 **Spec Reference**: Section 4.1 - Illegal Move Conditions
 
 **Files:**
-- `src/engine/game_engine.py` (extend)
-- `tests/unit/engine/test_move_validation.py`
+- `src/game/engine.py` ✅ (extend)
+- `tests/unit/game/test_move_validation.py` ✅
 
 **Implementation:**
-- Validate position bounds (0-2)
-- Check cell is empty
-- Verify game is not over
-- Validate player symbol (X or O)
-- Check correct turn order
-- Error codes: `E_MOVE_OUT_OF_BOUNDS`, `E_CELL_OCCUPIED`, `E_GAME_ALREADY_OVER`, `E_INVALID_PLAYER`, `E_INVALID_TURN`
+- ✅ Validate position bounds (0-2)
+- ✅ Check cell is empty
+- ✅ Verify game is not over
+- ✅ Validate player symbol (X or O)
+- ✅ Check correct turn order
+- ✅ Error codes: `E_MOVE_OUT_OF_BOUNDS`, `E_CELL_OCCUPIED`, `E_GAME_ALREADY_OVER`, `E_INVALID_PLAYER`, `E_INVALID_TURN`
 
-**Test Coverage**: AC-4.1.3.1 through AC-4.1.3.10 (10 acceptance criteria)
+**Test Coverage**: AC-4.1.3.1 through AC-4.1.3.10 (10 acceptance criteria) ✅
 
 #### 2.3. Turn Order and State Transitions
 
