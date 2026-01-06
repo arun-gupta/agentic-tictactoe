@@ -55,45 +55,29 @@ def main() -> None:
     # Initialize game engine
     engine = GameEngine(player_symbol="X", ai_symbol="O")
 
-    # Randomize first move and build appropriate strategy
-    game_type = random.choice(["center", "corner"])
+    print(
+        "\nNote: Players make random valid moves to demonstrate game engine.\n"
+        "      AI threat detection will be added in Phase 3 (Agent System).\n"
+    )
 
-    if game_type == "center":
-        # Center opening - X wins via column
-        moves = [
-            (1, 1, "X", "Player 1"),  # X center
-            (0, 0, "O", "Player 2"),  # O top-left
-            (2, 2, "X", "Player 1"),  # X bottom-right (diagonal)
-            (2, 0, "O", "Player 2"),  # O bottom-left (anti-diagonal threat)
-            (0, 2, "X", "Player 1"),  # X BLOCKS anti-diagonal at (0,2)
-            (1, 0, "O", "Player 2"),  # O middle-left (threatens row 1)
-            (1, 2, "X", "Player 1"),  # X BLOCKS row 1 at (1,2)
-            (0, 1, "O", "Player 2"),  # O top-center
-            (2, 1, "X", "Player 1"),  # X completes column 1 - wins!
-        ]
-    else:
-        # Corner opening - X wins via diagonal
-        moves = [
-            (0, 0, "X", "Player 1"),  # X top-left corner
-            (1, 1, "O", "Player 2"),  # O takes center
-            (2, 2, "X", "Player 1"),  # X bottom-right (diagonal)
-            (1, 0, "O", "Player 2"),  # O middle-left (threatens row 1)
-            (1, 2, "X", "Player 1"),  # X BLOCKS row 1 threat at (1,2)!
-            (0, 1, "O", "Player 2"),  # O top-center (threatens column 1)
-            (2, 1, "X", "Player 1"),  # X BLOCKS column 1 at (2,1)
-            (0, 2, "O", "Player 2"),  # O top-right
-            (1, 0, "X", "Player 1"),  # X completes diagonal (0,0)-(1,1)-(2,2)... wait, (1,1) is O
-        ]
-        # Fix: diagonal is blocked, so win via row
-        moves = [
-            (0, 0, "X", "Player 1"),  # X top-left corner
-            (1, 1, "O", "Player 2"),  # O takes center
-            (0, 2, "X", "Player 1"),  # X top-right (threatens row 0)
-            (1, 0, "O", "Player 2"),  # O middle-left (threatens row 1)
-            (1, 2, "X", "Player 1"),  # X BLOCKS row 1 at (1,2)!
-            (2, 0, "O", "Player 2"),  # O bottom-left
-            (0, 1, "X", "Player 1"),  # X completes row 0 - wins!
-        ]
+    # Play game with random moves until someone wins or draw
+    moves = []
+    max_moves = 9  # Maximum moves in tic-tac-toe
+    move_count = 0
+
+    while move_count < max_moves and not engine.is_game_over():
+        # Get available moves
+        available = engine.get_available_moves()
+        if not available:
+            break
+
+        # Random move selection
+        position = random.choice(available)
+        current_player = engine.get_current_state().get_current_player()
+        player_name = "Player 1" if current_player == "X" else "Player 2"
+
+        moves.append((position.row, position.col, current_player, player_name))
+        move_count += 1
 
     print("GAME START")
     print("-" * 50)
