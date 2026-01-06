@@ -662,10 +662,10 @@ pre-commit install --overwrite
 - ✅ Return `Threat` objects with blocking positions
 - ✅ No LLM needed for this (pure algorithmic)
 
-**3.0.2. Rule-Based Opportunity Detection**
-- Scan all 8 lines for AI two-in-a-row + one empty
-- Return `Opportunity` objects with winning positions
-- Confidence = 1.0 for immediate wins
+**3.0.2. Rule-Based Opportunity Detection** ✅
+- ✅ Scan all 8 lines for AI two-in-a-row + one empty
+- ✅ Return `Opportunity` objects with winning positions
+- ✅ Confidence = 1.0 for immediate wins
 
 **3.0.3. Strategic Position Analysis**
 - Identify center position (1,1)
