@@ -73,7 +73,7 @@ The system is designed to follow a layered architecture:
 ### Current Metrics
 - **276 tests passing**
 - **24 Scout Agent tests** covering threat detection, opportunity detection, strategic positions, game phase, and board evaluation
-- **94% test coverage** (local) / **87% coverage** (Codecov)
+- **Test coverage**: See badge above for current Codecov coverage
   - Codecov excludes unimplemented placeholder files for agents, API, and UI layers
   - 100% coverage on all implemented code (domain models, game engine, Scout agent)
 - **100% type checking** (mypy strict mode)
