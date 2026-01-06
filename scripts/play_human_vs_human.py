@@ -6,6 +6,8 @@ a human vs human game. It shows all the public methods and validates that
 the game engine correctly enforces rules, detects wins/draws, and manages state.
 """
 
+import random
+
 from src.domain.models import Position
 from src.game.engine import GameEngine
 
@@ -53,14 +55,38 @@ def main() -> None:
     # Initialize game engine
     engine = GameEngine(player_symbol="X", ai_symbol="O")
 
-    # Pre-defined moves for a complete game (Player X wins)
-    moves = [
-        (0, 0, "X", "Player 1"),  # X at top-left
-        (1, 0, "O", "Player 2"),  # O at middle-left
-        (0, 1, "X", "Player 1"),  # X at top-center
-        (1, 1, "O", "Player 2"),  # O at center
-        (0, 2, "X", "Player 1"),  # X at top-right (wins!)
+    # Randomize first move for variety
+    first_moves = [
+        (0, 0),  # Top-left (corner)
+        (0, 2),  # Top-right (corner)
+        (1, 1),  # Center
+        (2, 0),  # Bottom-left (corner)
+        (2, 2),  # Bottom-right (corner)
     ]
+    first_row, first_col = random.choice(first_moves)
+
+    # Build game moves dynamically based on first move
+    # This creates different game scenarios while still demonstrating a win
+    if first_row == 1 and first_col == 1:  # Center opening
+        moves = [
+            (first_row, first_col, "X", "Player 1"),  # X center
+            (0, 0, "O", "Player 2"),  # O top-left
+            (0, 1, "X", "Player 1"),  # X top-center
+            (2, 1, "O", "Player 2"),  # O bottom-center
+            (0, 2, "X", "Player 1"),  # X top-right
+            (1, 0, "O", "Player 2"),  # O middle-left
+            (1, 2, "X", "Player 1"),  # X middle-right (wins column 2)
+        ]
+    else:  # Corner or edge opening
+        moves = [
+            (first_row, first_col, "X", "Player 1"),  # X random start
+            (1, 1, "O", "Player 2"),  # O takes center
+            (0 if first_row != 0 else 2, 0, "X", "Player 1"),  # X another corner
+            (1, 0, "O", "Player 2"),  # O middle-left
+            (0 if first_row != 0 else 2, 1, "X", "Player 1"),  # X continues row
+            (1, 2, "O", "Player 2"),  # O middle-right
+            (0 if first_row != 0 else 2, 2, "X", "Player 1"),  # X wins the row!
+        ]
 
     print("GAME START")
     print("-" * 50)
