@@ -4,7 +4,13 @@ This module implements the game engine with win condition detection, move valida
 and state management as per Section 4.1 of the spec.
 """
 
-# Error codes will be used in later phases for move validation
+from src.domain.errors import (
+    E_CELL_OCCUPIED,
+    E_GAME_ALREADY_OVER,
+    E_INVALID_PLAYER,
+    E_INVALID_TURN,
+    E_MOVE_OUT_OF_BOUNDS,
+)
 from src.domain.models import Board, GameState, PlayerSymbol, Position
 
 
@@ -156,6 +162,52 @@ class GameEngine:
             return True
 
         return False
+
+    def validate_move(self, row: int, col: int, player: PlayerSymbol) -> tuple[bool, str | None]:
+        """Validate a move before execution.
+
+        Validates all move conditions per spec Section 4.1 - Illegal Move Conditions.
+        Checks: position bounds, cell empty, game not over, valid player symbol, correct turn.
+
+        Args:
+            row: Row index (0-2)
+            col: Column index (0-2)
+            player: The player symbol making the move ('X' or 'O')
+
+        Returns:
+            Tuple of (is_valid, error_code). If valid, returns (True, None).
+            If invalid, returns (False, error_code).
+        """
+        # Check 1: Position bounds (0-2 for both row and col)
+        if not (0 <= row <= 2) or not (0 <= col <= 2):
+            return (False, E_MOVE_OUT_OF_BOUNDS)
+
+        # Create Position for remaining checks (now safe to create)
+        try:
+            position = Position(row=row, col=col)
+        except Exception:
+            # This shouldn't happen after bounds check, but handle it
+            return (False, E_MOVE_OUT_OF_BOUNDS)
+
+        # Check 2: Cell is empty
+        if not self.game_state.board.is_empty(position):
+            return (False, E_CELL_OCCUPIED)
+
+        # Check 3: Game is not over
+        if self.game_state.is_game_over():
+            return (False, E_GAME_ALREADY_OVER)
+
+        # Check 4: Valid player symbol (X or O)
+        if player not in ("X", "O"):
+            return (False, E_INVALID_PLAYER)
+
+        # Check 5: Correct turn (player must match current player)
+        current_player = self.game_state.get_current_player()
+        if player != current_player:
+            return (False, E_INVALID_TURN)
+
+        # All checks passed - move is legal
+        return (True, None)
 
     def get_current_state(self) -> GameState:
         """Get the current game state.
