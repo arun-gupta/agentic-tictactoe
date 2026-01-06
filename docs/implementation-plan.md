@@ -324,13 +324,13 @@ pre-commit install
 
 **Test Coverage**: AC-2.10.1 through AC-2.10.7 (7 acceptance criteria) ✅
 
-**1.1.8. MoveExecution**
-- Implement `MoveExecution` with position, success, validation_errors, execution_time_ms
-- Support validation error list
-- Track actual_priority_used
-- Error code: `E_INVALID_EXECUTION_TIME`
+**1.1.8. MoveExecution** ✅
+- ✅ Implement `MoveExecution` with position, success, validation_errors, execution_time_ms
+- ✅ Support validation error list
+- ✅ Track actual_priority_used
+- ✅ Error code: `E_INVALID_EXECUTION_TIME`
 
-**Test Coverage**: AC-2.11.1 through AC-2.11.7 (7 acceptance criteria)
+**Test Coverage**: AC-2.11.1 through AC-2.11.7 (7 acceptance criteria) ✅
 
 #### 1.2. Result Wrappers
 

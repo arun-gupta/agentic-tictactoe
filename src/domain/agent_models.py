@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 from src.domain.errors import (
     E_INVALID_CONFIDENCE,
     E_INVALID_EVAL_SCORE,
+    E_INVALID_EXECUTION_TIME,
     E_INVALID_GAME_PHASE,
     E_INVALID_LINE_TYPE,
     E_INVALID_MOVE_TYPE,
@@ -425,6 +426,88 @@ class Strategy(BaseModel):
         """
         # Sort by priority descending (higher priority first)
         return sorted(v, key=lambda m: m.priority.value, reverse=True)
+
+
+class MoveExecution(BaseModel):
+    """Represents the Executor agent's move execution result.
+
+    MoveExecution contains the result of executing a move, including success status,
+    validation errors, execution time, reasoning, and the actual priority used.
+    This is the output of the Executor agent's execution.
+
+    Attributes:
+        position: Position where the move was attempted (required if success=True)
+        success: Boolean indicating if the move was successful
+        validation_errors: List of error codes if validation failed (optional)
+        execution_time_ms: Execution time in milliseconds (required, >= 0.0)
+        reasoning: Human-readable explanation for the execution result (required, non-empty)
+        actual_priority_used: Optional MovePriority enum value indicating which priority was used
+
+    Raises:
+        ValueError: If execution_time_ms is negative (error code: E_INVALID_EXECUTION_TIME)
+        ValueError: If reasoning is empty (error code: E_MISSING_REASONING)
+    """
+
+    position: Position | None = Field(
+        default=None, description="Position where move was attempted (required if success=True)"
+    )
+    success: bool = Field(..., description="Whether the move was successful")
+    validation_errors: list[str] = Field(
+        default_factory=list, description="List of error codes if validation failed"
+    )
+    execution_time_ms: float = Field(
+        ..., ge=0.0, description="Execution time in milliseconds (>= 0.0)"
+    )
+    reasoning: str = Field(
+        ..., min_length=1, max_length=1000, description="Human-readable explanation"
+    )
+    actual_priority_used: MovePriority | None = Field(
+        default=None,
+        description="Optional MovePriority enum value indicating which priority was used",
+    )
+
+    @field_validator("execution_time_ms")
+    @classmethod
+    def validate_execution_time(cls, v: float) -> float:
+        """Validate that execution_time_ms is >= 0.0.
+
+        Args:
+            v: The execution_time_ms value to validate
+
+        Returns:
+            The validated execution_time_ms value (rounded to 2 decimal places)
+
+        Raises:
+            ValueError: If execution_time_ms is negative (error code: E_INVALID_EXECUTION_TIME)
+        """
+        if v < 0.0:
+            raise ValueError(
+                f"execution_time_ms must be >= 0.0, got {v}. "
+                f"Error code: {E_INVALID_EXECUTION_TIME}"
+            )
+        # Round to 2 decimal places as per spec
+        return round(v, 2)
+
+    @field_validator("reasoning")
+    @classmethod
+    def validate_reasoning(cls, v: str) -> str:
+        """Validate that reasoning is non-empty.
+
+        Args:
+            v: The reasoning value to validate
+
+        Returns:
+            The validated reasoning value
+
+        Raises:
+            ValueError: If reasoning is empty (error code: E_MISSING_REASONING)
+        """
+        if not v or not v.strip():
+            raise ValueError(
+                f"reasoning must be a non-empty string, got empty value. "
+                f"Error code: {E_MISSING_REASONING}"
+            )
+        return v
 
 
 class BoardAnalysis(BaseModel):

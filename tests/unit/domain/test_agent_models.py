@@ -8,6 +8,7 @@ Test Coverage:
 - AC-2.8.1 through AC-2.8.9 (MovePriority acceptance criteria)
 - AC-2.9.1 through AC-2.9.6 (MoveRecommendation acceptance criteria)
 - AC-2.10.1 through AC-2.10.7 (Strategy acceptance criteria)
+- AC-2.11.1 through AC-2.11.7 (MoveExecution acceptance criteria)
 """
 
 import pytest
@@ -15,6 +16,7 @@ from pydantic import ValidationError
 
 from src.domain.agent_models import (
     BoardAnalysis,
+    MoveExecution,
     MovePriority,
     MoveRecommendation,
     Opportunity,
@@ -1096,3 +1098,185 @@ class TestStrategyValidation:
             == "Win immediately if possible, otherwise block threats and control center"
         )
         assert strategy.risk_assessment == "low"
+
+
+class TestMoveExecutionCreation:
+    """Test MoveExecution creation and validation."""
+
+    def test_ac_2_11_1_valid_execution(self):
+        """AC-2.11.1: Given valid move execution, when MoveExecution is created, then success=True, validation_errors=empty list."""
+        position = Position(row=1, col=1)
+        execution = MoveExecution(
+            position=position,
+            success=True,
+            validation_errors=[],
+            execution_time_ms=5.5,
+            reasoning="Move executed successfully",
+        )
+        assert execution.success is True
+        assert execution.validation_errors == []
+        assert execution.position == position
+
+    def test_ac_2_11_2_invalid_cell_occupied(self):
+        """AC-2.11.2: Given invalid move (cell occupied), when MoveExecution is created, then success=False, validation_errors contains `E_CELL_OCCUPIED`."""
+        position = Position(row=0, col=0)
+        execution = MoveExecution(
+            position=position,
+            success=False,
+            validation_errors=["E_CELL_OCCUPIED"],
+            execution_time_ms=2.0,
+            reasoning="Cell is already occupied",
+        )
+        assert execution.success is False
+        assert "E_CELL_OCCUPIED" in execution.validation_errors
+
+    def test_ac_2_11_3_execution_time_rounding(self):
+        """AC-2.11.3: Given execution_time_ms=5.123456, when MoveExecution is created, then execution_time_ms=5.12 (rounded to 2 decimal places)."""
+        position = Position(row=1, col=1)
+        execution = MoveExecution(
+            position=position,
+            success=True,
+            validation_errors=[],
+            execution_time_ms=5.123456,
+            reasoning="Test execution",
+        )
+        assert execution.execution_time_ms == 5.12
+
+    def test_ac_2_11_4_invalid_execution_time_negative(self):
+        """AC-2.11.4: Given execution_time_ms=-1.0, when MoveExecution is created, then validation error E_INVALID_EXECUTION_TIME is raised (must be >= 0.0)."""
+        position = Position(row=1, col=1)
+        with pytest.raises(ValidationError):
+            MoveExecution(
+                position=position,
+                success=True,
+                validation_errors=[],
+                execution_time_ms=-1.0,
+                reasoning="Test execution",
+            )
+
+    def test_ac_2_11_5_empty_reasoning(self):
+        """AC-2.11.5: Given reasoning='', when MoveExecution is created, then validation error E_MISSING_REASONING is raised."""
+        position = Position(row=1, col=1)
+        with pytest.raises(ValidationError):
+            MoveExecution(
+                position=position,
+                success=True,
+                validation_errors=[],
+                execution_time_ms=5.0,
+                reasoning="",
+            )
+
+    def test_ac_2_11_6_actual_priority_used(self):
+        """AC-2.11.6: Given actual_priority_used=IMMEDIATE_WIN, when MoveExecution is created, then actual_priority_used is set."""
+        position = Position(row=1, col=1)
+        execution = MoveExecution(
+            position=position,
+            success=True,
+            validation_errors=[],
+            execution_time_ms=5.0,
+            reasoning="Winning move executed",
+            actual_priority_used=MovePriority.IMMEDIATE_WIN,
+        )
+        assert execution.actual_priority_used == MovePriority.IMMEDIATE_WIN
+
+    def test_ac_2_11_7_no_actual_priority_used(self):
+        """AC-2.11.7: Given MoveExecution without actual_priority_used, when created, then actual_priority_used is None."""
+        position = Position(row=1, col=1)
+        execution = MoveExecution(
+            position=position,
+            success=True,
+            validation_errors=[],
+            execution_time_ms=5.0,
+            reasoning="Move executed",
+        )
+        assert execution.actual_priority_used is None
+
+
+class TestMoveExecutionValidation:
+    """Test MoveExecution field validation."""
+
+    def test_valid_execution_times(self):
+        """Test that valid execution times (>= 0.0) are accepted."""
+        position = Position(row=1, col=1)
+        for time_ms in [0.0, 1.5, 10.0, 100.0]:
+            execution = MoveExecution(
+                position=position,
+                success=True,
+                validation_errors=[],
+                execution_time_ms=time_ms,
+                reasoning="Test execution",
+            )
+            assert execution.execution_time_ms == time_ms
+
+    def test_multiple_validation_errors(self):
+        """Test that multiple validation errors can be stored."""
+        # Note: Position validation happens at Position creation, so we'll use valid position
+        # but simulate multiple errors
+        execution = MoveExecution(
+            position=Position(row=0, col=0),
+            success=False,
+            validation_errors=["E_CELL_OCCUPIED", "E_GAME_ALREADY_OVER"],
+            execution_time_ms=2.0,
+            reasoning="Multiple validation errors",
+        )
+        assert len(execution.validation_errors) == 2
+        assert "E_CELL_OCCUPIED" in execution.validation_errors
+        assert "E_GAME_ALREADY_OVER" in execution.validation_errors
+
+    def test_reasoning_max_length(self):
+        """Test that reasoning respects max length of 1000 characters."""
+        position = Position(row=1, col=1)
+        # Valid: exactly 1000 characters
+        valid_reasoning = "a" * 1000
+        execution = MoveExecution(
+            position=position,
+            success=True,
+            validation_errors=[],
+            execution_time_ms=5.0,
+            reasoning=valid_reasoning,
+        )
+        assert len(execution.reasoning) == 1000
+
+    def test_position_optional_when_failed(self):
+        """Test that position can be None when success=False."""
+        execution = MoveExecution(
+            position=None,
+            success=False,
+            validation_errors=["E_POSITION_OUT_OF_BOUNDS"],
+            execution_time_ms=1.0,
+            reasoning="Invalid position",
+        )
+        assert execution.position is None
+        assert execution.success is False
+
+    def test_all_priority_levels_for_actual_priority(self):
+        """Test that all MovePriority enum values can be used for actual_priority_used."""
+        position = Position(row=1, col=1)
+        for priority in MovePriority:
+            execution = MoveExecution(
+                position=position,
+                success=True,
+                validation_errors=[],
+                execution_time_ms=5.0,
+                reasoning="Test execution",
+                actual_priority_used=priority,
+            )
+            assert execution.actual_priority_used == priority
+
+    def test_complete_move_execution(self):
+        """Test MoveExecution with all fields populated."""
+        position = Position(row=2, col=2)
+        execution = MoveExecution(
+            position=position,
+            success=True,
+            validation_errors=[],
+            execution_time_ms=7.5,
+            reasoning="Successfully executed winning move",
+            actual_priority_used=MovePriority.IMMEDIATE_WIN,
+        )
+        assert execution.position == position
+        assert execution.success is True
+        assert execution.validation_errors == []
+        assert execution.execution_time_ms == 7.5
+        assert execution.reasoning == "Successfully executed winning move"
+        assert execution.actual_priority_used == MovePriority.IMMEDIATE_WIN
