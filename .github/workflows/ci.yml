@@ -33,7 +33,7 @@ jobs:
       run: mypy src/ --ignore-missing-imports || true  # Don't fail on first run
 
     - name: Run tests
-      run: pytest tests/ -v --cov=src --cov-report=xml --cov-report=term || true  # Don't fail on first run
+      run: pytest tests/ -v --cov=src --cov-branch --cov-report=xml --cov-report=term || true  # Don't fail on first run
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
