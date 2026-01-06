@@ -6,7 +6,7 @@ This module contains generic result wrappers for agent outputs: AgentResult.
 from datetime import UTC, datetime
 from typing import Any, Generic, TypeVar
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 from src.domain.errors import (
     E_INVALID_EXECUTION_TIME,
@@ -81,7 +81,7 @@ class AgentResult(BaseModel, Generic[T]):
 
     @field_validator("data")
     @classmethod
-    def validate_data_when_success(cls, v: T | None, info) -> T | None:
+    def validate_data_when_success(cls, v: T | None, info: "ValidationInfo") -> T | None:
         """Validate that data is present when success=True.
 
         Args:
@@ -102,7 +102,9 @@ class AgentResult(BaseModel, Generic[T]):
 
     @field_validator("error_message")
     @classmethod
-    def validate_error_message_when_failure(cls, v: str | None, info) -> str | None:
+    def validate_error_message_when_failure(
+        cls, v: str | None, info: "ValidationInfo"
+    ) -> str | None:
         """Validate that error_message is present when success=False.
 
         Args:
@@ -200,5 +202,6 @@ class AgentResult(BaseModel, Generic[T]):
 
 
 # Expose factory methods at class level to avoid Pydantic field shadowing
-AgentResult.success = AgentResult._create_success  # type: ignore[assignment]
-AgentResult.error = AgentResult._create_error  # type: ignore[assignment]
+# Using setattr to avoid mypy errors about assignment to class
+AgentResult.success = AgentResult._create_success
+AgentResult.error = AgentResult._create_error

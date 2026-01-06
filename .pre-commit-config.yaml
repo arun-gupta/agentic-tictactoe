@@ -35,4 +35,4 @@ repos:
         entry: mypy
         language: system
         types: [python]
-        args: [--strict, src/]
+        args: [--strict, --explicit-package-bases, src/]

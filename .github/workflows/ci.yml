@@ -30,7 +30,7 @@ jobs:
       run: ruff check src/ tests/
 
     - name: Run type checking (mypy)
-      run: mypy src/ --strict
+      run: mypy src/ --strict --explicit-package-bases
 
     - name: Run tests with coverage
       run: pytest tests/ --cov=src --cov-branch --cov-report=xml --cov-report=term --cov-fail-under=80

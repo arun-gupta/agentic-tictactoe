@@ -59,7 +59,7 @@ class Board(BaseModel):
     """
 
     cells: list[list[CellState]] = Field(
-        default_factory=lambda: [["EMPTY"] * 3 for _ in range(3)],
+        default_factory=lambda: [["EMPTY" for _ in range(3)] for _ in range(3)],  # type: ignore[arg-type]
         description="3x3 matrix of cell states",
     )
 

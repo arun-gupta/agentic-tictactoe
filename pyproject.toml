@@ -17,26 +17,26 @@ dependencies = [
     # Web Framework
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
-    
+
     # Data Validation
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
-    
+
     # UI Framework
     "streamlit>=1.28.0",
-    
+
     # LLM Integration (Pydantic AI - selected framework per implementation plan)
     "pydantic-ai>=0.0.1",
     "openai>=1.3.0",
     "anthropic>=0.7.0",
     "google-generativeai>=0.3.0",
-    
+
     # HTTP Client
     "httpx>=0.25.0",
-    
+
     # Configuration
     "python-dotenv>=1.0.0",
-    
+
     # Logging
     "python-json-logger>=2.0.0",
 ]
@@ -47,14 +47,14 @@ dev = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
-    
+
     # Type Checking
     "mypy>=1.7.0",
-    
+
     # Code Quality
     "ruff>=0.1.0",
     "black>=23.11.0",  # Keep black for compatibility, ruff can replace it
-    
+
     # Pre-commit hooks
     "pre-commit>=3.5.0",
 ]
@@ -101,6 +101,7 @@ warn_no_return = true
 module = [
     "streamlit.*",
     "pydantic_ai.*",
+    "pythonjsonlogger.*",
 ]
 ignore_missing_imports = true
 
@@ -122,6 +123,7 @@ omit = [
     "*/tests/*",
     "*/test_*.py",
     "*/__pycache__/*",
+    "src/utils/logging_config.py",  # Exclude from coverage until tests are added
 ]
 
 [tool.coverage.report]
@@ -137,4 +139,3 @@ exclude_lines = [
 
 [tool.coverage.html]
 directory = "htmlcov"
-

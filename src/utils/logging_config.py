@@ -1,29 +1,28 @@
 """Logging configuration with structured JSON logging (Section 17)."""
 
-import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
-from pythonjsonlogger import jsonlogger  # type: ignore
+from pythonjsonlogger import jsonlogger  # type: ignore[import-untyped, name-defined]
 
 
-class StructuredJSONFormatter(jsonlogger.JsonFormatter):
+class StructuredJSONFormatter(jsonlogger.JsonFormatter):  # type: ignore[misc]
     """Custom JSON formatter for structured logging (Section 17)."""
 
     def add_fields(
         self,
-        log_record: Dict[str, Any],
+        log_record: dict[str, Any],
         record: logging.LogRecord,
-        message_dict: Dict[str, Any],
+        message_dict: dict[str, Any],
     ) -> None:
         """Add fields to log record according to Section 17 schema."""
         super().add_fields(log_record, record, message_dict)
 
         # Required fields per Section 17
-        log_record["timestamp"] = datetime.now(timezone.utc).isoformat()
+        log_record["timestamp"] = datetime.now(UTC).isoformat()
         log_record["level"] = record.levelname
         log_record["message"] = record.getMessage()
 
@@ -31,12 +30,12 @@ class StructuredJSONFormatter(jsonlogger.JsonFormatter):
         # Format: "service.component" or "service"
         logger_parts = record.name.split(".")
         log_record["service"] = logger_parts[0] if len(logger_parts) > 0 else "unknown"
-        log_record["component"] = (
-            logger_parts[1] if len(logger_parts) > 1 else logger_parts[0]
-        )
+        log_record["component"] = logger_parts[1] if len(logger_parts) > 1 else logger_parts[0]
 
         # Event type from extra or default based on level
-        log_record["event_type"] = getattr(record, "event_type", self._default_event_type(record.levelname))
+        log_record["event_type"] = getattr(
+            record, "event_type", self._default_event_type(record.levelname)
+        )
 
         # Context from extra
         if hasattr(record, "context"):
@@ -66,7 +65,7 @@ class StructuredJSONFormatter(jsonlogger.JsonFormatter):
 
 def setup_logging(
     log_level: str = "INFO",
-    log_file: Optional[Path] = None,
+    log_file: Path | None = None,
     enable_file_logging: bool = True,
 ) -> None:
     """
@@ -83,7 +82,7 @@ def setup_logging(
         log_dir.mkdir(exist_ok=True)
 
         if log_file is None:
-            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            date_str = datetime.now(UTC).strftime("%Y-%m-%d")
             log_file = log_dir / f"app-{date_str}.log"
 
     # Configure root logger
@@ -126,4 +125,3 @@ def get_logger(name: str) -> logging.Logger:
         Logger instance configured for structured logging
     """
     return logging.getLogger(name)
-
