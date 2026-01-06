@@ -236,7 +236,7 @@ pre-commit install
 
 **Implementation Order:**
 
-**1.0.10. Position**
+**1.0.1. Position**
 - Implement `Position` class with row/col validation (0-2 range)
 - Add immutability (frozen dataclass or Pydantic BaseModel)
 - Implement `__hash__` and `__eq__` for dictionary/set usage
@@ -244,7 +244,7 @@ pre-commit install
 
 **Test Coverage**: AC-2.1.1 through AC-2.1.5 (5 acceptance criteria)
 
-**1.0.10. Board**
+**1.0.2. Board**
 - Implement `Board` class as 3x3 grid
 - Add methods: `get_cell()`, `set_cell()`, `is_empty()`, `get_empty_positions()`
 - Validate board size is exactly 3x3
@@ -252,7 +252,7 @@ pre-commit install
 
 **Test Coverage**: AC-2.2.1 through AC-2.2.10 (10 acceptance criteria)
 
-**1.0.10. GameState**
+**1.0.3. GameState**
 - Implement `GameState` with board, players, move tracking
 - Add helper methods: `get_current_player()`, `get_opponent()`
 - Track game over status, winner, draw
@@ -270,7 +270,7 @@ pre-commit install
 
 **Implementation Order:**
 
-**1.1.10. Threat**
+**1.1.1. Threat**
 - Implement `Threat` with position, line_type, line_index, severity
 - Validate line_type is one of: 'row', 'column', 'diagonal'
 - Validate line_index is 0-2
@@ -278,14 +278,14 @@ pre-commit install
 
 **Test Coverage**: AC-2.4.1 through AC-2.4.4 (4 acceptance criteria)
 
-**1.1.10. Opportunity**
+**1.1.2. Opportunity**
 - Implement `Opportunity` with position, line_type, line_index, confidence
 - Validate confidence is 0.0-1.0 (float)
 - Error code: `E_INVALID_CONFIDENCE`
 
 **Test Coverage**: AC-2.5.1 through AC-2.5.4 (4 acceptance criteria)
 
-**1.1.10. StrategicMove**
+**1.1.3. StrategicMove**
 - Implement `StrategicMove` with position, move_type, priority, reasoning
 - Validate move_type is one of: 'center', 'corner', 'edge', 'fork', 'block_fork'
 - Validate priority is 1-10
@@ -294,7 +294,7 @@ pre-commit install
 
 **Test Coverage**: AC-2.6.1 through AC-2.6.5 (5 acceptance criteria)
 
-**1.1.10. BoardAnalysis**
+**1.1.4. BoardAnalysis**
 - Implement `BoardAnalysis` with threats, opportunities, strategic_moves
 - Add game_phase ('opening', 'midgame', 'endgame')
 - Add board_evaluation_score (-1.0 to 1.0)
@@ -302,21 +302,21 @@ pre-commit install
 
 **Test Coverage**: AC-2.7.1 through AC-2.7.9 (9 acceptance criteria)
 
-**1.1.10. MovePriority (Enum)**
+**1.1.5. MovePriority (Enum)**
 - Implement `MovePriority` enum with 8 levels and numeric values
 - IMMEDIATE_WIN=100, BLOCK_THREAT=90, FORCE_WIN=80, etc.
 - Ensure enum values are comparable (higher priority > lower priority)
 
 **Test Coverage**: AC-2.8.1 through AC-2.8.9 (9 acceptance criteria)
 
-**1.1.10. MoveRecommendation**
+**1.1.6. MoveRecommendation**
 - Implement `MoveRecommendation` with position, priority, confidence, reasoning
 - Validate all fields per constraints
 - Support optional outcome_description
 
 **Test Coverage**: AC-2.9.1 through AC-2.9.6 (6 acceptance criteria)
 
-**1.1.10. Strategy**
+**1.1.7. Strategy**
 - Implement `Strategy` with primary_move, alternatives, game_plan, risk_assessment
 - Validate alternatives are sorted by priority (descending)
 - Validate risk_assessment is 'low', 'medium', or 'high'
@@ -324,7 +324,7 @@ pre-commit install
 
 **Test Coverage**: AC-2.10.1 through AC-2.10.7 (7 acceptance criteria)
 
-**1.1.10. MoveExecution**
+**1.1.8. MoveExecution**
 - Implement `MoveExecution` with position, success, validation_errors, execution_time_ms
 - Support validation error list
 - Track actual_priority_used
@@ -340,7 +340,7 @@ pre-commit install
 - `src/domain/result.py`
 - `tests/unit/domain/test_result.py`
 
-**1.2.10. AgentResult**
+**1.2.1. AgentResult**
 - Implement generic `AgentResult[T]` wrapper
 - Add factory methods: `AgentResult.success()`, `AgentResult.error()`
 - Track execution_time_ms, timestamp (ISO 8601), metadata
