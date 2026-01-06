@@ -646,14 +646,14 @@ pre-commit install --overwrite
 
 **Why Third**: Agents depend on domain models and game engine. Start with rule-based logic, add LLM integration later.
 
-#### 3.0. Scout Agent (Board Analysis)
+#### 3.0. Scout Agent (Board Analysis) ✅
 
 **Spec Reference**: Section 3 - Agent Responsibilities - Scout Agent
 
-**Files to Create:**
-- `src/agents/scout.py`
-- `src/agents/base.py` (base agent interface)
-- `tests/unit/agents/test_scout.py`
+**Files Created:**
+- ✅ `src/agents/scout.py`
+- ✅ `src/agents/base.py` (base agent interface)
+- ✅ `tests/unit/agents/test_scout.py`
 
 **Implementation Order:**
 

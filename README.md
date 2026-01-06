@@ -68,16 +68,20 @@ The system is designed to follow a layered architecture:
 - ✅ **Phase 0**: Project Setup and Foundation
 - ✅ **Phase 1**: Domain Models (Foundation Layer)
 - ✅ **Phase 2**: Game Engine (Business Logic Layer)
+- ✅ **Phase 3.0**: Scout Agent (Board Analysis)
 
 ### Current Metrics
-- **282 tests passing**
+- **276 tests passing**
+- **24 Scout Agent tests** covering threat detection, opportunity detection, strategic positions, game phase, and board evaluation
 - **94% test coverage** (local) / **87% coverage** (Codecov)
   - Codecov excludes unimplemented placeholder files for agents, API, and UI layers
-  - 100% coverage on all implemented code (domain models, game engine)
+  - 100% coverage on all implemented code (domain models, game engine, Scout agent)
 - **100% type checking** (mypy strict mode)
 
 ### Next Steps
-- Phase 3: Agent System (Scout, Strategist, Executor)
+- Phase 3.1: Strategist Agent (Move Selection)
+- Phase 3.2: Executor Agent (Move Execution)
+- Phase 3.3: Agent Pipeline Orchestration
 
 See the [Implementation Plan](docs/implementation-plan.md) for full details on all phases and estimated timeline.
 
