@@ -713,12 +713,23 @@ pre-commit install --overwrite
   7. EDGE_PLAY (30) - Take edge
   8. RANDOM_VALID (10) - Any valid move
 
+**Subsection Tests** (3 tests for incremental development):
+- Immediate win gets highest priority
+- Block threat gets second priority
+- Win takes priority over blocking threat
+
 **3.1.2. Strategy Assembly**
 - Convert `BoardAnalysis` into `Strategy`
 - Select primary move (highest priority)
 - Generate 2+ alternative moves (sorted by priority descending)
 - Create game plan (string explanation)
 - Assess risk level (low/medium/high)
+
+**Subsection Tests** (4 tests for incremental development):
+- Strategy includes primary move recommendation
+- Strategy includes alternatives sorted by priority
+- Strategy includes game plan explanation
+- Strategy includes risk assessment
 
 **3.1.3. Confidence Scoring**
 - Assign confidence values per priority level (spec Section 3.5)
@@ -727,7 +738,15 @@ pre-commit install --overwrite
 - CENTER_CONTROL: confidence = 0.7
 - etc.
 
-**Test Coverage**: AC-3.2.1 through AC-3.2.8 (8 acceptance criteria)
+**Subsection Tests** (3 tests for incremental development):
+- Immediate win gets confidence = 1.0
+- Block threat gets confidence = 0.95
+- Center control gets confidence = 0.7
+
+**Test Coverage**:
+- **Subsection Tests**: 10 tests (3 + 4 + 3) for incremental development and debugging
+- **Acceptance Criteria**: AC-3.2.1 through AC-3.2.8 (8 official tests for final verification)
+- **Total**: 18 tests for Phase 3.1
 
 #### 3.2. Executor Agent (Move Execution)
 
@@ -745,18 +764,36 @@ pre-commit install --overwrite
 - Verify game is not over
 - Collect validation errors if any
 
+**Subsection Tests** (3 tests for incremental development):
+- Validates position is within bounds (0-2)
+- Validates cell is empty
+- Validates game is not over
+
 **3.2.2. Move Execution**
 - Call game engine's `make_move()`
 - Track execution time
 - Return `MoveExecution` with success status
 - Record actual priority used
 
+**Subsection Tests** (3 tests for incremental development):
+- Successfully executes valid move via game engine
+- Tracks execution time in milliseconds
+- Records actual priority used in MoveExecution
+
 **3.2.3. Fallback Handling**
 - If primary move fails, try alternatives
 - If all alternatives fail, select random valid move
 - Always return a valid move or clear error
 
-**Test Coverage**: AC-3.3.1 through AC-3.3.7 (7 acceptance criteria)
+**Subsection Tests** (3 tests for incremental development):
+- Falls back to first alternative when primary move fails
+- Falls back to random valid move when all alternatives fail
+- Returns clear error when no valid moves available
+
+**Test Coverage**:
+- **Subsection Tests**: 9 tests (3 + 3 + 3) for incremental development and debugging
+- **Acceptance Criteria**: AC-3.3.1 through AC-3.3.7 (7 official tests for final verification)
+- **Total**: 16 tests for Phase 3.2
 
 #### 3.3. Agent Pipeline Orchestration
 
@@ -774,10 +811,23 @@ pre-commit install --overwrite
 - Handle agent failures gracefully
 - Implement timeout handling (Section 3.3)
 
+**Subsection Tests** (5 tests for incremental development):
+- Orchestrates Scout → Strategist → Executor in correct order
+- Passes BoardAnalysis from Scout to Strategist
+- Passes Strategy from Strategist to Executor
+- Returns final MoveExecution result
+- Handles agent failures and returns error result
+
 **3.3.2. Timeout Configuration**
 - Per-agent timeouts: Scout (5s), Strategist (3s), Executor (2s)
 - Total pipeline timeout: 15s (Section 3.6)
 - Trigger fallback after timeout
+
+**Subsection Tests** (4 tests for incremental development):
+- Enforces Scout timeout at 5 seconds
+- Enforces Strategist timeout at 3 seconds
+- Enforces Executor timeout at 2 seconds
+- Enforces total pipeline timeout at 15 seconds
 
 **3.3.3. Fallback Strategy**
 - On Scout timeout: Use rule-based analysis only
@@ -785,12 +835,28 @@ pre-commit install --overwrite
 - On Executor timeout: Select random valid move
 - Always produce a move within 15s (spec requirement)
 
-**Test Coverage**: AC-3.6.1 through AC-3.6.41 (41 acceptance criteria)
+**Subsection Tests** (6 tests for incremental development):
+- Scout timeout triggers rule-based analysis fallback
+- Strategist timeout triggers priority-based selection fallback
+- Executor timeout triggers random valid move fallback
+- Pipeline completes within 15 seconds even with all timeouts
+- Fallback strategy produces valid move
+- Records which fallback was used in result metadata
+
+**Test Coverage**:
+- **Subsection Tests**: 15 tests (5 + 4 + 6) for incremental development and debugging
+- **Acceptance Criteria**: AC-3.6.1 through AC-3.6.41 (41 official tests for final verification)
+- **Total**: 56 tests for Phase 3.3
 
 **Phase 3 Deliverables:**
 - ✅ All three agents implemented with rule-based logic
 - ✅ Agent pipeline orchestrates Scout → Strategist → Executor
-- ✅ 66 tests passing (10 Scout + 8 Strategist + 7 Executor + 41 Pipeline)
+- ✅ **106 tests passing**:
+  - Scout: 10 tests (already complete)
+  - Strategist: 18 tests (10 subsection + 8 AC)
+  - Executor: 16 tests (9 subsection + 7 AC)
+  - Pipeline: 56 tests (15 subsection + 41 AC)
+  - Integration: 6 tests (end-to-end scenarios)
 - ✅ AI can play full game using rule-based decisions (no LLM yet)
 - ✅ Timeout and fallback mechanisms working
 
