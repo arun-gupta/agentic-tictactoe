@@ -260,13 +260,13 @@ pre-commit install
 
 **Test Coverage**: AC-2.3.1 through AC-2.3.10 (10 acceptance criteria) ✅
 
-#### 1.1. Agent Domain Models
+#### 1.1. Agent Domain Models ✅
 
 **Spec Reference**: Section 2 - Agent Domain Models
 
 **Files to Create:**
-- `src/domain/agent_models.py`
-- `tests/unit/domain/test_agent_models.py`
+- `src/domain/agent_models.py` ✅
+- `tests/unit/domain/test_agent_models.py` ✅
 
 **Implementation Order:**
 
