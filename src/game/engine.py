@@ -216,3 +216,45 @@ class GameEngine:
             Complete GameState domain model with all properties
         """
         return self.game_state
+
+    def make_move(self, row: int, col: int, player: PlayerSymbol) -> tuple[bool, str | None]:
+        """Execute a move on the board.
+
+        Validates the move, executes it if valid, updates game state including turn
+        and state transitions. Turn alternates: Player (even moves) → AI (odd moves).
+        State transitions: IN_PROGRESS → WON or DRAW. Transitions are immutable.
+
+        Args:
+            row: Row index (0-2)
+            col: Column index (0-2)
+            player: The player symbol making the move ('X' or 'O')
+
+        Returns:
+            Tuple of (success, error_code). If successful, returns (True, None).
+            If failed, returns (False, error_code).
+        """
+        # Validate the move first
+        is_valid, error_code = self.validate_move(row, col, player)
+        if not is_valid:
+            return (False, error_code)
+
+        # Execute the move
+        position = Position(row=row, col=col)
+        self.game_state.board.set_cell(position, player)
+
+        # Increment move count
+        self.game_state.move_count += 1
+
+        # Note: Game over status and winner are computed on-the-fly by GameState methods
+        # (_check_win(), _check_draw(), is_game_over(), get_winner())
+        # No need to set explicit flags - the state is determined by the board state
+
+        return (True, None)
+
+    def is_game_over(self) -> bool:
+        """Check if the game is over.
+
+        Returns:
+            True if the game is over (win or draw), False otherwise
+        """
+        return self.game_state.is_game_over()

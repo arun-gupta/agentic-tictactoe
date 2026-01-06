@@ -573,21 +573,21 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-4.1.3.1 through AC-4.1.3.10 (10 acceptance criteria) ✅
 
-#### 2.3. Turn Order and State Transitions
+#### 2.3. Turn Order and State Transitions ✅
 
 **Spec Reference**: Section 4.1 - Turn Order Rules, State Transitions
 
 **Files:**
-- `src/engine/game_engine.py` (extend)
-- `tests/unit/engine/test_turn_order.py`
+- `src/game/engine.py` ✅ (extended with make_move method)
+- `tests/unit/game/test_turn_order.py` ✅
 
 **Implementation:**
-- Turn alternation: Player (even moves) → AI (odd moves)
-- Move number increments after each move
-- State transitions: IN_PROGRESS → WON or DRAW
-- Immutable transitions (cannot restart without reset)
+- ✅ Turn alternation: Player (even moves) → AI (odd moves)
+- ✅ Move number increments after each move
+- ✅ State transitions: IN_PROGRESS → WON or DRAW
+- ✅ Immutable transitions (cannot restart without reset)
 
-**Test Coverage**: AC-4.1.4.1 through AC-4.1.4.9 (9 acceptance criteria)
+**Test Coverage**: AC-4.1.4.1 through AC-4.1.4.9 (9 acceptance criteria) ✅
 
 #### 2.4. State Validation
 
