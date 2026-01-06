@@ -236,21 +236,21 @@ pre-commit install
 
 **Implementation Order:**
 
-**1.0.1. Position**
-- Implement `Position` class with row/col validation (0-2 range)
-- Add immutability (frozen dataclass or Pydantic BaseModel)
-- Implement `__hash__` and `__eq__` for dictionary/set usage
-- Add validation for `E_POSITION_OUT_OF_BOUNDS`
+**1.0.1. Position** ✅
+- ✅ Implement `Position` class with row/col validation (0-2 range)
+- ✅ Add immutability (frozen dataclass or Pydantic BaseModel)
+- ✅ Implement `__hash__` and `__eq__` for dictionary/set usage
+- ✅ Add validation for `E_POSITION_OUT_OF_BOUNDS`
 
-**Test Coverage**: AC-2.1.1 through AC-2.1.5 (5 acceptance criteria)
+**Test Coverage**: AC-2.1.1 through AC-2.1.5 (5 acceptance criteria) ✅
 
-**1.0.2. Board**
-- Implement `Board` class as 3x3 grid
-- Add methods: `get_cell()`, `set_cell()`, `is_empty()`, `get_empty_positions()`
-- Validate board size is exactly 3x3
-- Raise `E_INVALID_BOARD_SIZE` for invalid sizes
+**1.0.2. Board** ✅
+- ✅ Implement `Board` class as 3x3 grid
+- ✅ Add methods: `get_cell()`, `set_cell()`, `is_empty()`, `get_empty_positions()`
+- ✅ Validate board size is exactly 3x3
+- ✅ Raise `E_INVALID_BOARD_SIZE` for invalid sizes
 
-**Test Coverage**: AC-2.2.1 through AC-2.2.10 (10 acceptance criteria)
+**Test Coverage**: AC-2.2.1 through AC-2.2.10 (10 acceptance criteria) ✅
 
 **1.0.3. GameState**
 - Implement `GameState` with board, players, move tracking
