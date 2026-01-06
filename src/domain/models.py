@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field, field_validator
 from src.domain.errors import E_INVALID_BOARD_SIZE, E_POSITION_OUT_OF_BOUNDS
 
 CellState = Literal["EMPTY", "X", "O"]
+PlayerSymbol = Literal["X", "O"]
+WinnerSymbol = Literal["X", "O", "DRAW"]
 
 
 class Position(BaseModel):
@@ -151,3 +153,133 @@ class Board(BaseModel):
                 if self.is_empty(pos):
                     empty_positions.append(pos)
         return empty_positions
+
+
+class GameState(BaseModel):
+    """Represents the complete state of a Tic-Tac-Toe game.
+
+    GameState tracks the board, players, move count, and game status.
+    It provides helper methods to determine the current player and opponent.
+
+    Attributes:
+        board: The current 3x3 game board
+        player_symbol: Human player's symbol ('X' or 'O')
+        ai_symbol: AI player's symbol ('X' or 'O')
+        move_count: Number of moves made (0-9)
+
+    Raises:
+        ValueError: If board is invalid (error code: E_INVALID_BOARD_SIZE)
+    """
+
+    board: Board = Field(default_factory=Board, description="Current 3x3 game board")
+    player_symbol: PlayerSymbol = Field(..., description="Human player's symbol ('X' or 'O')")
+    ai_symbol: PlayerSymbol = Field(..., description="AI player's symbol ('X' or 'O')")
+    move_count: int = Field(default=0, ge=0, le=9, description="Number of moves made (0-9)")
+
+    def get_current_player(self) -> PlayerSymbol:
+        """Get the current player's symbol based on move count.
+
+        Returns player symbol for even move counts, AI symbol for odd move counts.
+
+        Returns:
+            Current player's symbol ('X' or 'O')
+        """
+        if self.move_count % 2 == 0:
+            return self.player_symbol
+        else:
+            return self.ai_symbol
+
+    def get_opponent(self, symbol: PlayerSymbol | None = None) -> PlayerSymbol:
+        """Get the opponent symbol for the current player or given symbol.
+
+        If no symbol is provided, returns the opponent of the current player.
+
+        Args:
+            symbol: Optional player symbol ('X' or 'O'). If None, uses current player.
+
+        Returns:
+            The opponent symbol ('O' if symbol is 'X', 'X' if symbol is 'O')
+        """
+        if symbol is None:
+            symbol = self.get_current_player()
+        return "O" if symbol == "X" else "X"
+
+    def _check_win(self) -> PlayerSymbol | None:
+        """Check if there is a winner on the board.
+
+        Checks all 8 winning lines (3 rows, 3 columns, 2 diagonals) for three
+        matching symbols.
+
+        Returns:
+            Winner symbol ('X' or 'O') if there is a winner, None otherwise
+        """
+        # Check rows
+        for row in range(3):
+            if (
+                self.board.cells[row][0] != "EMPTY"
+                and self.board.cells[row][0] == self.board.cells[row][1]
+                and self.board.cells[row][1] == self.board.cells[row][2]
+            ):
+                return self.board.cells[row][0]  # type: ignore[return-value]
+
+        # Check columns
+        for col in range(3):
+            if (
+                self.board.cells[0][col] != "EMPTY"
+                and self.board.cells[0][col] == self.board.cells[1][col]
+                and self.board.cells[1][col] == self.board.cells[2][col]
+            ):
+                return self.board.cells[0][col]  # type: ignore[return-value]
+
+        # Check main diagonal (0,0), (1,1), (2,2)
+        if (
+            self.board.cells[0][0] != "EMPTY"
+            and self.board.cells[0][0] == self.board.cells[1][1]
+            and self.board.cells[1][1] == self.board.cells[2][2]
+        ):
+            return self.board.cells[0][0]  # type: ignore[return-value]
+
+        # Check anti-diagonal (0,2), (1,1), (2,0)
+        if (
+            self.board.cells[0][2] != "EMPTY"
+            and self.board.cells[0][2] == self.board.cells[1][1]
+            and self.board.cells[1][1] == self.board.cells[2][0]
+        ):
+            return self.board.cells[0][2]  # type: ignore[return-value]
+
+        return None
+
+    def _check_draw(self) -> bool:
+        """Check if the game is a draw.
+
+        A draw occurs when all 9 cells are occupied and there is no winner.
+
+        Returns:
+            True if the game is a draw, False otherwise
+        """
+        if self.move_count < 9:
+            return False
+        return self._check_win() is None
+
+    def is_game_over(self) -> bool:
+        """Check if the game is over.
+
+        The game is over if there is a winner or a draw.
+
+        Returns:
+            True if the game is over, False otherwise
+        """
+        return self._check_win() is not None or self._check_draw()
+
+    def get_winner(self) -> WinnerSymbol | None:
+        """Get the winner of the game.
+
+        Returns:
+            Winner symbol ('X', 'O', 'DRAW') if game is over, None if game is ongoing
+        """
+        winner = self._check_win()
+        if winner is not None:
+            return winner  # type: ignore[return-value]
+        if self._check_draw():
+            return "DRAW"
+        return None
