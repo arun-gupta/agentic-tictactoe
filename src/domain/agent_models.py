@@ -262,6 +262,79 @@ class StrategicMove(BaseModel):
         return v
 
 
+class MoveRecommendation(BaseModel):
+    """Represents a move recommendation from the Strategist agent.
+
+    MoveRecommendation contains a recommended position with priority,
+    confidence, reasoning, and optional outcome description. Used by the
+    Strategist agent to recommend moves to the Executor.
+
+    Attributes:
+        position: The Position recommended for the move
+        priority: MovePriority enum value (IMMEDIATE_WIN, BLOCK_THREAT, etc.)
+        confidence: Confidence score (0.0-1.0)
+        reasoning: Human-readable explanation for the move (required, non-empty)
+        outcome_description: Optional string describing what this move achieves
+
+    Raises:
+        ValueError: If confidence is out of range (error code: E_INVALID_CONFIDENCE)
+        ValueError: If reasoning is empty (error code: E_MISSING_REASONING)
+    """
+
+    position: Position = Field(..., description="Recommended position for the move")
+    priority: MovePriority = Field(..., description="MovePriority enum value")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score (0.0-1.0)")
+    reasoning: str = Field(
+        ..., min_length=1, max_length=1000, description="Human-readable explanation"
+    )
+    outcome_description: str | None = Field(
+        default=None, max_length=500, description="Optional description of what this move achieves"
+    )
+
+    @field_validator("confidence")
+    @classmethod
+    def validate_confidence(cls, v: float) -> float:
+        """Validate that confidence is in range 0.0-1.0.
+
+        Args:
+            v: The confidence value to validate
+
+        Returns:
+            The validated confidence value (rounded to 2 decimal places)
+
+        Raises:
+            ValueError: If confidence is not in range 0.0-1.0 (error code: E_INVALID_CONFIDENCE)
+        """
+        if not (0.0 <= v <= 1.0):
+            raise ValueError(
+                f"confidence must be between 0.0 and 1.0, got {v}. "
+                f"Error code: {E_INVALID_CONFIDENCE}"
+            )
+        # Round to 2 decimal places as per spec
+        return round(v, 2)
+
+    @field_validator("reasoning")
+    @classmethod
+    def validate_reasoning(cls, v: str) -> str:
+        """Validate that reasoning is non-empty.
+
+        Args:
+            v: The reasoning value to validate
+
+        Returns:
+            The validated reasoning value
+
+        Raises:
+            ValueError: If reasoning is empty (error code: E_MISSING_REASONING)
+        """
+        if not v or not v.strip():
+            raise ValueError(
+                f"reasoning must be a non-empty string, got empty value. "
+                f"Error code: {E_MISSING_REASONING}"
+            )
+        return v
+
+
 class BoardAnalysis(BaseModel):
     """Represents the Scout agent's analysis of the board state.
 
