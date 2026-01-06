@@ -4,12 +4,13 @@ Test Coverage:
 - AC-2.4.1 through AC-2.4.4 (Threat acceptance criteria)
 - AC-2.5.1 through AC-2.5.4 (Opportunity acceptance criteria)
 - AC-2.6.1 through AC-2.6.5 (StrategicMove acceptance criteria)
+- AC-2.7.1 through AC-2.7.9 (BoardAnalysis acceptance criteria)
 """
 
 import pytest
 from pydantic import ValidationError
 
-from src.domain.agent_models import Opportunity, StrategicMove, Threat
+from src.domain.agent_models import BoardAnalysis, Opportunity, StrategicMove, Threat
 from src.domain.errors import (
     E_INVALID_LINE_INDEX,
     E_POSITION_OUT_OF_BOUNDS,
@@ -382,3 +383,212 @@ class TestStrategicMoveValidation:
         )
         assert strategic_move.move_type == "block_fork"
         assert strategic_move.priority == 8
+
+
+class TestBoardAnalysisCreation:
+    """Test BoardAnalysis creation and validation."""
+
+    def test_ac_2_7_1_threats_present(self):
+        """AC-2.7.1: Given board with opponent about to win, when BoardAnalysis is created, then threats list contains at least one Threat."""
+        threat = Threat(position=Position(row=0, col=2), line_type="row", line_index=0)
+        analysis = BoardAnalysis(
+            threats=[threat],
+            opportunities=[],
+            strategic_moves=[],
+            game_phase="midgame",
+            board_evaluation_score=-0.5,
+        )
+        assert len(analysis.threats) >= 1
+        assert analysis.threats[0] == threat
+
+    def test_ac_2_7_2_opportunities_present(self):
+        """AC-2.7.2: Given board with AI about to win, when BoardAnalysis is created, then opportunities list contains at least one Opportunity with winning position."""
+        opportunity = Opportunity(
+            position=Position(row=1, col=2), line_type="row", line_index=1, confidence=1.0
+        )
+        analysis = BoardAnalysis(
+            threats=[],
+            opportunities=[opportunity],
+            strategic_moves=[],
+            game_phase="midgame",
+            board_evaluation_score=0.8,
+        )
+        assert len(analysis.opportunities) >= 1
+        assert analysis.opportunities[0] == opportunity
+
+    def test_ac_2_7_3_opening_phase(self):
+        """AC-2.7.3: Given empty board (move 0-2), when BoardAnalysis is created, then game_phase='opening'."""
+        analysis = BoardAnalysis(
+            threats=[],
+            opportunities=[],
+            strategic_moves=[],
+            game_phase="opening",
+            board_evaluation_score=0.0,
+        )
+        assert analysis.game_phase == "opening"
+
+    def test_ac_2_7_4_midgame_phase(self):
+        """AC-2.7.4: Given board with 3-6 moves, when BoardAnalysis is created, then game_phase='midgame'."""
+        analysis = BoardAnalysis(
+            threats=[],
+            opportunities=[],
+            strategic_moves=[],
+            game_phase="midgame",
+            board_evaluation_score=0.2,
+        )
+        assert analysis.game_phase == "midgame"
+
+    def test_ac_2_7_5_endgame_phase(self):
+        """AC-2.7.5: Given board with 7-9 moves, when BoardAnalysis is created, then game_phase='endgame'."""
+        analysis = BoardAnalysis(
+            threats=[],
+            opportunities=[],
+            strategic_moves=[],
+            game_phase="endgame",
+            board_evaluation_score=0.1,
+        )
+        assert analysis.game_phase == "endgame"
+
+    def test_ac_2_7_6_invalid_eval_score_too_high(self):
+        """AC-2.7.6: Given board evaluation score 1.5, when BoardAnalysis is created, then validation error E_INVALID_EVAL_SCORE is raised (must be -1.0 to 1.0)."""
+        with pytest.raises(ValidationError):
+            BoardAnalysis(
+                threats=[],
+                opportunities=[],
+                strategic_moves=[],
+                game_phase="midgame",
+                board_evaluation_score=1.5,
+            )
+
+    def test_ac_2_7_7_favorable_ai_score(self):
+        """AC-2.7.7: Given favorable board for AI, when BoardAnalysis is created, then board_evaluation_score > 0.0."""
+        analysis = BoardAnalysis(
+            threats=[],
+            opportunities=[
+                Opportunity(
+                    position=Position(row=1, col=2), line_type="row", line_index=1, confidence=1.0
+                )
+            ],
+            strategic_moves=[],
+            game_phase="midgame",
+            board_evaluation_score=0.5,
+        )
+        assert analysis.board_evaluation_score > 0.0
+
+    def test_ac_2_7_8_favorable_opponent_score(self):
+        """AC-2.7.8: Given favorable board for opponent, when BoardAnalysis is created, then board_evaluation_score < 0.0."""
+        analysis = BoardAnalysis(
+            threats=[Threat(position=Position(row=0, col=2), line_type="row", line_index=0)],
+            opportunities=[],
+            strategic_moves=[],
+            game_phase="midgame",
+            board_evaluation_score=-0.5,
+        )
+        assert analysis.board_evaluation_score < 0.0
+
+    def test_ac_2_7_9_balanced_score(self):
+        """AC-2.7.9: Given balanced board, when BoardAnalysis is created, then board_evaluation_score ≈ 0.0 (within ±0.2)."""
+        analysis = BoardAnalysis(
+            threats=[],
+            opportunities=[],
+            strategic_moves=[],
+            game_phase="opening",
+            board_evaluation_score=0.1,
+        )
+        assert -0.2 <= analysis.board_evaluation_score <= 0.2
+
+
+class TestBoardAnalysisValidation:
+    """Test BoardAnalysis field validation."""
+
+    def test_valid_game_phases(self):
+        """Test that all valid game phases are accepted."""
+        for phase in ["opening", "midgame", "endgame"]:
+            analysis = BoardAnalysis(
+                threats=[],
+                opportunities=[],
+                strategic_moves=[],
+                game_phase=phase,
+                board_evaluation_score=0.0,
+            )
+            assert analysis.game_phase == phase
+
+    def test_invalid_game_phase(self):
+        """Test that invalid game_phase raises ValidationError."""
+        with pytest.raises(ValidationError):
+            BoardAnalysis(
+                threats=[],
+                opportunities=[],
+                strategic_moves=[],
+                game_phase="invalid",  # type: ignore[arg-type]
+                board_evaluation_score=0.0,
+            )
+
+    def test_valid_eval_scores(self):
+        """Test that valid evaluation scores (-1.0 to 1.0) are accepted."""
+        for score in [-1.0, -0.5, 0.0, 0.5, 1.0]:
+            analysis = BoardAnalysis(
+                threats=[],
+                opportunities=[],
+                strategic_moves=[],
+                game_phase="midgame",
+                board_evaluation_score=score,
+            )
+            assert analysis.board_evaluation_score == score
+
+    def test_eval_score_rounding(self):
+        """Test that evaluation scores are rounded to 2 decimal places."""
+        analysis = BoardAnalysis(
+            threats=[],
+            opportunities=[],
+            strategic_moves=[],
+            game_phase="midgame",
+            board_evaluation_score=0.123456,
+        )
+        assert analysis.board_evaluation_score == 0.12
+
+    def test_invalid_eval_score_too_low(self):
+        """Test that evaluation score < -1.0 raises validation error."""
+        with pytest.raises(ValidationError):
+            BoardAnalysis(
+                threats=[],
+                opportunities=[],
+                strategic_moves=[],
+                game_phase="midgame",
+                board_evaluation_score=-1.5,
+            )
+
+    def test_empty_lists_default(self):
+        """Test that empty lists are the default for threats, opportunities, and strategic_moves."""
+        analysis = BoardAnalysis(
+            game_phase="opening",
+            board_evaluation_score=0.0,
+        )
+        assert analysis.threats == []
+        assert analysis.opportunities == []
+        assert analysis.strategic_moves == []
+
+    def test_complete_board_analysis(self):
+        """Test BoardAnalysis with all fields populated."""
+        threat = Threat(position=Position(row=0, col=2), line_type="row", line_index=0)
+        opportunity = Opportunity(
+            position=Position(row=1, col=2), line_type="row", line_index=1, confidence=1.0
+        )
+        strategic_move = StrategicMove(
+            position=Position(row=1, col=1),
+            move_type="center",
+            priority=8,
+            reasoning="Center control",
+        )
+        analysis = BoardAnalysis(
+            threats=[threat],
+            opportunities=[opportunity],
+            strategic_moves=[strategic_move],
+            game_phase="midgame",
+            board_evaluation_score=0.3,
+        )
+        assert len(analysis.threats) == 1
+        assert len(analysis.opportunities) == 1
+        assert len(analysis.strategic_moves) == 1
+        assert analysis.game_phase == "midgame"
+        assert analysis.board_evaluation_score == 0.3

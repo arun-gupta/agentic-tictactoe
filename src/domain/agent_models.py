@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field, field_validator
 
 from src.domain.errors import (
     E_INVALID_CONFIDENCE,
+    E_INVALID_EVAL_SCORE,
+    E_INVALID_GAME_PHASE,
     E_INVALID_LINE_TYPE,
     E_INVALID_MOVE_TYPE,
     E_INVALID_PRIORITY,
@@ -19,6 +21,7 @@ from src.domain.models import Position
 
 LineType = Literal["row", "column", "diagonal"]
 MoveType = Literal["center", "corner", "edge", "fork", "block_fork"]
+GamePhase = Literal["opening", "midgame", "endgame"]
 
 
 class Threat(BaseModel):
@@ -229,3 +232,83 @@ class StrategicMove(BaseModel):
                 f"Error code: {E_MISSING_REASONING}"
             )
         return v
+
+
+class BoardAnalysis(BaseModel):
+    """Represents the Scout agent's analysis of the board state.
+
+    BoardAnalysis contains lists of threats, opportunities, and strategic moves,
+    along with game phase and board evaluation score. This is the output of the
+    Scout agent's analysis.
+
+    Attributes:
+        threats: List of Threat objects (may be empty)
+        opportunities: List of Opportunity objects (may be empty)
+        strategic_moves: List of StrategicMove objects (may be empty)
+        game_phase: Current game phase ('opening', 'midgame', or 'endgame')
+        board_evaluation_score: Board evaluation score (-1.0 to 1.0)
+
+    Raises:
+        ValueError: If game_phase is invalid (error code: E_INVALID_GAME_PHASE)
+        ValueError: If board_evaluation_score is out of range (error code: E_INVALID_EVAL_SCORE)
+    """
+
+    threats: list[Threat] = Field(
+        default_factory=list, description="List of threats (may be empty)"
+    )
+    opportunities: list[Opportunity] = Field(
+        default_factory=list, description="List of opportunities (may be empty)"
+    )
+    strategic_moves: list[StrategicMove] = Field(
+        default_factory=list, description="List of strategic moves (may be empty)"
+    )
+    game_phase: GamePhase = Field(
+        ..., description="Current game phase ('opening', 'midgame', or 'endgame')"
+    )
+    board_evaluation_score: float = Field(
+        ..., ge=-1.0, le=1.0, description="Board evaluation score (-1.0 to 1.0)"
+    )
+
+    @field_validator("game_phase")
+    @classmethod
+    def validate_game_phase(cls, v: str) -> str:
+        """Validate that game_phase is one of: 'opening', 'midgame', 'endgame'.
+
+        Args:
+            v: The game_phase value to validate
+
+        Returns:
+            The validated game_phase value
+
+        Raises:
+            ValueError: If game_phase is not one of the valid values (error code: E_INVALID_GAME_PHASE)
+        """
+        valid_phases = ["opening", "midgame", "endgame"]
+        if v not in valid_phases:
+            raise ValueError(
+                f"game_phase must be one of {valid_phases}, got '{v}'. "
+                f"Error code: {E_INVALID_GAME_PHASE}"
+            )
+        return v  # type: ignore[return-value]
+
+    @field_validator("board_evaluation_score")
+    @classmethod
+    def validate_board_evaluation_score(cls, v: float) -> float:
+        """Validate that board_evaluation_score is in range -1.0 to 1.0.
+
+        Args:
+            v: The board_evaluation_score value to validate
+
+        Returns:
+            The validated board_evaluation_score value (rounded to 2 decimal places)
+
+        Raises:
+            ValueError: If board_evaluation_score is not in range -1.0 to 1.0 (error code: E_INVALID_EVAL_SCORE)
+        """
+        if not (-1.0 <= v <= 1.0):
+            raise ValueError(
+                f"board_evaluation_score must be between -1.0 and 1.0, got {v}. "
+                f"Error code: {E_INVALID_EVAL_SCORE}"
+            )
+        # Round to 2 decimal places as per spec
+        return round(v, 2)

@@ -294,13 +294,13 @@ pre-commit install
 
 **Test Coverage**: AC-2.6.1 through AC-2.6.5 (5 acceptance criteria) ✅
 
-**1.1.4. BoardAnalysis**
-- Implement `BoardAnalysis` with threats, opportunities, strategic_moves
-- Add game_phase ('opening', 'midgame', 'endgame')
-- Add board_evaluation_score (-1.0 to 1.0)
-- Error codes: `E_INVALID_GAME_PHASE`, `E_INVALID_EVAL_SCORE`
+**1.1.4. BoardAnalysis** ✅
+- ✅ Implement `BoardAnalysis` with threats, opportunities, strategic_moves
+- ✅ Add game_phase ('opening', 'midgame', 'endgame')
+- ✅ Add board_evaluation_score (-1.0 to 1.0)
+- ✅ Error codes: `E_INVALID_GAME_PHASE`, `E_INVALID_EVAL_SCORE`
 
-**Test Coverage**: AC-2.7.1 through AC-2.7.9 (9 acceptance criteria)
+**Test Coverage**: AC-2.7.1 through AC-2.7.9 (9 acceptance criteria) ✅
 
 **1.1.5. MovePriority (Enum)**
 - Implement `MovePriority` enum with 8 levels and numeric values
