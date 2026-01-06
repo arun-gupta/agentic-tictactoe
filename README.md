@@ -73,14 +73,14 @@ The system is designed to follow a layered architecture:
 
 ## Getting Started
 
-Since the project is in the planning phase, here's how to get started:
+Since the project is currently in the specification and planning phase:
 
-1. **Review the Specification**: Read the [Full Specification](docs/spec/spec.md) to understand system requirements
-2. **Study the Implementation Plan**: Check the [Implementation Plan](docs/implementation-plan.md) to understand the 10-phase approach
-3. **Review Test Coverage**: See [Test Coverage Analysis](docs/analysis/test-coverage-analysis.md) for testing strategy
-4. **Check UI Design**: Explore the [UI Specification](docs/spec/ui-spec.md) and [Interactive Preview](docs/spec/ui/preview/game-board-preview.html)
+1. **Start with the Documentation**: Review the [Documentation](#documentation) section below for all available resources
+2. **Understand the System**: Read the [Full Specification](docs/spec/spec.md) to understand requirements and architecture
+3. **Follow the Plan**: Study the [Implementation Plan](docs/implementation-plan.md) to understand the phased approach
+4. **Review Current Status**: Check the [Project Status](#project-status) section for what's been completed
 
-When implementation begins, setup instructions will be added here.
+When implementation begins, setup and installation instructions will be added here.
 
 ## Contributing
 
