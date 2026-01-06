@@ -316,13 +316,13 @@ pre-commit install
 
 **Test Coverage**: AC-2.9.1 through AC-2.9.6 (6 acceptance criteria) ✅
 
-**1.1.7. Strategy**
-- Implement `Strategy` with primary_move, alternatives, game_plan, risk_assessment
-- Validate alternatives are sorted by priority (descending)
-- Validate risk_assessment is 'low', 'medium', or 'high'
-- Error codes: `E_MISSING_PRIMARY_MOVE`, `E_INVALID_RISK_LEVEL`
+**1.1.7. Strategy** ✅
+- ✅ Implement `Strategy` with primary_move, alternatives, game_plan, risk_assessment
+- ✅ Validate alternatives are sorted by priority (descending)
+- ✅ Validate risk_assessment is 'low', 'medium', or 'high'
+- ✅ Error codes: `E_MISSING_PRIMARY_MOVE`, `E_INVALID_RISK_LEVEL`
 
-**Test Coverage**: AC-2.10.1 through AC-2.10.7 (7 acceptance criteria)
+**Test Coverage**: AC-2.10.1 through AC-2.10.7 (7 acceptance criteria) ✅
 
 **1.1.8. MoveExecution**
 - Implement `MoveExecution` with position, success, validation_errors, execution_time_ms

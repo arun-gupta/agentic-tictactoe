@@ -16,6 +16,8 @@ from src.domain.errors import (
     E_INVALID_LINE_TYPE,
     E_INVALID_MOVE_TYPE,
     E_INVALID_PRIORITY,
+    E_INVALID_RISK_LEVEL,
+    E_MISSING_PRIMARY_MOVE,
     E_MISSING_REASONING,
 )
 from src.domain.models import Position
@@ -23,6 +25,7 @@ from src.domain.models import Position
 LineType = Literal["row", "column", "diagonal"]
 MoveType = Literal["center", "corner", "edge", "fork", "block_fork"]
 GamePhase = Literal["opening", "midgame", "endgame"]
+RiskLevel = Literal["low", "medium", "high"]
 
 
 class MovePriority(IntEnum):
@@ -333,6 +336,95 @@ class MoveRecommendation(BaseModel):
                 f"Error code: {E_MISSING_REASONING}"
             )
         return v
+
+
+class Strategy(BaseModel):
+    """Represents the Strategist agent's move strategy.
+
+    Strategy contains a primary move recommendation, alternative moves,
+    overall game plan, and risk assessment. This is the output of the
+    Strategist agent's planning.
+
+    Attributes:
+        primary_move: Required MoveRecommendation (highest priority move)
+        alternatives: List of MoveRecommendation objects (sorted by priority descending)
+        game_plan: Human-readable overall strategic plan (required, non-empty)
+        risk_assessment: Risk level ('low', 'medium', or 'high')
+
+    Raises:
+        ValueError: If primary_move is missing (error code: E_MISSING_PRIMARY_MOVE)
+        ValueError: If risk_assessment is invalid (error code: E_INVALID_RISK_LEVEL)
+    """
+
+    primary_move: MoveRecommendation = Field(
+        ..., description="Highest priority move recommendation"
+    )
+    alternatives: list[MoveRecommendation] = Field(
+        default_factory=list, description="Alternative moves sorted by priority descending"
+    )
+    game_plan: str = Field(..., min_length=1, max_length=2000, description="Overall strategic plan")
+    risk_assessment: RiskLevel = Field(..., description="Risk level ('low', 'medium', or 'high')")
+
+    @field_validator("primary_move")
+    @classmethod
+    def validate_primary_move(cls, v: MoveRecommendation | None) -> MoveRecommendation:
+        """Validate that primary_move is present.
+
+        Args:
+            v: The primary_move value to validate
+
+        Returns:
+            The validated primary_move value
+
+        Raises:
+            ValueError: If primary_move is None or missing (error code: E_MISSING_PRIMARY_MOVE)
+        """
+        if v is None:
+            raise ValueError(
+                f"primary_move is required and cannot be None. "
+                f"Error code: {E_MISSING_PRIMARY_MOVE}"
+            )
+        return v
+
+    @field_validator("risk_assessment")
+    @classmethod
+    def validate_risk_assessment(cls, v: str) -> str:
+        """Validate that risk_assessment is one of: 'low', 'medium', 'high'.
+
+        Args:
+            v: The risk_assessment value to validate
+
+        Returns:
+            The validated risk_assessment value
+
+        Raises:
+            ValueError: If risk_assessment is not one of the valid values (error code: E_INVALID_RISK_LEVEL)
+        """
+        valid_levels = ["low", "medium", "high"]
+        if v not in valid_levels:
+            raise ValueError(
+                f"risk_assessment must be one of {valid_levels}, got '{v}'. "
+                f"Error code: {E_INVALID_RISK_LEVEL}"
+            )
+        return v  # type: ignore[return-value]
+
+    @field_validator("alternatives")
+    @classmethod
+    def validate_alternatives_sorted(cls, v: list[MoveRecommendation]) -> list[MoveRecommendation]:
+        """Validate that alternatives are sorted by priority descending.
+
+        Args:
+            v: The alternatives list to validate
+
+        Returns:
+            The validated alternatives list (sorted if needed)
+
+        Note:
+            This validator ensures alternatives are sorted by priority (highest first).
+            If not sorted, it will sort them automatically.
+        """
+        # Sort by priority descending (higher priority first)
+        return sorted(v, key=lambda m: m.priority.value, reverse=True)
 
 
 class BoardAnalysis(BaseModel):

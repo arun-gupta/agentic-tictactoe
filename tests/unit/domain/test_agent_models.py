@@ -7,6 +7,7 @@ Test Coverage:
 - AC-2.7.1 through AC-2.7.9 (BoardAnalysis acceptance criteria)
 - AC-2.8.1 through AC-2.8.9 (MovePriority acceptance criteria)
 - AC-2.9.1 through AC-2.9.6 (MoveRecommendation acceptance criteria)
+- AC-2.10.1 through AC-2.10.7 (Strategy acceptance criteria)
 """
 
 import pytest
@@ -18,6 +19,7 @@ from src.domain.agent_models import (
     MoveRecommendation,
     Opportunity,
     StrategicMove,
+    Strategy,
     Threat,
 )
 from src.domain.errors import (
@@ -861,3 +863,236 @@ class TestMoveRecommendationValidation:
         assert recommendation.confidence == 1.0
         assert recommendation.reasoning == "This move will win the game"
         assert recommendation.outcome_description == "Game ends with AI victory"
+
+
+class TestStrategyCreation:
+    """Test Strategy creation and validation."""
+
+    def test_ac_2_10_1_primary_move_required(self):
+        """AC-2.10.1: Given Strategy with primary_move, when created, then primary_move is set."""
+        position = Position(row=1, col=1)
+        primary_move = MoveRecommendation(
+            position=position,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.8,
+            reasoning="Center control",
+        )
+        strategy = Strategy(
+            primary_move=primary_move,
+            alternatives=[],
+            game_plan="Control center and expand",
+            risk_assessment="low",
+        )
+        assert strategy.primary_move == primary_move
+
+    def test_ac_2_10_2_alternatives_sorted(self):
+        """AC-2.10.2: Given Strategy with multiple alternatives, when created, then alternatives are sorted by priority descending."""
+        position1 = Position(row=0, col=0)
+        position2 = Position(row=1, col=1)
+        position3 = Position(row=2, col=2)
+        alt1 = MoveRecommendation(
+            position=position1,
+            priority=MovePriority.CORNER_CONTROL,
+            confidence=0.7,
+            reasoning="Corner move",
+        )
+        alt2 = MoveRecommendation(
+            position=position2,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.8,
+            reasoning="Center move",
+        )
+        alt3 = MoveRecommendation(
+            position=position3,
+            priority=MovePriority.EDGE_PLAY,
+            confidence=0.6,
+            reasoning="Edge move",
+        )
+        # Create with unsorted alternatives - should be sorted automatically
+        strategy = Strategy(
+            primary_move=alt2,  # Center has highest priority
+            alternatives=[
+                alt3,
+                alt1,
+            ],  # Edge (30) then Corner (40) - should become Corner then Edge
+            game_plan="Test plan",
+            risk_assessment="medium",
+        )
+        # After validation, alternatives should be sorted: Corner (40) > Edge (30)
+        assert len(strategy.alternatives) == 2
+        assert strategy.alternatives[0].priority == MovePriority.CORNER_CONTROL
+        assert strategy.alternatives[1].priority == MovePriority.EDGE_PLAY
+
+    def test_ac_2_10_3_empty_alternatives(self):
+        """AC-2.10.3: Given Strategy with empty alternatives list, when created, then alternatives is empty list."""
+        position = Position(row=1, col=1)
+        primary_move = MoveRecommendation(
+            position=position,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.8,
+            reasoning="Center control",
+        )
+        strategy = Strategy(
+            primary_move=primary_move,
+            alternatives=[],
+            game_plan="Simple plan",
+            risk_assessment="low",
+        )
+        assert strategy.alternatives == []
+
+    def test_ac_2_10_4_valid_risk_levels(self):
+        """AC-2.10.4: Given Strategy with risk_assessment='low', 'medium', or 'high', when created, then risk_assessment is set."""
+        position = Position(row=1, col=1)
+        primary_move = MoveRecommendation(
+            position=position,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.8,
+            reasoning="Center control",
+        )
+        for risk_level in ["low", "medium", "high"]:
+            strategy = Strategy(
+                primary_move=primary_move,
+                alternatives=[],
+                game_plan="Test plan",
+                risk_assessment=risk_level,
+            )
+            assert strategy.risk_assessment == risk_level
+
+    def test_ac_2_10_5_invalid_risk_level(self):
+        """AC-2.10.5: Given risk_assessment='invalid', when Strategy is created, then validation error E_INVALID_RISK_LEVEL is raised."""
+        position = Position(row=1, col=1)
+        primary_move = MoveRecommendation(
+            position=position,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.8,
+            reasoning="Center control",
+        )
+        with pytest.raises(ValidationError):
+            Strategy(
+                primary_move=primary_move,
+                alternatives=[],
+                game_plan="Test plan",
+                risk_assessment="invalid",  # type: ignore[arg-type]
+            )
+
+    def test_ac_2_10_6_missing_primary_move(self):
+        """AC-2.10.6: Given primary_move=None, when Strategy is created, then validation error E_MISSING_PRIMARY_MOVE is raised."""
+        with pytest.raises(ValidationError):
+            Strategy(
+                primary_move=None,  # type: ignore[arg-type]
+                alternatives=[],
+                game_plan="Test plan",
+                risk_assessment="low",
+            )
+
+    def test_ac_2_10_7_game_plan_required(self):
+        """AC-2.10.7: Given game_plan='', when Strategy is created, then validation error is raised (game_plan must be non-empty)."""
+        position = Position(row=1, col=1)
+        primary_move = MoveRecommendation(
+            position=position,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.8,
+            reasoning="Center control",
+        )
+        with pytest.raises(ValidationError):
+            Strategy(
+                primary_move=primary_move,
+                alternatives=[],
+                game_plan="",
+                risk_assessment="low",
+            )
+
+
+class TestStrategyValidation:
+    """Test Strategy field validation."""
+
+    def test_alternatives_auto_sort(self):
+        """Test that alternatives are automatically sorted by priority descending."""
+        position1 = Position(row=0, col=0)
+        position2 = Position(row=1, col=1)
+        position3 = Position(row=2, col=2)
+        primary = MoveRecommendation(
+            position=position1,
+            priority=MovePriority.IMMEDIATE_WIN,
+            confidence=1.0,
+            reasoning="Win move",
+        )
+        alt1 = MoveRecommendation(
+            position=position2,
+            priority=MovePriority.EDGE_PLAY,  # Priority 30
+            confidence=0.6,
+            reasoning="Edge",
+        )
+        alt2 = MoveRecommendation(
+            position=position3,
+            priority=MovePriority.CORNER_CONTROL,  # Priority 40
+            confidence=0.7,
+            reasoning="Corner",
+        )
+        # Create with alternatives in wrong order
+        strategy = Strategy(
+            primary_move=primary,
+            alternatives=[alt1, alt2],  # Edge (30) then Corner (40)
+            game_plan="Test plan",
+            risk_assessment="low",
+        )
+        # Should be sorted: Corner (40) > Edge (30)
+        assert strategy.alternatives[0].priority == MovePriority.CORNER_CONTROL
+        assert strategy.alternatives[1].priority == MovePriority.EDGE_PLAY
+
+    def test_game_plan_max_length(self):
+        """Test that game_plan respects max length of 2000 characters."""
+        position = Position(row=1, col=1)
+        primary_move = MoveRecommendation(
+            position=position,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.8,
+            reasoning="Center control",
+        )
+        # Valid: exactly 2000 characters
+        valid_plan = "a" * 2000
+        strategy = Strategy(
+            primary_move=primary_move,
+            alternatives=[],
+            game_plan=valid_plan,
+            risk_assessment="low",
+        )
+        assert len(strategy.game_plan) == 2000
+
+    def test_complete_strategy(self):
+        """Test Strategy with all fields populated."""
+        position1 = Position(row=1, col=1)
+        position2 = Position(row=0, col=0)
+        position3 = Position(row=2, col=2)
+        primary = MoveRecommendation(
+            position=position1,
+            priority=MovePriority.IMMEDIATE_WIN,
+            confidence=1.0,
+            reasoning="This move wins the game",
+            outcome_description="Game victory",
+        )
+        alt1 = MoveRecommendation(
+            position=position2,
+            priority=MovePriority.BLOCK_THREAT,
+            confidence=0.9,
+            reasoning="Block opponent",
+        )
+        alt2 = MoveRecommendation(
+            position=position3,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.8,
+            reasoning="Center control",
+        )
+        strategy = Strategy(
+            primary_move=primary,
+            alternatives=[alt1, alt2],
+            game_plan="Win immediately if possible, otherwise block threats and control center",
+            risk_assessment="low",
+        )
+        assert strategy.primary_move == primary
+        assert len(strategy.alternatives) == 2
+        assert (
+            strategy.game_plan
+            == "Win immediately if possible, otherwise block threats and control center"
+        )
+        assert strategy.risk_assessment == "low"
