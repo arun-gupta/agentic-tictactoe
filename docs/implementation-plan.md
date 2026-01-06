@@ -662,10 +662,10 @@ pre-commit install --overwrite
 - ✅ Return `Threat` objects with blocking positions
 - ✅ No LLM needed for this (pure algorithmic)
 
-**3.0.2. Rule-Based Opportunity Detection** ✅
-- ✅ Scan all 8 lines for AI two-in-a-row + one empty
-- ✅ Return `Opportunity` objects with winning positions
-- ✅ Confidence = 1.0 for immediate wins
+**3.0.2. Rule-Based Opportunity Detection**
+- Scan all 8 lines for AI two-in-a-row + one empty
+- Return `Opportunity` objects with winning positions
+- Confidence = 1.0 for immediate wins
 
 **3.0.3. Strategic Position Analysis**
 - Identify center position (1,1)
@@ -673,20 +673,20 @@ pre-commit install --overwrite
 - Identify edge positions (0,1), (1,0), (1,2), (2,1)
 - Return `StrategicMove` list
 
-**3.0.4. Game Phase Detection** ✅
-- ✅ Opening: move_number 0-2
-- ✅ Midgame: move_number 3-6
-- ✅ Endgame: move_number 7-9
+**3.0.4. Game Phase Detection**
+- Opening: move_number 0-2
+- Midgame: move_number 3-6
+- Endgame: move_number 7-9
 
-**3.0.5. Board Evaluation Score** ✅
-- ✅ Calculate evaluation based on position control
-- ✅ Range: -1.0 (opponent winning) to +1.0 (AI winning)
-- ✅ Simple heuristic: count potential winning lines
+**3.0.5. Board Evaluation Score**
+- Calculate evaluation based on position control
+- Range: -1.0 (opponent winning) to +1.0 (AI winning)
+- Simple heuristic: count potential winning lines
 
-**3.0.6. BoardAnalysis Assembly** ✅
-- ✅ Combine all analyses into `BoardAnalysis` object
-- ✅ Return wrapped in `AgentResult` with success status
-- ✅ Track execution time
+**3.0.6. BoardAnalysis Assembly**
+- Combine all analyses into `BoardAnalysis` object
+- Return wrapped in `AgentResult.success()`
+- Track execution time
 
 **Test Coverage**: AC-3.1.1 through AC-3.1.10 (10 acceptance criteria)
 
