@@ -14,7 +14,7 @@ from collections.abc import Sequence
 from typing import Literal
 
 from src.agents.base import BaseAgent
-from src.domain.agent_models import BoardAnalysis, Opportunity, Threat
+from src.domain.agent_models import BoardAnalysis, Opportunity, StrategicMove, Threat
 from src.domain.models import GameState, PlayerSymbol, Position
 from src.domain.result import AgentResult
 
@@ -57,6 +57,9 @@ class ScoutAgent(BaseAgent):
             # Detect opportunities (AI two-in-a-row)
             opportunities = self._detect_opportunities(game_state)
 
+            # Analyze strategic positions (center, corners, edges)
+            strategic_moves = self._analyze_strategic_positions(game_state)
+
             # Determine game phase
             game_phase = self._detect_game_phase(game_state)
 
@@ -67,7 +70,7 @@ class ScoutAgent(BaseAgent):
             analysis = BoardAnalysis(
                 threats=threats,
                 opportunities=opportunities,
-                strategic_moves=[],  # Will implement in 3.0.3
+                strategic_moves=strategic_moves,
                 game_phase=game_phase,
                 board_evaluation_score=eval_score,
             )
@@ -261,6 +264,62 @@ class ScoutAgent(BaseAgent):
         ai_count = list(line).count(self.ai_symbol)
         empty_count = list(line).count("EMPTY")
         return ai_count == 2 and empty_count == 1
+
+    def _analyze_strategic_positions(self, game_state: GameState) -> list[StrategicMove]:
+        """Analyze strategic positions (center, corners, edges).
+
+        Identifies available strategic positions and assigns priorities:
+        - Center (1,1): Highest priority
+        - Corners (0,0), (0,2), (2,0), (2,2): Medium priority
+        - Edges (0,1), (1,0), (1,2), (2,1): Lower priority
+
+        Args:
+            game_state: Current game state
+
+        Returns:
+            List of StrategicMove objects for empty strategic positions
+        """
+        strategic_moves: list[StrategicMove] = []
+        board = game_state.board
+
+        # Center position (1,1) - highest priority
+        if board.cells[1][1] == "EMPTY":
+            strategic_moves.append(
+                StrategicMove(
+                    position=Position(row=1, col=1),
+                    move_type="center",
+                    priority=10,
+                    reasoning="Center position controls the most lines (4 total: 1 row, 1 column, 2 diagonals)",
+                )
+            )
+
+        # Corner positions - medium priority
+        corners = [(0, 0), (0, 2), (2, 0), (2, 2)]
+        for row, col in corners:
+            if board.cells[row][col] == "EMPTY":
+                strategic_moves.append(
+                    StrategicMove(
+                        position=Position(row=row, col=col),
+                        move_type="corner",
+                        priority=7,
+                        reasoning=f"Corner position ({row},{col}) controls 3 lines (1 row, 1 column, 1 diagonal)",
+                    )
+                )
+
+        # Edge positions - lower priority
+        edges = [(0, 1), (1, 0), (1, 2), (2, 1)]
+        for row, col in edges:
+            if board.cells[row][col] == "EMPTY":
+                strategic_moves.append(
+                    StrategicMove(
+                        position=Position(row=row, col=col),
+                        move_type="edge",
+                        priority=4,
+                        reasoning=f"Edge position ({row},{col}) controls 2 lines (1 row, 1 column)",
+                    )
+                )
+
+        return strategic_moves
 
     def _detect_game_phase(self, game_state: GameState) -> GamePhase:
         """Determine current game phase based on move count.

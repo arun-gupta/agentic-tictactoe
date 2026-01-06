@@ -258,6 +258,124 @@ class TestOpportunityDetection:
         assert len(analysis.opportunities) == 0
 
 
+class TestStrategicPositionAnalysis:
+    """Test strategic position analysis (center, corners, edges)."""
+
+    def test_empty_board_returns_all_strategic_positions(self) -> None:
+        """Empty board returns all 9 strategic positions (1 center + 4 corners + 4 edges)."""
+        scout = ScoutAgent(ai_symbol="O")
+
+        board = Board()
+        game_state = GameState(board=board, player_symbol="X", ai_symbol="O", move_count=0)
+
+        result = scout.analyze(game_state)
+        assert result.success
+        assert result.data is not None
+        analysis = result.data
+
+        assert len(analysis.strategic_moves) == 9  # All positions empty
+
+    def test_center_position_identified(self) -> None:
+        """Center position (1,1) is identified with correct type and priority."""
+        scout = ScoutAgent(ai_symbol="O")
+
+        board = Board()
+        game_state = GameState(board=board, player_symbol="X", ai_symbol="O", move_count=0)
+
+        result = scout.analyze(game_state)
+        assert result.success
+        assert result.data is not None
+        analysis = result.data
+
+        # Find center position
+        center_moves = [m for m in analysis.strategic_moves if m.move_type == "center"]
+        assert len(center_moves) == 1
+        center = center_moves[0]
+        assert center.position == Position(row=1, col=1)
+        assert center.priority == 10
+        assert "center" in center.reasoning.lower()
+
+    def test_corner_positions_identified(self) -> None:
+        """All 4 corner positions identified with correct type and priority."""
+        scout = ScoutAgent(ai_symbol="O")
+
+        board = Board()
+        game_state = GameState(board=board, player_symbol="X", ai_symbol="O", move_count=0)
+
+        result = scout.analyze(game_state)
+        assert result.success
+        assert result.data is not None
+        analysis = result.data
+
+        # Find corner positions
+        corner_moves = [m for m in analysis.strategic_moves if m.move_type == "corner"]
+        assert len(corner_moves) == 4
+
+        corner_positions = {(0, 0), (0, 2), (2, 0), (2, 2)}
+        found_positions = {(m.position.row, m.position.col) for m in corner_moves}
+        assert found_positions == corner_positions
+
+        # All corners should have same priority
+        for corner in corner_moves:
+            assert corner.priority == 7
+            assert "corner" in corner.reasoning.lower()
+
+    def test_edge_positions_identified(self) -> None:
+        """All 4 edge positions identified with correct type and priority."""
+        scout = ScoutAgent(ai_symbol="O")
+
+        board = Board()
+        game_state = GameState(board=board, player_symbol="X", ai_symbol="O", move_count=0)
+
+        result = scout.analyze(game_state)
+        assert result.success
+        assert result.data is not None
+        analysis = result.data
+
+        # Find edge positions
+        edge_moves = [m for m in analysis.strategic_moves if m.move_type == "edge"]
+        assert len(edge_moves) == 4
+
+        edge_positions = {(0, 1), (1, 0), (1, 2), (2, 1)}
+        found_positions = {(m.position.row, m.position.col) for m in edge_moves}
+        assert found_positions == edge_positions
+
+        # All edges should have same priority
+        for edge in edge_moves:
+            assert edge.priority == 4
+            assert "edge" in edge.reasoning.lower()
+
+    def test_occupied_positions_not_included(self) -> None:
+        """Occupied positions are not included in strategic moves."""
+        scout = ScoutAgent(ai_symbol="O")
+
+        # Board with center and one corner occupied
+        board = Board(
+            cells=[
+                ["EMPTY", "EMPTY", "X"],  # Corner (0,2) occupied
+                ["EMPTY", "O", "EMPTY"],  # Center (1,1) occupied
+                ["EMPTY", "EMPTY", "EMPTY"],
+            ]
+        )
+        game_state = GameState(board=board, player_symbol="X", ai_symbol="O", move_count=2)
+
+        result = scout.analyze(game_state)
+        assert result.success
+        assert result.data is not None
+        analysis = result.data
+
+        # Should have 7 strategic moves (9 total - 2 occupied)
+        assert len(analysis.strategic_moves) == 7
+
+        # Center should not be in list
+        center_moves = [m for m in analysis.strategic_moves if m.move_type == "center"]
+        assert len(center_moves) == 0
+
+        # Only 3 corners should be in list (one is occupied)
+        corner_moves = [m for m in analysis.strategic_moves if m.move_type == "corner"]
+        assert len(corner_moves) == 3
+
+
 class TestGamePhaseDetection:
     """Test game phase detection."""
 
