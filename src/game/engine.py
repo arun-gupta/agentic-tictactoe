@@ -8,8 +8,11 @@ from src.domain.errors import (
     E_CELL_OCCUPIED,
     E_GAME_ALREADY_OVER,
     E_INVALID_PLAYER,
+    E_INVALID_SYMBOL_BALANCE,
     E_INVALID_TURN,
     E_MOVE_OUT_OF_BOUNDS,
+    E_MULTIPLE_WINNERS,
+    E_WIN_NOT_FINALIZED,
 )
 from src.domain.models import Board, GameState, PlayerSymbol, Position
 
@@ -258,3 +261,120 @@ class GameEngine:
             True if the game is over (win or draw), False otherwise
         """
         return self.game_state.is_game_over()
+
+    def validate_state(self) -> tuple[bool, str | None]:
+        """Validate the current game state consistency.
+
+        Validates state consistency per spec Section 4.1 - State Validation Rules:
+        1. Board symbol consistency (|count(X) - count(O)| <= 1)
+        2. Move count matches board state
+        3. Current player matches symbol counts
+        4. At most one winner exists
+        5. Winner implies game over
+        6. Game over state is terminal
+
+        Returns:
+            Tuple of (is_valid, error_code). If valid, returns (True, None).
+            If invalid, returns (False, error_code).
+        """
+        board = self.game_state.board
+
+        # Count X and O symbols on the board
+        count_x = 0
+        count_o = 0
+        for row in range(3):
+            for col in range(3):
+                cell = board.cells[row][col]
+                if cell == "X":
+                    count_x += 1
+                elif cell == "O":
+                    count_o += 1
+
+        # Rule 1: Symbol balance (|count(X) - count(O)| <= 1)
+        symbol_diff = abs(count_x - count_o)
+        if symbol_diff > 1:
+            return (False, E_INVALID_SYMBOL_BALANCE)
+
+        # Rule 2: Move count matches board state
+        total_moves = count_x + count_o
+        if self.game_state.move_count != total_moves:
+            return (False, E_INVALID_TURN)
+
+        # Rule 3: Current player matches symbol counts
+        # If counts are equal, Player (X) should be next
+        # If X has one more, AI (O) should be next
+        current_player = self.game_state.get_current_player()
+        if count_x == count_o:
+            # Even number of moves, Player's turn
+            if current_player != self.player_symbol:
+                return (False, E_INVALID_TURN)
+        elif count_x == count_o + 1:
+            # Odd number of moves, AI's turn
+            if current_player != self.ai_symbol:
+                return (False, E_INVALID_TURN)
+        else:
+            # Invalid balance already caught above
+            return (False, E_INVALID_SYMBOL_BALANCE)
+
+        # Rule 4: At most one winner exists
+        # Check if both X and O have winning lines
+        x_wins = self._has_winning_line("X")
+        o_wins = self._has_winning_line("O")
+        if x_wins and o_wins:
+            return (False, E_MULTIPLE_WINNERS)
+
+        # Rule 5: Winner implies game over
+        winner = self.check_winner()
+        if winner is not None:
+            if not self.game_state.is_game_over():
+                return (False, E_WIN_NOT_FINALIZED)
+
+        # All validation checks passed
+        return (True, None)
+
+    def _has_winning_line(self, symbol: PlayerSymbol) -> bool:
+        """Check if a specific symbol has a winning line on the board.
+
+        Args:
+            symbol: The player symbol to check ('X' or 'O')
+
+        Returns:
+            True if the symbol has a winning line, False otherwise
+        """
+        board = self.game_state.board
+
+        # Check rows
+        for row in range(3):
+            if (
+                board.cells[row][0] == symbol
+                and board.cells[row][1] == symbol
+                and board.cells[row][2] == symbol
+            ):
+                return True
+
+        # Check columns
+        for col in range(3):
+            if (
+                board.cells[0][col] == symbol
+                and board.cells[1][col] == symbol
+                and board.cells[2][col] == symbol
+            ):
+                return True
+
+        # Check main diagonal
+        if (
+            board.cells[0][0] == symbol
+            and board.cells[1][1] == symbol
+            and board.cells[2][2] == symbol
+        ):
+            return True
+
+        # Check anti-diagonal
+        if (
+            board.cells[0][2] == symbol
+            and board.cells[1][1] == symbol
+            and board.cells[2][0] == symbol
+        ):
+            return True
+
+        return False

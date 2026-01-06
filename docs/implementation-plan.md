@@ -589,21 +589,22 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-4.1.4.1 through AC-4.1.4.9 (9 acceptance criteria) ✅
 
-#### 2.4. State Validation
+#### 2.4. State Validation ✅
 
 **Spec Reference**: Section 4.1 - State Validation Rules
 
 **Files:**
-- `src/engine/game_engine.py` (extend)
-- `tests/unit/engine/test_state_validation.py`
+- `src/game/engine.py` ✅ (extended with validate_state method)
+- `tests/unit/game/test_state_validation.py` ✅
 
 **Implementation:**
-- Validate board consistency (symbol counts)
-- Verify move number matches board state
-- Check at most one winner exists
-- Validate game over state is terminal
+- ✅ Validate board consistency (symbol counts)
+- ✅ Verify move number matches board state
+- ✅ Check at most one winner exists
+- ✅ Validate game over state is terminal
+- ✅ Added error codes: E_INVALID_SYMBOL_BALANCE, E_MULTIPLE_WINNERS, E_WIN_NOT_FINALIZED
 
-**Test Coverage**: AC-4.1.5.1 through AC-4.1.5.10 (10 acceptance criteria)
+**Test Coverage**: AC-4.1.5.1 through AC-4.1.5.10 (10 acceptance criteria) ✅
 
 #### 2.5. Game Engine Interface
 
