@@ -1,5 +1,6 @@
 # Agentic Tic-Tac-Toe
 
+[![CI](https://github.com/arun-gupta/agentic-tictactoe/actions/workflows/ci.yml/badge.svg)](https://github.com/arun-gupta/agentic-tictactoe/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/arun-gupta/agentic-tictactoe/branch/main/graph/badge.svg)](https://codecov.io/gh/arun-gupta/agentic-tictactoe)
 
 A multi-agent AI system for playing Tic-Tac-Toe, featuring specialized agents (Scout, Strategist, Executor) that collaborate to make optimal moves. Includes LLM provider abstraction, experimentation tracking for A/B testing different AI models, and comprehensive game state management.
