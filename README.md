@@ -7,7 +7,7 @@ A multi-agent AI system for playing Tic-Tac-Toe, featuring specialized agents (S
 
 ## Planned Features
 
-> **Note**: This project is currently in the specification and planning phase. The features below are designed and specified but not yet implemented.
+> **Note**: Implementation is in progress. Phase 0, Phase 1, and part of Phase 2 are complete. Features below include both implemented and planned components.
 
 - **Multi-Agent Architecture**: Three specialized agents (Scout, Strategist, Executor) working in coordination
 - **LLM Integration**: Support for OpenAI, Anthropic, and Google Gemini models with provider abstraction
@@ -52,7 +52,7 @@ The system is designed to follow a layered architecture:
 - **ASGI Server**: Uvicorn
 - **Data Validation**: Pydantic v2
 - **UI Framework**: Streamlit
-- **LLM Integration**: LiteLLM (OpenAI, Anthropic, Google Gemini SDKs)
+- **LLM Integration**: Pydantic AI (OpenAI, Anthropic, Google Gemini SDKs)
 - **Testing**: pytest, pytest-cov, pytest-asyncio, mypy
 - **Code Quality**: black, ruff, pre-commit hooks
 - **Coverage**: Codecov
@@ -62,26 +62,64 @@ The system is designed to follow a layered architecture:
 
 ## Project Status
 
-**Current Phase**: Specification & Planning ✅
+**Current Phase**: Implementation - Phase 2 (Game Engine) 🚧
 
-- ✅ Complete specification (spec.md, schemas.md, ui-spec.md)
-- ✅ Implementation plan with 10 phases
-- ✅ Test coverage documentation for all phases
-- ✅ Design system with Figma integration
-- ⏸️ Implementation (not started)
+### Completed
+- ✅ **Phase 0**: Project Setup and Foundation
+  - Python project initialization, directory structure
+  - CI/CD pipeline (GitHub Actions), pre-commit hooks
+  - Development tools configured (black, ruff, mypy, pytest)
+- ✅ **Phase 1**: Domain Models (Foundation Layer)
+  - Core game entities (Position, Board, GameState)
+  - Agent domain models (Threat, Opportunity, StrategicMove, BoardAnalysis, etc.)
+  - Result wrappers (AgentResult)
+  - Enhanced CI/CD with strict type checking and coverage requirements
+- ✅ **Phase 2.0**: Win Condition Detection
+- ✅ **Phase 2.1**: Draw Condition Detection
+- ✅ **Phase 2.2**: Move Validation
 
-**Next Steps**: Implementation will begin with Phase 0 (Project Setup) as outlined in the [Implementation Plan](docs/implementation-plan.md). Estimated timeline: 6-8 weeks for full implementation.
+### Current Metrics
+- **196 tests passing** (all acceptance criteria for completed phases)
+- **93% test coverage**
+- **100% type checking** (mypy strict mode)
+
+### Next Steps
+Continue with Phase 2:
+- Phase 2.3: Turn Order and State Transitions
+- Phase 2.4: State Validation
+- Phase 2.5: Game Engine Interface
+
+See the [Implementation Plan](docs/implementation-plan.md) for full details on all phases and estimated timeline.
 
 ## Getting Started
 
-Since the project is currently in the specification and planning phase:
+### For Developers
 
-1. **Start with the Documentation**: Review the [Documentation](#documentation) section below for all available resources
-2. **Understand the System**: Read the [Full Specification](docs/spec/spec.md) to understand requirements and architecture
-3. **Follow the Plan**: Study the [Implementation Plan](docs/implementation-plan.md) to understand the phased approach
-4. **Review Current Status**: Check the [Project Status](#project-status) section for what's been completed
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/arun-gupta/agentic-tictactoe.git
+   cd agentic-tictactoe
+   ```
 
-When implementation begins, setup and installation instructions will be added here.
+2. **Set up development environment**:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   pip install -e ".[dev]"
+   ```
+
+3. **Run tests**:
+   ```bash
+   pytest tests/ --cov=src --cov-report=term
+   ```
+
+4. **Review Documentation**: See the [Documentation](#documentation) section for specifications and implementation plans
+
+### For Contributors
+
+1. **Understand the System**: Read the [Full Specification](docs/spec/spec.md) to understand requirements and architecture
+2. **Follow the Plan**: Study the [Implementation Plan](docs/implementation-plan.md) to understand the phased approach
+3. **Check Current Status**: Review the [Project Status](#project-status) section above
 
 ## Contributing
 
