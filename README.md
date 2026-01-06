@@ -83,6 +83,19 @@ See the [Implementation Plan](docs/implementation-plan.md) for full details on a
 
 ## Getting Started
 
+### Quick Demo
+
+Try the human vs human game demo to see Phase 2 (Game Engine) in action:
+
+```bash
+./run_demo.sh
+```
+
+This script will automatically:
+- Create and activate virtual environment
+- Install dependencies
+- Run the interactive demo
+
 ### For Developers
 
 1. **Clone the repository**:
