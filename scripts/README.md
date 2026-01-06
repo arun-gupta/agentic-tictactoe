@@ -2,6 +2,17 @@
 
 This directory contains demonstration scripts showing the capabilities of each implemented phase.
 
+## Setup
+
+Before running any demo scripts, ensure you have the project installed:
+
+```bash
+# From project root
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -e .
+```
+
 ## Available Demos
 
 ### Human vs Human Game (`play_human_vs_human.py`)
@@ -17,7 +28,10 @@ Demonstrates Phase 2 (Game Engine) capabilities with a simulated human vs human 
 
 **How to run:**
 ```bash
-# From project root
+# Ensure virtual environment is activated
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Run from project root
 python -m scripts.play_human_vs_human
 ```
 
