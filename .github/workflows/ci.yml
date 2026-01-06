@@ -23,24 +23,22 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
 
-    - name: Run linting (ruff)
-      run: ruff check src/ tests/ || true  # Don't fail on first run
-
     - name: Run formatting check (black)
-      run: black --check src/ tests/ || true  # Don't fail on first run
+      run: black --check src/ tests/
+
+    - name: Run linting (ruff)
+      run: ruff check src/ tests/
 
     - name: Run type checking (mypy)
-      run: mypy src/ --ignore-missing-imports || true  # Don't fail on first run
+      run: mypy src/ --strict
 
-    - name: Run tests
-      run: pytest tests/ -v --cov=src --cov-branch --cov-report=xml --cov-report=term || true  # Don't fail on first run
+    - name: Run tests with coverage
+      run: pytest tests/ --cov=src --cov-branch --cov-report=xml --cov-report=term --cov-fail-under=80
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: false  # Don't fail on first run
         files: ./coverage.xml
-        flags: unittests  # Flag to identify test type
-        name: codecov-umbrella  # Name for this upload
-      if: always()
+        flags: unittests
+        name: codecov-umbrella
