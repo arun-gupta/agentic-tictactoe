@@ -270,13 +270,13 @@ pre-commit install
 
 **Implementation Order:**
 
-**1.1.1. Threat**
-- Implement `Threat` with position, line_type, line_index, severity
-- Validate line_type is one of: 'row', 'column', 'diagonal'
-- Validate line_index is 0-2
-- Error codes: `E_INVALID_LINE_TYPE`, `E_INVALID_LINE_INDEX`
+**1.1.1. Threat** ✅
+- ✅ Implement `Threat` with position, line_type, line_index, severity
+- ✅ Validate line_type is one of: 'row', 'column', 'diagonal'
+- ✅ Validate line_index is 0-2
+- ✅ Error codes: `E_INVALID_LINE_TYPE`, `E_INVALID_LINE_INDEX`
 
-**Test Coverage**: AC-2.4.1 through AC-2.4.4 (4 acceptance criteria)
+**Test Coverage**: AC-2.4.1 through AC-2.4.4 (4 acceptance criteria) ✅
 
 **1.1.2. Opportunity**
 - Implement `Opportunity` with position, line_type, line_index, confidence
