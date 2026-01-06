@@ -28,7 +28,10 @@ ignore:
   # Ignore empty placeholder files that aren't implemented yet
   - "src/agents/*.py"
   - "src/api/**/*.py"
-  - "src/game/*.py"
+  # src/game/*.py is now implemented - remove from ignore
+  # Keep specific placeholder files in ignore:
+  - "src/game/coordinator.py"  # Placeholder, not implemented yet
+  - "src/game/state.py"  # Placeholder, not implemented yet
   - "src/models/*.py"
   - "src/schemas/*.py"
   - "src/services/*.py"
