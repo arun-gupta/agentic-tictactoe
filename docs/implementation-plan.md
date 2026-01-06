@@ -517,7 +517,7 @@ pre-commit install --overwrite
 
 **Why Second**: Game engine depends only on domain models. It implements pure business logic without agents or API concerns.
 
-#### 2.1. Win Condition Detection
+#### 2.0. Win Condition Detection
 
 **Spec Reference**: Section 4.1 - Formal Game Rules - Win Conditions Enumeration
 
@@ -538,7 +538,7 @@ pre-commit install --overwrite
 - Diagonal wins (2 tests)
 - No win conditions (2 tests)
 
-#### 2.2. Draw Condition Detection
+#### 2.0. Draw Condition Detection
 
 **Spec Reference**: Section 4.1 - Draw Conditions
 
@@ -553,7 +553,7 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-4.1.2.1 through AC-4.1.2.6 (6 acceptance criteria)
 
-#### 2.3. Move Validation
+#### 2.0. Move Validation
 
 **Spec Reference**: Section 4.1 - Illegal Move Conditions
 
@@ -571,7 +571,7 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-4.1.3.1 through AC-4.1.3.10 (10 acceptance criteria)
 
-#### 2.4. Turn Order and State Transitions
+#### 2.0. Turn Order and State Transitions
 
 **Spec Reference**: Section 4.1 - Turn Order Rules, State Transitions
 
@@ -587,7 +587,7 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-4.1.4.1 through AC-4.1.4.9 (9 acceptance criteria)
 
-#### 2.5. State Validation
+#### 2.0. State Validation
 
 **Spec Reference**: Section 4.1 - State Validation Rules
 
@@ -603,7 +603,7 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-4.1.5.1 through AC-4.1.5.10 (10 acceptance criteria)
 
-#### 2.6. Game Engine Interface
+#### 2.0. Game Engine Interface
 
 **Spec Reference**: Section 4.1 - Game Engine Interface
 
@@ -639,7 +639,7 @@ pre-commit install --overwrite
 
 **Why Third**: Agents depend on domain models and game engine. Start with rule-based logic, add LLM integration later.
 
-#### 3.1. Scout Agent (Board Analysis)
+#### 3.0. Scout Agent (Board Analysis)
 
 **Spec Reference**: Section 3 - Agent Responsibilities - Scout Agent
 
@@ -650,33 +650,33 @@ pre-commit install --overwrite
 
 **Implementation Order:**
 
-**3.1.1. Rule-Based Threat Detection**
+**3.0.1. Rule-Based Threat Detection**
 - Scan all 8 lines for opponent two-in-a-row + one empty
 - Return `Threat` objects with blocking positions
 - No LLM needed for this (pure algorithmic)
 
-**3.1.2. Rule-Based Opportunity Detection**
+**3.0.2. Rule-Based Opportunity Detection**
 - Scan all 8 lines for AI two-in-a-row + one empty
 - Return `Opportunity` objects with winning positions
 - Confidence = 1.0 for immediate wins
 
-**3.1.3. Strategic Position Analysis**
+**3.0.3. Strategic Position Analysis**
 - Identify center position (1,1)
 - Identify corner positions (0,0), (0,2), (2,0), (2,2)
 - Identify edge positions (0,1), (1,0), (1,2), (2,1)
 - Return `StrategicMove` list
 
-**3.1.4. Game Phase Detection**
+**3.0.4. Game Phase Detection**
 - Opening: move_number 0-2
 - Midgame: move_number 3-6
 - Endgame: move_number 7-9
 
-**3.1.5. Board Evaluation Score**
+**3.0.5. Board Evaluation Score**
 - Calculate evaluation based on position control
 - Range: -1.0 (opponent winning) to +1.0 (AI winning)
 - Simple heuristic: count potential winning lines
 
-**3.1.6. BoardAnalysis Assembly**
+**3.0.6. BoardAnalysis Assembly**
 - Combine all analyses into `BoardAnalysis` object
 - Return wrapped in `AgentResult.success()`
 - Track execution time
@@ -685,7 +685,7 @@ pre-commit install --overwrite
 
 **Note**: LLM integration for Scout will be added in Phase 5. For now, rule-based analysis is sufficient and allows agents to function without LLM dependency.
 
-#### 3.2. Strategist Agent (Move Selection)
+#### 3.0. Strategist Agent (Move Selection)
 
 **Spec Reference**: Section 3 - Agent Responsibilities - Strategist Agent
 
@@ -695,7 +695,7 @@ pre-commit install --overwrite
 
 **Implementation:**
 
-**3.2.1. Priority-Based Move Selection**
+**3.0.1. Priority-Based Move Selection**
 - Implement priority ordering per Section 3.5 - Move Priority System:
   1. IMMEDIATE_WIN (100) - Win on this move
   2. BLOCK_THREAT (90) - Block opponent win
@@ -706,14 +706,14 @@ pre-commit install --overwrite
   7. EDGE_PLAY (30) - Take edge
   8. RANDOM_VALID (10) - Any valid move
 
-**3.2.2. Strategy Assembly**
+**3.0.2. Strategy Assembly**
 - Convert `BoardAnalysis` into `Strategy`
 - Select primary move (highest priority)
 - Generate 2+ alternative moves (sorted by priority descending)
 - Create game plan (string explanation)
 - Assess risk level (low/medium/high)
 
-**3.2.3. Confidence Scoring**
+**3.0.3. Confidence Scoring**
 - Assign confidence values per priority level (spec Section 3.5)
 - IMMEDIATE_WIN: confidence = 1.0
 - BLOCK_THREAT: confidence = 0.95
@@ -722,7 +722,7 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-3.2.1 through AC-3.2.8 (8 acceptance criteria)
 
-#### 3.3. Executor Agent (Move Execution)
+#### 3.0. Executor Agent (Move Execution)
 
 **Spec Reference**: Section 3 - Agent Responsibilities - Executor Agent
 
@@ -732,26 +732,26 @@ pre-commit install --overwrite
 
 **Implementation:**
 
-**3.3.1. Move Validation**
+**3.0.1. Move Validation**
 - Validate recommended move from Strategist
 - Check position is valid and empty
 - Verify game is not over
 - Collect validation errors if any
 
-**3.3.2. Move Execution**
+**3.0.2. Move Execution**
 - Call game engine's `make_move()`
 - Track execution time
 - Return `MoveExecution` with success status
 - Record actual priority used
 
-**3.3.3. Fallback Handling**
+**3.0.3. Fallback Handling**
 - If primary move fails, try alternatives
 - If all alternatives fail, select random valid move
 - Always return a valid move or clear error
 
 **Test Coverage**: AC-3.3.1 through AC-3.3.7 (7 acceptance criteria)
 
-#### 3.4. Agent Pipeline Orchestration
+#### 3.0. Agent Pipeline Orchestration
 
 **Spec Reference**: Section 3 - Agent Pipeline Flow
 
@@ -761,18 +761,18 @@ pre-commit install --overwrite
 
 **Implementation:**
 
-**3.4.1. Pipeline Coordinator**
+**3.0.1. Pipeline Coordinator**
 - Orchestrate Scout → Strategist → Executor flow
 - Pass outputs between agents (typed domain models)
 - Handle agent failures gracefully
 - Implement timeout handling (Section 3.3)
 
-**3.4.2. Timeout Configuration**
+**3.0.2. Timeout Configuration**
 - Per-agent timeouts: Scout (5s), Strategist (3s), Executor (2s)
 - Total pipeline timeout: 15s (Section 3.6)
 - Trigger fallback after timeout
 
-**3.4.3. Fallback Strategy**
+**3.0.3. Fallback Strategy**
 - On Scout timeout: Use rule-based analysis only
 - On Strategist timeout: Use simple priority selection
 - On Executor timeout: Select random valid move
@@ -803,7 +803,7 @@ pre-commit install --overwrite
 
 **Why Fourth**: API layer orchestrates game engine and agents. Now that both work, expose them via HTTP.
 
-#### 4.1. API Foundation
+#### 4.0. API Foundation
 
 **Spec Reference**: Section 5 - API Design
 
@@ -814,31 +814,31 @@ pre-commit install --overwrite
 - `src/api/errors.py` (error handling)
 - `tests/integration/api/test_api.py`
 
-**4.1.1. FastAPI Application Setup**
+**4.0.1. FastAPI Application Setup**
 - Create FastAPI app instance
 - Configure CORS (Section 5)
 - Set up exception handlers
 - Configure logging middleware
 
-**4.1.2. Request/Response Models**
+**4.0.2. Request/Response Models**
 - Implement Pydantic models per Section 5.3:
   - `MoveRequest` (row, col)
   - `MoveResponse` (updated state, AI move)
   - `GameStatusResponse` (complete game state)
   - `ErrorResponse` (error code, message, details)
 
-#### 4.2. Health and Readiness Endpoints
+#### 4.0. Health and Readiness Endpoints
 
 **Spec Reference**: Section 5.2 - REST API Endpoints
 
-**4.2.1. GET /health**
+**4.0.1. GET /health**
 - Return basic health status
 - Check if API is running
 - No dependencies checked
 
 **Test Coverage**: AC-5.1.1 through AC-5.1.4 (4 acceptance criteria)
 
-**4.2.2. GET /ready**
+**4.0.2. GET /ready**
 - Check game engine is initialized
 - Check agent system is ready
 - Verify LLM providers are configured (optional in Phase 4)
@@ -846,9 +846,9 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-5.2.1 through AC-5.2.6 (6 acceptance criteria)
 
-#### 4.3. Game Control Endpoints
+#### 4.0. Game Control Endpoints
 
-**4.3.1. POST /api/game/new**
+**4.0.1. POST /api/game/new**
 - Create new game session
 - Initialize game engine
 - Return game ID and initial state
@@ -856,7 +856,7 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-5.3.1 through AC-5.3.3 (3 acceptance criteria)
 
-**4.3.2. POST /api/game/move**
+**4.0.2. POST /api/game/move**
 - Accept player move (row, col)
 - Validate move via game engine
 - Trigger AI agent pipeline
@@ -865,39 +865,39 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-5.4.1 through AC-5.4.8 (8 acceptance criteria)
 
-**4.3.3. GET /api/game/status**
+**4.0.3. GET /api/game/status**
 - Return current game state
 - Include board, move history, game over status
 - Return agent insights (if available)
 
 **Test Coverage**: AC-5.5.1 through AC-5.5.4 (4 acceptance criteria)
 
-**4.3.4. POST /api/game/reset**
+**4.0.4. POST /api/game/reset**
 - Reset current game to initial state
 - Clear move history
 - Reinitialize agents
 
 **Test Coverage**: AC-5.6.1 through AC-5.6.3 (3 acceptance criteria)
 
-**4.3.5. GET /api/game/history**
+**4.0.5. GET /api/game/history**
 - Return complete move history
 - Include both player and AI moves
 - Include timestamps and agent reasoning
 
 **Test Coverage**: AC-5.7.1 through AC-5.7.3 (3 acceptance criteria)
 
-#### 4.4. Agent Status Endpoints
+#### 4.0. Agent Status Endpoints
 
 **Spec Reference**: Section 5.2 - Agent Status Endpoints
 
-**4.4.1. GET /api/agents/status**
+**4.0.1. GET /api/agents/status**
 - Return status of each agent (idle/running/success/failed)
 - Include current processing agent
 - Show elapsed time for current operation
 
 **Test Coverage**: AC-5.8.1 through AC-5.8.5 (5 acceptance criteria)
 
-#### 4.5. Error Handling
+#### 4.0. Error Handling
 
 **Spec Reference**: Section 5.4 - Error Response Schema, Section 5.5 - HTTP Status Code Mapping
 
@@ -933,7 +933,7 @@ pre-commit install --overwrite
 
 **Why Fifth**: LLM integration is optional enhancement. Agents already work with rule-based logic. Now make them smarter.
 
-#### 5.1. LLM Provider Abstraction
+#### 5.0. LLM Provider Abstraction
 
 **Spec Reference**: Section 16 - LLM Integration
 
@@ -946,25 +946,25 @@ pre-commit install --overwrite
 
 **Implementation:**
 
-**5.1.1. Provider Interface**
+**5.0.1. Provider Interface**
 - Define abstract `LLMProvider` interface
 - Methods: `generate(prompt, model, max_tokens, temperature)`
 - Return structured response with text, tokens, latency
 
-**5.1.2. OpenAI Provider**
+**5.0.2. OpenAI Provider**
 - Implement using `openai` SDK
 - Support models: gpt-4o, gpt-4o-mini, gpt-3.5-turbo
 - Handle API errors and retries
 
-**5.1.3. Anthropic Provider**
+**5.0.3. Anthropic Provider**
 - Implement using `anthropic` SDK
 - Support models: claude-3-5-sonnet, claude-3-opus, claude-3-haiku
 
-**5.1.4. Google Gemini Provider**
+**5.0.4. Google Gemini Provider**
 - Implement using Google SDK
 - Support models: gemini-1.5-pro, gemini-1.5-flash
 
-**5.1.5. Pydantic AI Implementation**
+**5.0.5. Pydantic AI Implementation**
 
 **Framework Selected**: **Pydantic AI** (see Technology Stack section for selection rationale based on Section 19)
 
@@ -995,11 +995,11 @@ pre-commit install --overwrite
 
 **Test Files**: `tests/unit/llm/test_providers.py`
 
-#### 5.2. Agent LLM Integration with Pydantic AI
+#### 5.0. Agent LLM Integration with Pydantic AI
 
 **Spec Reference**: Section 16.3 - LLM Usage Patterns, Section 19 (Pydantic AI framework)
 
-**5.2.1. Scout LLM Enhancement (Pydantic AI)**
+**5.0.1. Scout LLM Enhancement (Pydantic AI)**
 - Create Pydantic AI Agent with `BoardAnalysis` as response model
 - Define prompt: "Analyze this Tic-Tac-Toe board..."
 - Use Pydantic AI's structured output to automatically validate response against `BoardAnalysis` domain model
@@ -1007,7 +1007,7 @@ pre-commit install --overwrite
 - Fallback to rule-based if LLM fails/times out
 - Update `src/agents/scout.py`
 
-**5.2.2. Strategist LLM Enhancement (Pydantic AI)**
+**5.0.2. Strategist LLM Enhancement (Pydantic AI)**
 - Create Pydantic AI Agent with `Strategy` as response model
 - Define prompt: "Given this analysis, recommend best move..."
 - Use Pydantic AI's structured output to automatically validate response against `Strategy` domain model
@@ -1015,7 +1015,7 @@ pre-commit install --overwrite
 - Fallback to priority-based selection if LLM fails
 - Update `src/agents/strategist.py`
 
-**5.2.3. Executor (No LLM)**
+**5.0.3. Executor (No LLM)**
 - Executor remains rule-based (no LLM needed for validation/execution)
 - Keeps execution fast and deterministic
 
@@ -1028,7 +1028,7 @@ pre-commit install --overwrite
 
 **Test Files**: `tests/unit/agents/test_scout_llm.py`, `tests/unit/agents/test_strategist_llm.py`, `tests/integration/test_llm_fallback.py`
 
-#### 5.3. Configuration and Settings
+#### 5.0. Configuration and Settings
 
 **Spec Reference**: Section 9 - Configuration Management
 
@@ -1042,7 +1042,7 @@ pre-commit install --overwrite
 - Allow runtime provider switching
 - Configuration hierarchy: env vars > .env file > defaults
 
-**5.3.1. Environment Variables**
+**5.0.1. Environment Variables**
 ```bash
 LLM_PROVIDER=openai
 LLM_MODEL=gpt-4o-mini
@@ -1061,7 +1061,7 @@ GOOGLE_API_KEY=...
 
 **Test Files**: `tests/unit/config/test_llm_config.py`
 
-#### 5.4. Metrics and Tracking
+#### 5.0. Metrics and Tracking
 
 **Spec Reference**: Section 12.1 - LLM Provider Metadata and Experimentation Tracking
 
@@ -1108,7 +1108,7 @@ GOOGLE_API_KEY=...
 
 **Why Sixth**: UI is the final layer. All backend systems are working, now add user-facing interface.
 
-#### 6.1. UI Foundation
+#### 6.0. UI Foundation
 
 **Spec Reference**: Section 6 - Web UI Functional Requirements, docs/spec/ui-spec.md
 
@@ -1123,22 +1123,22 @@ GOOGLE_API_KEY=...
 - CSS with design tokens from ui-spec.md
 - Fetch API for REST calls
 
-**6.1.1. Design System Setup**
+**6.0.1. Design System Setup**
 - Implement color palette (ui-spec.md Section: Color Palette)
 - Set up typography (SF Pro Display font)
 - Define spacing scale (8px base unit)
 - Create CSS variables for design tokens
 
-**6.1.2. API Client**
+**6.0.2. API Client**
 - Create JavaScript wrapper for REST API
 - Methods: `makeMove()`, `getGameStatus()`, `resetGame()`
 - Handle errors and display to user
 
-#### 6.2. Game Board UI
+#### 6.0. Game Board UI
 
 **Spec Reference**: US-001, US-002, US-003, US-004, US-005 (Section 6)
 
-**6.2.1. Display Game Board (US-001)**
+**6.0.1. Display Game Board (US-001)**
 - Render 3x3 grid with cells
 - Cell dimensions: 100px × 100px
 - Gap: 12px between cells
@@ -1146,7 +1146,7 @@ GOOGLE_API_KEY=...
 
 **Test Coverage**: AC-US001.1 through AC-US001.3 (3 acceptance criteria)
 
-**6.2.2. Make Player Move (US-002)**
+**6.0.2. Make Player Move (US-002)**
 - Click handler on empty cells
 - Disable board during AI turn
 - Show hover effects on valid cells
@@ -1154,57 +1154,57 @@ GOOGLE_API_KEY=...
 
 **Test Coverage**: AC-US002.1 through AC-US002.12 (12 acceptance criteria)
 
-**6.2.3. View Last Move (US-003)**
+**6.0.3. View Last Move (US-003)**
 - Highlight last played cell
 - Border color: highlight pink (#f72585)
 - Glow effect per ui-spec.md
 
 **Test Coverage**: AC-US003.1 through AC-US003.2 (2 acceptance criteria)
 
-**6.2.4. View Current Turn (US-004)**
+**6.0.4. View Current Turn (US-004)**
 - Display whose turn (Player or AI)
 - Color-code by player symbol
 - Show move count
 
 **Test Coverage**: AC-US004.1 through AC-US004.8 (8 acceptance criteria)
 
-**6.2.5. View Game Status (US-005)**
+**6.0.5. View Game Status (US-005)**
 - Display game over message
 - Show winner (X, O, or DRAW)
 - Fade board when game ends
 
 **Test Coverage**: AC-US005.1 through AC-US005.3 (3 acceptance criteria)
 
-#### 6.3. Move History Panel
+#### 6.0. Move History Panel
 
 **Spec Reference**: US-006, US-007
 
-**6.3.1. View Move History (US-006)**
+**6.0.1. View Move History (US-006)**
 - Chronological list of all moves
 - Show player/AI indicator, move number, position, timestamp
 - Scrollable panel (max-height: 400px)
 
 **Test Coverage**: AC-US006.1 through AC-US006.2 (2 acceptance criteria)
 
-**6.3.2. View Move Details (US-007)**
+**6.0.2. View Move Details (US-007)**
 - Expandable move entries
 - Show agent reasoning (Scout analysis, Strategist strategy, Executor details)
 - Collapse/expand animation
 
 **Test Coverage**: AC-US007.1 through AC-US007.2 (2 acceptance criteria)
 
-#### 6.4. Agent Insights Panel
+#### 6.0. Agent Insights Panel
 
 **Spec Reference**: US-008, US-009, US-010, US-011, US-012
 
-**6.4.1. View Agent Analysis (US-008)**
+**6.0.1. View Agent Analysis (US-008)**
 - Real-time agent status display
 - Show threats, opportunities, recommended moves
 - Three sections: Scout, Strategist, Executor
 
 **Test Coverage**: AC-US008.1 through AC-US008.11 (11 acceptance criteria)
 
-**6.4.2. Processing Status (US-009, US-010)**
+**6.0.2. Processing Status (US-009, US-010)**
 - Loading indicators while agents think
 - Progressive status updates:
   - 0-2s: Simple spinner
@@ -1215,85 +1215,85 @@ GOOGLE_API_KEY=...
 
 **Test Coverage**: AC-US009.1 through AC-US010.1e (9 acceptance criteria)
 
-**6.4.3. Force Fallback and Retry (US-011, US-012)**
+**6.0.3. Force Fallback and Retry (US-011, US-012)**
 - "Force Fallback" button after 10s
 - "Retry" button on agent failure
 - Clear explanations of fallback strategy
 
 **Test Coverage**: AC-US011.1 through AC-US012.2 (5 acceptance criteria)
 
-#### 6.5. Post-Game Metrics
+#### 6.0. Post-Game Metrics
 
 **Spec Reference**: US-013, US-014, US-015, US-016, US-017, US-018
 
-**6.5.1. Metrics Tab (US-013)**
+**6.0.1. Metrics Tab (US-013)**
 - Only visible after game ends
 - Tabbed interface: Summary | Performance | LLM | Communication
 
 **Test Coverage**: AC-US013.1 through AC-US013.2 (2 acceptance criteria)
 
-**6.5.2. Agent Communication (US-014)**
+**6.0.2. Agent Communication (US-014)**
 - Show request/response data for each agent call
 - Display JSON with syntax highlighting
 
 **Test Coverage**: AC-US014.1 through AC-US014.3 (3 acceptance criteria)
 
-**6.5.3. LLM Interactions (US-015)**
+**6.0.3. LLM Interactions (US-015)**
 - Show prompts sent to LLM
 - Show LLM responses
 - Display token usage, latency, model/provider
 
 **Test Coverage**: AC-US015.1 through AC-US015.6 (6 acceptance criteria)
 
-**6.5.4. Agent Configuration (US-016)**
+**6.0.4. Agent Configuration (US-016)**
 - Display agent mode (local vs MCP)
 - Show LLM framework used
 - Show initialization details
 
 **Test Coverage**: AC-US016.1 through AC-US016.4 (4 acceptance criteria)
 
-**6.5.5. Performance Summary (US-017)**
+**6.0.5. Performance Summary (US-017)**
 - Per-agent execution times (min, max, avg)
 - Total LLM calls and tokens
 - Success/failure rates
 
 **Test Coverage**: AC-US017.1 through AC-US017.5 (5 acceptance criteria)
 
-**6.5.6. Game Summary (US-018)**
+**6.0.6. Game Summary (US-018)**
 - Total moves, duration, outcome
 - Average move time
 
 **Test Coverage**: AC-US018.1 through AC-US018.4 (4 acceptance criteria)
 
-#### 6.6. Configuration Panel
+#### 6.0. Configuration Panel
 
 **Spec Reference**: US-019, US-020, US-021
 
-**6.6.1. LLM Provider Selection (US-019)**
+**6.0.1. LLM Provider Selection (US-019)**
 - Dropdown for provider (OpenAI, Anthropic, Google)
 - Model name input
 - Save preferences to localStorage
 
 **Test Coverage**: AC-US019.1 through AC-US019.3 (3 acceptance criteria)
 
-**6.6.2. Agent Mode Selection (US-020)**
+**6.0.2. Agent Mode Selection (US-020)**
 - Toggle: Local vs Distributed MCP
 - LLM framework dropdown
 
 **Test Coverage**: AC-US020.1 through AC-US020.2 (2 acceptance criteria)
 
-**6.6.3. Game Settings (US-021)**
+**6.0.3. Game Settings (US-021)**
 - Reset game button
 - Player symbol selection (X or O)
 - Difficulty slider (optional)
 
 **Test Coverage**: AC-US021.1 through AC-US021.3 (3 acceptance criteria)
 
-#### 6.7. Error Handling UI
+#### 6.0. Error Handling UI
 
 **Spec Reference**: US-024, US-025, Section 12 - Failure Matrix
 
-**6.7.1. Display Error Messages (US-024)**
+**6.0.1. Display Error Messages (US-024)**
 - Critical errors: Red modal
 - Warnings: Orange/yellow badges
 - Info: Blue toasts (bottom-right)
@@ -1301,7 +1301,7 @@ GOOGLE_API_KEY=...
 
 **Test Coverage**: AC-US024.1 through AC-US024.4 (4 acceptance criteria)
 
-**6.7.2. Fallback Indication (US-025)**
+**6.0.2. Fallback Indication (US-025)**
 - Notify user when fallback is triggered
 - Explain why fallback was needed
 - Show which fallback strategy was used
@@ -1329,7 +1329,7 @@ GOOGLE_API_KEY=...
 
 **Spec Reference**: Section 11 - Testing Strategy
 
-#### 7.1. Unit Test Coverage
+#### 7.0. Unit Test Coverage
 
 **Target**: 100% coverage for domain models and game engine, 80%+ overall
 
@@ -1341,7 +1341,7 @@ GOOGLE_API_KEY=...
 
 **Deliverable**: Coverage report showing ≥80% overall, 100% for critical paths
 
-#### 7.2. Integration Tests
+#### 7.0. Integration Tests
 
 **Files to Create:**
 - `tests/integration/test_full_pipeline.py`
@@ -1353,7 +1353,7 @@ GOOGLE_API_KEY=...
 - API endpoints with real game engine and agents
 - Error handling across layers
 
-#### 7.3. End-to-End Tests
+#### 7.0. End-to-End Tests
 
 **Files to Create:**
 - `tests/e2e/test_game_scenarios.py`
@@ -1366,7 +1366,7 @@ GOOGLE_API_KEY=...
 - Agent timeout triggers fallback
 - LLM provider failure
 
-#### 7.4. Performance Tests
+#### 7.0. Performance Tests
 
 **Spec Reference**: Section 15 - Performance Optimization
 
@@ -1378,7 +1378,7 @@ GOOGLE_API_KEY=...
 - UI updates within 100ms of state change (AC-US023.3)
 - Agent status updates within 500ms (AC-US023.4)
 
-#### 7.5. Resilience Tests
+#### 7.0. Resilience Tests
 
 **Spec Reference**: Section 12 - Error Handling and Resilience
 
@@ -1409,7 +1409,7 @@ GOOGLE_API_KEY=...
 
 **Goal**: Production-ready configuration, logging, and metrics
 
-#### 8.1. Configuration Management
+#### 8.0. Configuration Management
 
 **Spec Reference**: Section 9 - Configuration Management
 
@@ -1442,7 +1442,7 @@ GOOGLE_API_KEY=...
 
 **Test Files**: `tests/unit/config/test_settings.py`, `tests/integration/test_config_loading.py`
 
-#### 8.2. Logging
+#### 8.0. Logging
 
 **Spec Reference**: Section 17 - Metrics and Observability - Log Format Specification
 
@@ -1469,7 +1469,7 @@ GOOGLE_API_KEY=...
 
 **Test Files**: `tests/unit/test_logging.py`, `tests/integration/test_logging_integration.py`
 
-#### 8.3. Metrics
+#### 8.0. Metrics
 
 **Spec Reference**: Section 17 - Metrics Format Specification
 
@@ -1509,7 +1509,7 @@ GOOGLE_API_KEY=...
 
 **Test Files**: `tests/unit/metrics/test_collector.py`, `tests/unit/metrics/test_exporter.py`, `tests/integration/test_metrics_api.py`
 
-#### 8.4. Health Checks
+#### 8.0. Health Checks
 
 **Implementation:**
 - Liveness probe: `/health` (already implemented in Phase 4)
@@ -1544,7 +1544,7 @@ GOOGLE_API_KEY=...
 
 **Goal**: Production deployment and user documentation
 
-#### 9.1. Documentation
+#### 9.0. Documentation
 
 **Files to Create:**
 - `README.md` (update with complete usage)
@@ -1563,7 +1563,7 @@ GOOGLE_API_KEY=...
 - API usage examples
 - License and contributing
 
-#### 9.2. Docker Containerization
+#### 9.0. Docker Containerization
 
 **Spec Reference**: Section 10 - Deployment Considerations
 
@@ -1703,7 +1703,7 @@ secrets:
     external: true
 ```
 
-#### 9.3. Local Deployment
+#### 9.0. Local Deployment
 
 **Spec Reference**: Section 10.1 - Local Development
 
@@ -1732,7 +1732,7 @@ uvicorn src.api.main:app --reload
 open http://localhost:8000
 ```
 
-#### 9.4. Production Deployment
+#### 9.0. Production Deployment
 
 **Spec Reference**: Section 10.2 - Production Deployment
 
@@ -1755,7 +1755,7 @@ open http://localhost:8000
 - Google Cloud Run
 - Limitations: May need to adjust timeout values
 
-#### 9.5. Add Docker Build to CI Pipeline
+#### 9.0. Add Docker Build to CI Pipeline
 
 **Update `.github/workflows/ci.yml`** to add Docker build verification:
 
@@ -1823,7 +1823,7 @@ jobs:
         docker run --rm agentic-tictactoe:${{ github.sha }} python -c "import src; print('Import successful')"
 ```
 
-#### 9.6. Continuous Deployment Pipeline
+#### 9.0. Continuous Deployment Pipeline
 
 **Note**: CI pipeline was enhanced above. This adds CD (deployment) pipeline.
 
@@ -1925,7 +1925,7 @@ jobs:
 
 **Note**: This phase is optional. The system is fully functional in local mode. Implement MCP mode only if you want to explore distributed agent architecture.
 
-#### 10.1. MCP Protocol Implementation
+#### 10.0. MCP Protocol Implementation
 
 **Files to Create:**
 - `src/mcp/client.py`
@@ -1949,7 +1949,7 @@ jobs:
 
 **Test Files**: `tests/unit/mcp/test_client.py`, `tests/unit/mcp/test_server.py`, `tests/unit/mcp/test_protocol.py`
 
-#### 10.2. Agent MCP Adaptation
+#### 10.0. Agent MCP Adaptation
 
 **Tasks:**
 - Wrap Scout agent as MCP server
@@ -1967,7 +1967,7 @@ jobs:
 
 **Test Files**: `tests/integration/test_mcp_agents.py`, `tests/integration/test_mcp_coordinator.py`
 
-#### 10.3. Mode Switching
+#### 10.0. Mode Switching
 
 **Implementation:**
 - Configuration: `AGENT_MODE=local` or `AGENT_MODE=mcp`
