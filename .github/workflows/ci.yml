@@ -40,5 +40,7 @@ jobs:
       with:
         file: ./coverage.xml
         fail_ci_if_error: false  # Don't fail on first run
+        token: ${{ secrets.CODECOV_TOKEN }}  # Optional but recommended for private repos
+        flags: unittests  # Flag to identify test type
+        name: codecov-umbrella  # Name for this upload
       if: always()
-
