@@ -6,6 +6,7 @@ Test Coverage:
 - AC-2.6.1 through AC-2.6.5 (StrategicMove acceptance criteria)
 - AC-2.7.1 through AC-2.7.9 (BoardAnalysis acceptance criteria)
 - AC-2.8.1 through AC-2.8.9 (MovePriority acceptance criteria)
+- AC-2.9.1 through AC-2.9.6 (MoveRecommendation acceptance criteria)
 """
 
 import pytest
@@ -14,6 +15,7 @@ from pydantic import ValidationError
 from src.domain.agent_models import (
     BoardAnalysis,
     MovePriority,
+    MoveRecommendation,
     Opportunity,
     StrategicMove,
     Threat,
@@ -691,3 +693,171 @@ class TestMovePriorityEnum:
         # Verify descending order
         for i in range(len(priorities) - 1):
             assert priorities[i] > priorities[i + 1]
+
+
+class TestMoveRecommendationCreation:
+    """Test MoveRecommendation creation and validation."""
+
+    def test_ac_2_9_1_required_fields(self):
+        """AC-2.9.1: Given MoveRecommendation with position, priority, confidence, reasoning, when created, then all required fields are set."""
+        position = Position(row=1, col=1)
+        recommendation = MoveRecommendation(
+            position=position,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.8,
+            reasoning="Center control is strategic",
+        )
+        assert recommendation.position == position
+        assert recommendation.priority == MovePriority.CENTER_CONTROL
+        assert recommendation.confidence == 0.8
+        assert recommendation.reasoning == "Center control is strategic"
+
+    def test_ac_2_9_2_optional_outcome_description(self):
+        """AC-2.9.2: Given MoveRecommendation with outcome_description, when created, then outcome_description is set."""
+        position = Position(row=0, col=0)
+        recommendation = MoveRecommendation(
+            position=position,
+            priority=MovePriority.CORNER_CONTROL,
+            confidence=0.7,
+            reasoning="Take corner position",
+            outcome_description="Secures corner advantage",
+        )
+        assert recommendation.outcome_description == "Secures corner advantage"
+
+    def test_ac_2_9_3_no_outcome_description(self):
+        """AC-2.9.3: Given MoveRecommendation without outcome_description, when created, then outcome_description is None."""
+        position = Position(row=1, col=1)
+        recommendation = MoveRecommendation(
+            position=position,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.8,
+            reasoning="Center control",
+        )
+        assert recommendation.outcome_description is None
+
+    def test_ac_2_9_4_invalid_confidence_too_high(self):
+        """AC-2.9.4: Given confidence value 1.5, when MoveRecommendation is created, then validation error E_INVALID_CONFIDENCE is raised (must be 0.0-1.0)."""
+        position = Position(row=1, col=1)
+        with pytest.raises(ValidationError):
+            MoveRecommendation(
+                position=position,
+                priority=MovePriority.CENTER_CONTROL,
+                confidence=1.5,
+                reasoning="Test reasoning",
+            )
+
+    def test_ac_2_9_5_invalid_confidence_too_low(self):
+        """AC-2.9.5: Given confidence value -0.1, when MoveRecommendation is created, then validation error E_INVALID_CONFIDENCE is raised."""
+        position = Position(row=1, col=1)
+        with pytest.raises(ValidationError):
+            MoveRecommendation(
+                position=position,
+                priority=MovePriority.CENTER_CONTROL,
+                confidence=-0.1,
+                reasoning="Test reasoning",
+            )
+
+    def test_ac_2_9_6_empty_reasoning(self):
+        """AC-2.9.6: Given reasoning='', when MoveRecommendation is created, then validation error E_MISSING_REASONING is raised."""
+        position = Position(row=1, col=1)
+        with pytest.raises(ValidationError):
+            MoveRecommendation(
+                position=position,
+                priority=MovePriority.CENTER_CONTROL,
+                confidence=0.8,
+                reasoning="",
+            )
+
+
+class TestMoveRecommendationValidation:
+    """Test MoveRecommendation field validation."""
+
+    def test_valid_confidence_values(self):
+        """Test that valid confidence values (0.0-1.0) are accepted."""
+        position = Position(row=1, col=1)
+        for confidence in [0.0, 0.25, 0.5, 0.75, 1.0]:
+            recommendation = MoveRecommendation(
+                position=position,
+                priority=MovePriority.CENTER_CONTROL,
+                confidence=confidence,
+                reasoning="Test reasoning",
+            )
+            assert recommendation.confidence == confidence
+
+    def test_confidence_rounding(self):
+        """Test that confidence values are rounded to 2 decimal places."""
+        position = Position(row=1, col=1)
+        recommendation = MoveRecommendation(
+            position=position,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.123456,
+            reasoning="Test reasoning",
+        )
+        assert recommendation.confidence == 0.12
+
+    def test_all_priority_levels(self):
+        """Test that all MovePriority enum values are accepted."""
+        position = Position(row=1, col=1)
+        for priority in MovePriority:
+            recommendation = MoveRecommendation(
+                position=position,
+                priority=priority,
+                confidence=0.8,
+                reasoning="Test reasoning",
+            )
+            assert recommendation.priority == priority
+
+    def test_reasoning_max_length(self):
+        """Test that reasoning respects max length of 1000 characters."""
+        position = Position(row=1, col=1)
+        # Valid: exactly 1000 characters
+        valid_reasoning = "a" * 1000
+        recommendation = MoveRecommendation(
+            position=position,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.8,
+            reasoning=valid_reasoning,
+        )
+        assert len(recommendation.reasoning) == 1000
+
+    def test_outcome_description_max_length(self):
+        """Test that outcome_description respects max length of 500 characters."""
+        position = Position(row=1, col=1)
+        # Valid: exactly 500 characters
+        valid_outcome = "a" * 500
+        recommendation = MoveRecommendation(
+            position=position,
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.8,
+            reasoning="Test reasoning",
+            outcome_description=valid_outcome,
+        )
+        assert recommendation.outcome_description == valid_outcome
+        assert len(recommendation.outcome_description) == 500
+
+    def test_whitespace_only_reasoning(self):
+        """Test that whitespace-only reasoning raises validation error."""
+        position = Position(row=1, col=1)
+        with pytest.raises(ValidationError):
+            MoveRecommendation(
+                position=position,
+                priority=MovePriority.CENTER_CONTROL,
+                confidence=0.8,
+                reasoning="   ",
+            )
+
+    def test_complete_move_recommendation(self):
+        """Test MoveRecommendation with all fields populated."""
+        position = Position(row=2, col=2)
+        recommendation = MoveRecommendation(
+            position=position,
+            priority=MovePriority.IMMEDIATE_WIN,
+            confidence=1.0,
+            reasoning="This move will win the game",
+            outcome_description="Game ends with AI victory",
+        )
+        assert recommendation.position == position
+        assert recommendation.priority == MovePriority.IMMEDIATE_WIN
+        assert recommendation.confidence == 1.0
+        assert recommendation.reasoning == "This move will win the game"
+        assert recommendation.outcome_description == "Game ends with AI victory"

@@ -309,12 +309,12 @@ pre-commit install
 
 **Test Coverage**: AC-2.8.1 through AC-2.8.9 (9 acceptance criteria) ✅
 
-**1.1.6. MoveRecommendation**
-- Implement `MoveRecommendation` with position, priority, confidence, reasoning
-- Validate all fields per constraints
-- Support optional outcome_description
+**1.1.6. MoveRecommendation** ✅
+- ✅ Implement `MoveRecommendation` with position, priority, confidence, reasoning
+- ✅ Validate all fields per constraints
+- ✅ Support optional outcome_description
 
-**Test Coverage**: AC-2.9.1 through AC-2.9.6 (6 acceptance criteria)
+**Test Coverage**: AC-2.9.1 through AC-2.9.6 (6 acceptance criteria) ✅
 
 **1.1.7. Strategy**
 - Implement `Strategy` with primary_move, alternatives, game_plan, risk_assessment
