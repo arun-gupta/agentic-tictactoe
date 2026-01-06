@@ -55,37 +55,44 @@ def main() -> None:
     # Initialize game engine
     engine = GameEngine(player_symbol="X", ai_symbol="O")
 
-    # Randomize first move for variety
-    first_moves = [
-        (0, 0),  # Top-left (corner)
-        (0, 2),  # Top-right (corner)
-        (1, 1),  # Center
-        (2, 0),  # Bottom-left (corner)
-        (2, 2),  # Bottom-right (corner)
-    ]
-    first_row, first_col = random.choice(first_moves)
+    # Randomize first move and build appropriate strategy
+    game_type = random.choice(["center", "corner"])
 
-    # Build game moves dynamically based on first move
-    # This creates different game scenarios while still demonstrating a win
-    if first_row == 1 and first_col == 1:  # Center opening
+    if game_type == "center":
+        # Center opening - X wins via column
         moves = [
-            (first_row, first_col, "X", "Player 1"),  # X center
+            (1, 1, "X", "Player 1"),  # X center
             (0, 0, "O", "Player 2"),  # O top-left
-            (0, 1, "X", "Player 1"),  # X top-center
-            (2, 1, "O", "Player 2"),  # O bottom-center
-            (0, 2, "X", "Player 1"),  # X top-right
-            (1, 0, "O", "Player 2"),  # O middle-left
-            (1, 2, "X", "Player 1"),  # X middle-right (wins column 2)
+            (2, 2, "X", "Player 1"),  # X bottom-right (diagonal)
+            (2, 0, "O", "Player 2"),  # O bottom-left (anti-diagonal threat)
+            (0, 2, "X", "Player 1"),  # X BLOCKS anti-diagonal at (0,2)
+            (1, 0, "O", "Player 2"),  # O middle-left (threatens row 1)
+            (1, 2, "X", "Player 1"),  # X BLOCKS row 1 at (1,2)
+            (0, 1, "O", "Player 2"),  # O top-center
+            (2, 1, "X", "Player 1"),  # X completes column 1 - wins!
         ]
-    else:  # Corner or edge opening
+    else:
+        # Corner opening - X wins via diagonal
         moves = [
-            (first_row, first_col, "X", "Player 1"),  # X random start
+            (0, 0, "X", "Player 1"),  # X top-left corner
             (1, 1, "O", "Player 2"),  # O takes center
-            (0 if first_row != 0 else 2, 0, "X", "Player 1"),  # X another corner
-            (1, 0, "O", "Player 2"),  # O middle-left
-            (0 if first_row != 0 else 2, 1, "X", "Player 1"),  # X continues row
-            (1, 2, "O", "Player 2"),  # O middle-right
-            (0 if first_row != 0 else 2, 2, "X", "Player 1"),  # X wins the row!
+            (2, 2, "X", "Player 1"),  # X bottom-right (diagonal)
+            (1, 0, "O", "Player 2"),  # O middle-left (threatens row 1)
+            (1, 2, "X", "Player 1"),  # X BLOCKS row 1 threat at (1,2)!
+            (0, 1, "O", "Player 2"),  # O top-center (threatens column 1)
+            (2, 1, "X", "Player 1"),  # X BLOCKS column 1 at (2,1)
+            (0, 2, "O", "Player 2"),  # O top-right
+            (1, 0, "X", "Player 1"),  # X completes diagonal (0,0)-(1,1)-(2,2)... wait, (1,1) is O
+        ]
+        # Fix: diagonal is blocked, so win via row
+        moves = [
+            (0, 0, "X", "Player 1"),  # X top-left corner
+            (1, 1, "O", "Player 2"),  # O takes center
+            (0, 2, "X", "Player 1"),  # X top-right (threatens row 0)
+            (1, 0, "O", "Player 2"),  # O middle-left (threatens row 1)
+            (1, 2, "X", "Player 1"),  # X BLOCKS row 1 at (1,2)!
+            (2, 0, "O", "Player 2"),  # O bottom-left
+            (0, 1, "X", "Player 1"),  # X completes row 0 - wins!
         ]
 
     print("GAME START")
