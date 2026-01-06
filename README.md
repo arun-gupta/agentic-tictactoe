@@ -71,7 +71,9 @@ The system is designed to follow a layered architecture:
 
 ### Current Metrics
 - **282 tests passing**
-- **94% test coverage**
+- **94% test coverage** (local) / **87% coverage** (Codecov)
+  - Codecov excludes unimplemented placeholder files for agents, API, and UI layers
+  - 100% coverage on all implemented code (domain models, game engine)
 - **100% type checking** (mypy strict mode)
 
 ### Next Steps
