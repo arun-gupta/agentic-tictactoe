@@ -540,20 +540,20 @@ pre-commit install --overwrite
 - Diagonal wins (2 tests) ✅
 - No win conditions (2 tests) ✅
 
-#### 2.1. Draw Condition Detection
+#### 2.1. Draw Condition Detection ✅
 
 **Spec Reference**: Section 4.1 - Draw Conditions
 
 **Files:**
-- `src/engine/game_engine.py` (extend)
-- `tests/unit/engine/test_draw_conditions.py`
+- `src/game/engine.py` ✅ (extend)
+- `tests/unit/game/test_draw_conditions.py` ✅
 
 **Implementation:**
-- **Mandatory**: Complete draw (MoveCount=9, no winner)
-- **Optional**: Inevitable draw (early detection when no winning moves remain)
-- Implement inevitable draw algorithm from spec (simulate all remaining moves)
+- ✅ **Mandatory**: Complete draw (MoveCount=9, no winner)
+- ✅ **Optional**: Inevitable draw (early detection when no winning moves remain)
+- ✅ Implement inevitable draw algorithm from spec (simulate all remaining moves)
 
-**Test Coverage**: AC-4.1.2.1 through AC-4.1.2.6 (6 acceptance criteria)
+**Test Coverage**: AC-4.1.2.1 through AC-4.1.2.6 (6 acceptance criteria) ✅
 
 #### 2.2. Move Validation
 
