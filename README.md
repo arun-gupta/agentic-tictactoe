@@ -85,44 +85,20 @@ See the [Implementation Plan](docs/implementation-plan.md) for full details on a
 
 ### Quick Demo
 
-Try the human vs human game demo to see Phase 2 (Game Engine) in action:
-
 ```bash
 ./run_demo.sh
 ```
 
-This script will automatically:
-- Create and activate virtual environment
-- Install dependencies
-- Run the interactive demo
+### Development Setup
 
-### For Developers
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pytest tests/
+```
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/arun-gupta/agentic-tictactoe.git
-   cd agentic-tictactoe
-   ```
-
-2. **Set up development environment**:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   pip install -e ".[dev]"
-   ```
-
-3. **Run tests**:
-   ```bash
-   pytest tests/ --cov=src --cov-report=term
-   ```
-
-4. **Review Documentation**: See the [Documentation](#documentation) section for specifications and implementation plans
-
-### For Contributors
-
-1. **Understand the System**: Read the [Full Specification](docs/spec/spec.md) to understand requirements and architecture
-2. **Follow the Plan**: Study the [Implementation Plan](docs/implementation-plan.md) to understand the phased approach
-3. **Check Current Status**: Review the [Project Status](#project-status) section above
+See [Documentation](#documentation) for specifications and implementation details.
 
 ## Contributing
 
