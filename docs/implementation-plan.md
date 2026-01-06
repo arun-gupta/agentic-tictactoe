@@ -224,7 +224,7 @@ pre-commit install
 
 **Why First**: Domain models are the foundation - they're used by everything else. They have no dependencies and can be fully tested in isolation.
 
-#### 1.0. Core Game Entities
+#### 1.0. Core Game Entities ✅
 
 **Spec Reference**: Section 2 - Core Game Entities
 
