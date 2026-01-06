@@ -515,11 +515,11 @@ pre-commit install --overwrite
 
 **Duration**: 3-4 days
 
-**Goal**: Implement game rules, win/draw detection, and move validation
+**Goal**: Implement game rules, win/draw detection, and move validation. **Enables human vs human gameplay.**
 
 **Why Second**: Game engine depends only on domain models. It implements pure business logic without agents or API concerns.
 
-**Status**: ✅ **COMPLETE** - All 5 sub-tasks (2.0-2.5) implemented and tested.
+**Status**: ✅ **COMPLETE** - All 5 sub-tasks (2.0-2.5) implemented and tested. Game fully playable (human vs human).
 
 #### 2.0. Win Condition Detection ✅
 
@@ -642,7 +642,7 @@ pre-commit install --overwrite
 
 **Duration**: 5-7 days
 
-**Goal**: Implement Scout, Strategist, and Executor agents with fallback strategies
+**Goal**: Implement Scout, Strategist, and Executor agents with fallback strategies. **Enables human vs AI gameplay.**
 
 **Why Third**: Agents depend on domain models and game engine. Start with rule-based logic, add LLM integration later.
 
