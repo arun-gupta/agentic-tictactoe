@@ -179,16 +179,14 @@ class TestAgentResultValidation:
             game_phase="opening",
             board_evaluation_score=0.0,
         )
-        result1: AgentResult[BoardAnalysis] = AgentResult.success_result(
+        result1: AgentResult[BoardAnalysis] = AgentResult.success(
             data=board_analysis, execution_time_ms=5.0
         )
         assert isinstance(result1.data, BoardAnalysis)
 
         # Test with Position
         position = Position(row=1, col=1)
-        result2: AgentResult[Position] = AgentResult.success_result(
-            data=position, execution_time_ms=1.0
-        )
+        result2: AgentResult[Position] = AgentResult.success(data=position, execution_time_ms=1.0)
         assert isinstance(result2.data, Position)
 
     def test_timestamp_format(self):
