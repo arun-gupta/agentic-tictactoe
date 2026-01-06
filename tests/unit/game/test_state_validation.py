@@ -3,13 +3,11 @@
 Tests AC-4.1.5.1 through AC-4.1.5.10 - State Validation Rules
 """
 
-import pytest
 
 from src.domain.errors import (
     E_INVALID_SYMBOL_BALANCE,
     E_INVALID_TURN,
     E_MULTIPLE_WINNERS,
-    E_WIN_NOT_FINALIZED,
 )
 from src.domain.models import Board, GameState
 from src.game.engine import GameEngine
