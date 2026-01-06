@@ -220,6 +220,15 @@ class GameEngine:
         """
         return self.game_state
 
+    def get_available_moves(self) -> list[Position]:
+        """Get all available (empty) positions on the board.
+
+        Returns:
+            List of Position objects representing all empty cells on the board.
+            Returns empty list if board is full.
+        """
+        return self.game_state.board.get_empty_positions()
+
     def make_move(self, row: int, col: int, player: PlayerSymbol) -> tuple[bool, str | None]:
         """Execute a move on the board.
 
