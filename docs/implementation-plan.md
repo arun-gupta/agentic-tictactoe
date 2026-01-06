@@ -224,7 +224,7 @@ pre-commit install
 
 **Why First**: Domain models are the foundation - they're used by everything else. They have no dependencies and can be fully tested in isolation.
 
-#### 1.0. Enhance CI/CD Pipeline
+#### 1.3. Enhance CI/CD Pipeline
 
 **Before implementing domain models**, upgrade the CI/CD pipeline from Phase 0:
 
@@ -370,7 +370,7 @@ pre-commit install --overwrite
 
 **Note**: Pre-commit hooks provide fast local feedback. CI/CD is the final quality gate and will catch issues even if pre-commit is skipped.
 
-#### 1.1. Core Game Entities
+#### 1.0. Core Game Entities
 
 **Spec Reference**: Section 2 - Core Game Entities
 
@@ -382,7 +382,7 @@ pre-commit install --overwrite
 
 **Implementation Order:**
 
-**1.1.1. Position**
+**1.0.0. Position**
 - Implement `Position` class with row/col validation (0-2 range)
 - Add immutability (frozen dataclass or Pydantic BaseModel)
 - Implement `__hash__` and `__eq__` for dictionary/set usage
@@ -390,7 +390,7 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-2.1.1 through AC-2.1.5 (5 acceptance criteria)
 
-**1.1.2. Board**
+**1.0.1. Board**
 - Implement `Board` class as 3x3 grid
 - Add methods: `get_cell()`, `set_cell()`, `is_empty()`, `get_empty_positions()`
 - Validate board size is exactly 3x3
@@ -398,7 +398,7 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-2.2.1 through AC-2.2.10 (10 acceptance criteria)
 
-**1.1.3. GameState**
+**1.0.2. GameState**
 - Implement `GameState` with board, players, move tracking
 - Add helper methods: `get_current_player()`, `get_opponent()`
 - Track game over status, winner, draw
@@ -406,7 +406,7 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-2.3.1 through AC-2.3.10 (10 acceptance criteria)
 
-#### 1.2. Agent Domain Models
+#### 1.1. Agent Domain Models
 
 **Spec Reference**: Section 2 - Agent Domain Models
 
@@ -416,7 +416,7 @@ pre-commit install --overwrite
 
 **Implementation Order:**
 
-**1.2.1. Threat**
+**1.1.0. Threat**
 - Implement `Threat` with position, line_type, line_index, severity
 - Validate line_type is one of: 'row', 'column', 'diagonal'
 - Validate line_index is 0-2
@@ -424,14 +424,14 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-2.4.1 through AC-2.4.4 (4 acceptance criteria)
 
-**1.2.2. Opportunity**
+**1.1.1. Opportunity**
 - Implement `Opportunity` with position, line_type, line_index, confidence
 - Validate confidence is 0.0-1.0 (float)
 - Error code: `E_INVALID_CONFIDENCE`
 
 **Test Coverage**: AC-2.5.1 through AC-2.5.4 (4 acceptance criteria)
 
-**1.2.3. StrategicMove**
+**1.1.2. StrategicMove**
 - Implement `StrategicMove` with position, move_type, priority, reasoning
 - Validate move_type is one of: 'center', 'corner', 'edge', 'fork', 'block_fork'
 - Validate priority is 1-10
@@ -440,7 +440,7 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-2.6.1 through AC-2.6.5 (5 acceptance criteria)
 
-**1.2.4. BoardAnalysis**
+**1.1.3. BoardAnalysis**
 - Implement `BoardAnalysis` with threats, opportunities, strategic_moves
 - Add game_phase ('opening', 'midgame', 'endgame')
 - Add board_evaluation_score (-1.0 to 1.0)
@@ -448,21 +448,21 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-2.7.1 through AC-2.7.9 (9 acceptance criteria)
 
-**1.2.5. MovePriority (Enum)**
+**1.1.4. MovePriority (Enum)**
 - Implement `MovePriority` enum with 8 levels and numeric values
 - IMMEDIATE_WIN=100, BLOCK_THREAT=90, FORCE_WIN=80, etc.
 - Ensure enum values are comparable (higher priority > lower priority)
 
 **Test Coverage**: AC-2.8.1 through AC-2.8.9 (9 acceptance criteria)
 
-**1.2.6. MoveRecommendation**
+**1.1.5. MoveRecommendation**
 - Implement `MoveRecommendation` with position, priority, confidence, reasoning
 - Validate all fields per constraints
 - Support optional outcome_description
 
 **Test Coverage**: AC-2.9.1 through AC-2.9.6 (6 acceptance criteria)
 
-**1.2.7. Strategy**
+**1.1.6. Strategy**
 - Implement `Strategy` with primary_move, alternatives, game_plan, risk_assessment
 - Validate alternatives are sorted by priority (descending)
 - Validate risk_assessment is 'low', 'medium', or 'high'
@@ -470,7 +470,7 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-2.10.1 through AC-2.10.7 (7 acceptance criteria)
 
-**1.2.8. MoveExecution**
+**1.1.7. MoveExecution**
 - Implement `MoveExecution` with position, success, validation_errors, execution_time_ms
 - Support validation error list
 - Track actual_priority_used
@@ -478,7 +478,7 @@ pre-commit install --overwrite
 
 **Test Coverage**: AC-2.11.1 through AC-2.11.7 (7 acceptance criteria)
 
-#### 1.3. Result Wrappers
+#### 1.2. Result Wrappers
 
 **Spec Reference**: Section 2 - Result Wrappers
 
@@ -486,7 +486,7 @@ pre-commit install --overwrite
 - `src/domain/result.py`
 - `tests/unit/domain/test_result.py`
 
-**1.3.1. AgentResult**
+**1.2.0. AgentResult**
 - Implement generic `AgentResult[T]` wrapper
 - Add factory methods: `AgentResult.success()`, `AgentResult.error()`
 - Track execution_time_ms, timestamp (ISO 8601), metadata
