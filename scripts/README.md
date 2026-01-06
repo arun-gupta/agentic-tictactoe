@@ -2,16 +2,20 @@
 
 This directory contains demonstration scripts showing the capabilities of each implemented phase.
 
-## Setup
+## Quick Start
 
-Before running any demo scripts, ensure you have the project installed:
+**Easiest way to run demos:**
 
 ```bash
 # From project root
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -e .
+./run_demo.sh
 ```
+
+The script will automatically:
+- Create and activate virtual environment if needed
+- Install dependencies if needed
+- Show menu of available demos
+- Run your selected demo
 
 ## Available Demos
 
@@ -24,9 +28,17 @@ Demonstrates Phase 2 (Game Engine) capabilities with a simulated human vs human 
 - Game rules enforcement (win detection, draw detection)
 - Move validation
 - State management and validation
+- Random valid moves (stateless gameplay)
 - All public methods: `make_move()`, `validate_move()`, `check_winner()`, `check_draw()`, `get_available_moves()`, `get_current_state()`, `validate_state()`, `reset_game()`
 
 **How to run:**
+
+Option 1 (Recommended): Use the demo runner
+```bash
+./run_demo.sh
+```
+
+Option 2: Run directly
 ```bash
 # Ensure virtual environment is activated
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
