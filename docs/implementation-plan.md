@@ -519,26 +519,26 @@ pre-commit install --overwrite
 
 **Why Second**: Game engine depends only on domain models. It implements pure business logic without agents or API concerns.
 
-#### 2.0. Win Condition Detection
+#### 2.0. Win Condition Detection ✅
 
 **Spec Reference**: Section 4.1 - Formal Game Rules - Win Conditions Enumeration
 
 **Files to Create:**
-- `src/engine/game_engine.py`
-- `tests/unit/engine/test_win_conditions.py`
+- `src/game/engine.py` ✅
+- `tests/unit/game/test_win_conditions.py` ✅
 
 **Implementation:**
 - Check all 8 winning lines (3 rows, 3 columns, 2 diagonals)
 - Win detection MUST check all lines after each move
 - Return winner symbol (X or O) or None
 
-**Test Coverage**: AC-4.1.1.1 through AC-4.1.1.10 (10 acceptance criteria)
+**Test Coverage**: AC-4.1.1.1 through AC-4.1.1.10 (10 acceptance criteria) ✅
 
 **Key Test Cases:**
-- Row wins (3 tests)
-- Column wins (3 tests)
-- Diagonal wins (2 tests)
-- No win conditions (2 tests)
+- Row wins (3 tests) ✅
+- Column wins (3 tests) ✅
+- Diagonal wins (2 tests) ✅
+- No win conditions (2 tests) ✅
 
 #### 2.1. Draw Condition Detection
 
