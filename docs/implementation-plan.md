@@ -224,6 +224,131 @@ pre-commit install
 
 **Why First**: Domain models are the foundation - they're used by everything else. They have no dependencies and can be fully tested in isolation.
 
+#### 1.0. Core Game Entities
+
+**Spec Reference**: Section 2 - Core Game Entities
+
+**Files to Create:**
+- `src/domain/models.py`
+- `tests/unit/domain/test_position.py`
+- `tests/unit/domain/test_board.py`
+- `tests/unit/domain/test_game_state.py`
+
+**Implementation Order:**
+
+**1.0.10. Position**
+- Implement `Position` class with row/col validation (0-2 range)
+- Add immutability (frozen dataclass or Pydantic BaseModel)
+- Implement `__hash__` and `__eq__` for dictionary/set usage
+- Add validation for `E_POSITION_OUT_OF_BOUNDS`
+
+**Test Coverage**: AC-2.1.1 through AC-2.1.5 (5 acceptance criteria)
+
+**1.0.10. Board**
+- Implement `Board` class as 3x3 grid
+- Add methods: `get_cell()`, `set_cell()`, `is_empty()`, `get_empty_positions()`
+- Validate board size is exactly 3x3
+- Raise `E_INVALID_BOARD_SIZE` for invalid sizes
+
+**Test Coverage**: AC-2.2.1 through AC-2.2.10 (10 acceptance criteria)
+
+**1.0.10. GameState**
+- Implement `GameState` with board, players, move tracking
+- Add helper methods: `get_current_player()`, `get_opponent()`
+- Track game over status, winner, draw
+- Integrate with Board validation
+
+**Test Coverage**: AC-2.3.1 through AC-2.3.10 (10 acceptance criteria)
+
+#### 1.1. Agent Domain Models
+
+**Spec Reference**: Section 2 - Agent Domain Models
+
+**Files to Create:**
+- `src/domain/agent_models.py`
+- `tests/unit/domain/test_agent_models.py`
+
+**Implementation Order:**
+
+**1.1.10. Threat**
+- Implement `Threat` with position, line_type, line_index, severity
+- Validate line_type is one of: 'row', 'column', 'diagonal'
+- Validate line_index is 0-2
+- Error codes: `E_INVALID_LINE_TYPE`, `E_INVALID_LINE_INDEX`
+
+**Test Coverage**: AC-2.4.1 through AC-2.4.4 (4 acceptance criteria)
+
+**1.1.10. Opportunity**
+- Implement `Opportunity` with position, line_type, line_index, confidence
+- Validate confidence is 0.0-1.0 (float)
+- Error code: `E_INVALID_CONFIDENCE`
+
+**Test Coverage**: AC-2.5.1 through AC-2.5.4 (4 acceptance criteria)
+
+**1.1.10. StrategicMove**
+- Implement `StrategicMove` with position, move_type, priority, reasoning
+- Validate move_type is one of: 'center', 'corner', 'edge', 'fork', 'block_fork'
+- Validate priority is 1-10
+- Validate reasoning is non-empty string
+- Error codes: `E_INVALID_MOVE_TYPE`, `E_INVALID_PRIORITY`, `E_MISSING_REASONING`
+
+**Test Coverage**: AC-2.6.1 through AC-2.6.5 (5 acceptance criteria)
+
+**1.1.10. BoardAnalysis**
+- Implement `BoardAnalysis` with threats, opportunities, strategic_moves
+- Add game_phase ('opening', 'midgame', 'endgame')
+- Add board_evaluation_score (-1.0 to 1.0)
+- Error codes: `E_INVALID_GAME_PHASE`, `E_INVALID_EVAL_SCORE`
+
+**Test Coverage**: AC-2.7.1 through AC-2.7.9 (9 acceptance criteria)
+
+**1.1.10. MovePriority (Enum)**
+- Implement `MovePriority` enum with 8 levels and numeric values
+- IMMEDIATE_WIN=100, BLOCK_THREAT=90, FORCE_WIN=80, etc.
+- Ensure enum values are comparable (higher priority > lower priority)
+
+**Test Coverage**: AC-2.8.1 through AC-2.8.9 (9 acceptance criteria)
+
+**1.1.10. MoveRecommendation**
+- Implement `MoveRecommendation` with position, priority, confidence, reasoning
+- Validate all fields per constraints
+- Support optional outcome_description
+
+**Test Coverage**: AC-2.9.1 through AC-2.9.6 (6 acceptance criteria)
+
+**1.1.10. Strategy**
+- Implement `Strategy` with primary_move, alternatives, game_plan, risk_assessment
+- Validate alternatives are sorted by priority (descending)
+- Validate risk_assessment is 'low', 'medium', or 'high'
+- Error codes: `E_MISSING_PRIMARY_MOVE`, `E_INVALID_RISK_LEVEL`
+
+**Test Coverage**: AC-2.10.1 through AC-2.10.7 (7 acceptance criteria)
+
+**1.1.10. MoveExecution**
+- Implement `MoveExecution` with position, success, validation_errors, execution_time_ms
+- Support validation error list
+- Track actual_priority_used
+- Error code: `E_INVALID_EXECUTION_TIME`
+
+**Test Coverage**: AC-2.11.1 through AC-2.11.7 (7 acceptance criteria)
+
+#### 1.2. Result Wrappers
+
+**Spec Reference**: Section 2 - Result Wrappers
+
+**Files to Create:**
+- `src/domain/result.py`
+- `tests/unit/domain/test_result.py`
+
+**1.2.10. AgentResult**
+- Implement generic `AgentResult[T]` wrapper
+- Add factory methods: `AgentResult.success()`, `AgentResult.error()`
+- Track execution_time_ms, timestamp (ISO 8601), metadata
+- Validate timestamp format, execution time ≥ 0
+- Error codes: `E_MISSING_DATA`, `E_MISSING_ERROR_MESSAGE`, `E_INVALID_TIMESTAMP`
+
+**Test Coverage**: AC-2.12.1 through AC-2.12.8 (8 acceptance criteria)
+
 #### 1.3. Enhance CI/CD Pipeline
 
 **After implementing domain models**, upgrade the CI/CD pipeline from Phase 0 to enforce strict type checking and coverage requirements on the implemented code:
@@ -369,131 +494,6 @@ pre-commit install --overwrite
 - ✅ All checks can be skipped with `--no-verify` if needed
 
 **Note**: Pre-commit hooks provide fast local feedback. CI/CD is the final quality gate and will catch issues even if pre-commit is skipped.
-
-#### 1.0. Core Game Entities
-
-**Spec Reference**: Section 2 - Core Game Entities
-
-**Files to Create:**
-- `src/domain/models.py`
-- `tests/unit/domain/test_position.py`
-- `tests/unit/domain/test_board.py`
-- `tests/unit/domain/test_game_state.py`
-
-**Implementation Order:**
-
-**1.0.10. Position**
-- Implement `Position` class with row/col validation (0-2 range)
-- Add immutability (frozen dataclass or Pydantic BaseModel)
-- Implement `__hash__` and `__eq__` for dictionary/set usage
-- Add validation for `E_POSITION_OUT_OF_BOUNDS`
-
-**Test Coverage**: AC-2.1.1 through AC-2.1.5 (5 acceptance criteria)
-
-**1.0.10. Board**
-- Implement `Board` class as 3x3 grid
-- Add methods: `get_cell()`, `set_cell()`, `is_empty()`, `get_empty_positions()`
-- Validate board size is exactly 3x3
-- Raise `E_INVALID_BOARD_SIZE` for invalid sizes
-
-**Test Coverage**: AC-2.2.1 through AC-2.2.10 (10 acceptance criteria)
-
-**1.0.10. GameState**
-- Implement `GameState` with board, players, move tracking
-- Add helper methods: `get_current_player()`, `get_opponent()`
-- Track game over status, winner, draw
-- Integrate with Board validation
-
-**Test Coverage**: AC-2.3.1 through AC-2.3.10 (10 acceptance criteria)
-
-#### 1.1. Agent Domain Models
-
-**Spec Reference**: Section 2 - Agent Domain Models
-
-**Files to Create:**
-- `src/domain/agent_models.py`
-- `tests/unit/domain/test_agent_models.py`
-
-**Implementation Order:**
-
-**1.1.10. Threat**
-- Implement `Threat` with position, line_type, line_index, severity
-- Validate line_type is one of: 'row', 'column', 'diagonal'
-- Validate line_index is 0-2
-- Error codes: `E_INVALID_LINE_TYPE`, `E_INVALID_LINE_INDEX`
-
-**Test Coverage**: AC-2.4.1 through AC-2.4.4 (4 acceptance criteria)
-
-**1.1.10. Opportunity**
-- Implement `Opportunity` with position, line_type, line_index, confidence
-- Validate confidence is 0.0-1.0 (float)
-- Error code: `E_INVALID_CONFIDENCE`
-
-**Test Coverage**: AC-2.5.1 through AC-2.5.4 (4 acceptance criteria)
-
-**1.1.10. StrategicMove**
-- Implement `StrategicMove` with position, move_type, priority, reasoning
-- Validate move_type is one of: 'center', 'corner', 'edge', 'fork', 'block_fork'
-- Validate priority is 1-10
-- Validate reasoning is non-empty string
-- Error codes: `E_INVALID_MOVE_TYPE`, `E_INVALID_PRIORITY`, `E_MISSING_REASONING`
-
-**Test Coverage**: AC-2.6.1 through AC-2.6.5 (5 acceptance criteria)
-
-**1.1.10. BoardAnalysis**
-- Implement `BoardAnalysis` with threats, opportunities, strategic_moves
-- Add game_phase ('opening', 'midgame', 'endgame')
-- Add board_evaluation_score (-1.0 to 1.0)
-- Error codes: `E_INVALID_GAME_PHASE`, `E_INVALID_EVAL_SCORE`
-
-**Test Coverage**: AC-2.7.1 through AC-2.7.9 (9 acceptance criteria)
-
-**1.1.10. MovePriority (Enum)**
-- Implement `MovePriority` enum with 8 levels and numeric values
-- IMMEDIATE_WIN=100, BLOCK_THREAT=90, FORCE_WIN=80, etc.
-- Ensure enum values are comparable (higher priority > lower priority)
-
-**Test Coverage**: AC-2.8.1 through AC-2.8.9 (9 acceptance criteria)
-
-**1.1.10. MoveRecommendation**
-- Implement `MoveRecommendation` with position, priority, confidence, reasoning
-- Validate all fields per constraints
-- Support optional outcome_description
-
-**Test Coverage**: AC-2.9.1 through AC-2.9.6 (6 acceptance criteria)
-
-**1.1.10. Strategy**
-- Implement `Strategy` with primary_move, alternatives, game_plan, risk_assessment
-- Validate alternatives are sorted by priority (descending)
-- Validate risk_assessment is 'low', 'medium', or 'high'
-- Error codes: `E_MISSING_PRIMARY_MOVE`, `E_INVALID_RISK_LEVEL`
-
-**Test Coverage**: AC-2.10.1 through AC-2.10.7 (7 acceptance criteria)
-
-**1.1.10. MoveExecution**
-- Implement `MoveExecution` with position, success, validation_errors, execution_time_ms
-- Support validation error list
-- Track actual_priority_used
-- Error code: `E_INVALID_EXECUTION_TIME`
-
-**Test Coverage**: AC-2.11.1 through AC-2.11.7 (7 acceptance criteria)
-
-#### 1.2. Result Wrappers
-
-**Spec Reference**: Section 2 - Result Wrappers
-
-**Files to Create:**
-- `src/domain/result.py`
-- `tests/unit/domain/test_result.py`
-
-**1.2.10. AgentResult**
-- Implement generic `AgentResult[T]` wrapper
-- Add factory methods: `AgentResult.success()`, `AgentResult.error()`
-- Track execution_time_ms, timestamp (ISO 8601), metadata
-- Validate timestamp format, execution time ≥ 0
-- Error codes: `E_MISSING_DATA`, `E_MISSING_ERROR_MESSAGE`, `E_INVALID_TIMESTAMP`
-
-**Test Coverage**: AC-2.12.1 through AC-2.12.8 (8 acceptance criteria)
 
 **Phase 1 Deliverables:**
 - ✅ Enhanced CI/CD pipeline with coverage and type checking
