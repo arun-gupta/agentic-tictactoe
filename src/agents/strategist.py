@@ -10,6 +10,7 @@ This is a rule-based implementation (Phase 3). LLM enhancement comes in Phase 5.
 """
 
 import time
+from typing import Literal
 
 from src.agents.base import BaseAgent
 from src.domain.agent_models import (
@@ -37,7 +38,7 @@ class StrategistAgent(BaseAgent):
         """
         self.ai_symbol = ai_symbol
 
-    def analyze(self, game_state) -> object:
+    def analyze(self, game_state: object) -> object:
         """Not used - Strategist uses plan() instead of analyze().
 
         This satisfies BaseAgent interface but Strategist receives
@@ -344,7 +345,7 @@ class StrategistAgent(BaseAgent):
 
         return f"Make strategic move at ({primary_move.position.row}, {primary_move.position.col})"
 
-    def _assess_risk(self, analysis: BoardAnalysis) -> str:
+    def _assess_risk(self, analysis: BoardAnalysis) -> Literal["low", "medium", "high"]:
         """Assess risk level based on board analysis.
 
         Risk levels:
