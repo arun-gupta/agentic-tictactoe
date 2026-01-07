@@ -195,9 +195,7 @@ class StrategistAgent(BaseAgent):
             reasoning="Fallback to center position",
         )
 
-    def _is_strategic_position_available(
-        self, analysis: BoardAnalysis, position: Position
-    ) -> bool:
+    def _is_strategic_position_available(self, analysis: BoardAnalysis, position: Position) -> bool:
         """Check if a strategic position is available (in strategic_moves list).
 
         Args:
@@ -207,9 +205,7 @@ class StrategistAgent(BaseAgent):
         Returns:
             True if position is in strategic_moves list
         """
-        return any(
-            move.position == position for move in analysis.strategic_moves
-        )
+        return any(move.position == position for move in analysis.strategic_moves)
 
     # =========================================================================
     # 3.1.2: Strategy Assembly
@@ -319,9 +315,7 @@ class StrategistAgent(BaseAgent):
         # Return top 5 alternatives
         return alternatives[:5]
 
-    def _generate_game_plan(
-        self, analysis: BoardAnalysis, primary_move: MoveRecommendation
-    ) -> str:
+    def _generate_game_plan(self, analysis: BoardAnalysis, primary_move: MoveRecommendation) -> str:
         """Generate game plan explanation.
 
         Creates human-readable explanation of the strategy.
