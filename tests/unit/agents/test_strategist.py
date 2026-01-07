@@ -5,13 +5,11 @@ This file includes:
 2. Official acceptance criteria tests (AC-3.2.1 through AC-3.2.8)
 """
 
-import pytest
-
 from src.agents.strategist import StrategistAgent
 from src.domain.agent_models import (
     BoardAnalysis,
-    MoveRecommendation,
     MovePriority,
+    MoveRecommendation,
     Opportunity,
     StrategicMove,
     Threat,
