@@ -66,17 +66,17 @@ class StrategistAgent(BaseAgent):
             # 3.1.1: Priority-Based Move Selection (IMPLEMENTED)
             primary_move = self._select_primary_move(analysis)
 
-            # TODO 3.1.2: Strategy Assembly - NOT YET IMPLEMENTED
-            # TODO: Generate alternative moves
-            # TODO: Generate game plan
-            # TODO: Assess risk
+            # 3.1.2: Strategy Assembly (IMPLEMENTING NOW)
+            alternatives = self._generate_alternatives(analysis, primary_move)
+            game_plan = self._generate_game_plan(analysis, primary_move)
+            risk_assessment = self._assess_risk(analysis)
 
-            # Minimal strategy for now
+            # Create complete strategy
             strategy = Strategy(
                 primary_move=primary_move,
-                alternatives=[],  # TODO: Implement in 3.1.2
-                game_plan="TODO: Game plan will be implemented in 3.1.2",  # TODO: Implement in 3.1.2
-                risk_assessment="medium",  # TODO: Implement in 3.1.2
+                alternatives=alternatives,
+                game_plan=game_plan,
+                risk_assessment=risk_assessment,
             )
 
             execution_time = (time.time() - start_time) * 1000  # Convert to ms
@@ -210,3 +210,173 @@ class StrategistAgent(BaseAgent):
         return any(
             move.position == position for move in analysis.strategic_moves
         )
+
+    # =========================================================================
+    # 3.1.2: Strategy Assembly
+    # =========================================================================
+
+    def _generate_alternatives(
+        self, analysis: BoardAnalysis, primary_move: MoveRecommendation
+    ) -> list[MoveRecommendation]:
+        """Generate alternative moves sorted by priority descending.
+
+        Creates list of backup moves in case primary fails.
+        Excludes the primary move from alternatives.
+
+        Args:
+            analysis: BoardAnalysis with all available moves
+            primary_move: The selected primary move
+
+        Returns:
+            List of alternative MoveRecommendations sorted by priority (descending)
+        """
+        alternatives: list[MoveRecommendation] = []
+
+        # Add opportunities (wins) as alternatives if not primary
+        for opp in analysis.opportunities:
+            if opp.position != primary_move.position:
+                alternatives.append(
+                    MoveRecommendation(
+                        position=opp.position,
+                        priority=MovePriority.IMMEDIATE_WIN,
+                        confidence=1.0,  # Hardcoded for now (will be 3.1.3)
+                        reasoning="Alternative winning move",
+                    )
+                )
+
+        # Add threats (blocks) as alternatives if not primary
+        for threat in analysis.threats:
+            if threat.position != primary_move.position:
+                alternatives.append(
+                    MoveRecommendation(
+                        position=threat.position,
+                        priority=MovePriority.BLOCK_THREAT,
+                        confidence=0.95,  # Hardcoded for now (will be 3.1.3)
+                        reasoning="Alternative threat blocking move",
+                    )
+                )
+
+        # Add strategic positions as alternatives
+        center = Position(row=1, col=1)
+        if (
+            self._is_strategic_position_available(analysis, center)
+            and center != primary_move.position
+        ):
+            alternatives.append(
+                MoveRecommendation(
+                    position=center,
+                    priority=MovePriority.CENTER_CONTROL,
+                    confidence=0.7,  # Hardcoded for now (will be 3.1.3)
+                    reasoning="Alternative center control",
+                )
+            )
+
+        # Add corners
+        corners = [
+            Position(row=0, col=0),
+            Position(row=0, col=2),
+            Position(row=2, col=0),
+            Position(row=2, col=2),
+        ]
+        for corner in corners:
+            if (
+                self._is_strategic_position_available(analysis, corner)
+                and corner != primary_move.position
+            ):
+                alternatives.append(
+                    MoveRecommendation(
+                        position=corner,
+                        priority=MovePriority.CORNER_CONTROL,
+                        confidence=0.6,  # Hardcoded for now (will be 3.1.3)
+                        reasoning=f"Alternative corner at ({corner.row}, {corner.col})",
+                    )
+                )
+
+        # Add edges
+        edges = [
+            Position(row=0, col=1),
+            Position(row=1, col=0),
+            Position(row=1, col=2),
+            Position(row=2, col=1),
+        ]
+        for edge in edges:
+            if (
+                self._is_strategic_position_available(analysis, edge)
+                and edge != primary_move.position
+            ):
+                alternatives.append(
+                    MoveRecommendation(
+                        position=edge,
+                        priority=MovePriority.EDGE_PLAY,
+                        confidence=0.5,  # Hardcoded for now (will be 3.1.3)
+                        reasoning=f"Alternative edge at ({edge.row}, {edge.col})",
+                    )
+                )
+
+        # Sort by priority (descending)
+        alternatives.sort(key=lambda x: x.priority.value, reverse=True)
+
+        # Return top 5 alternatives
+        return alternatives[:5]
+
+    def _generate_game_plan(
+        self, analysis: BoardAnalysis, primary_move: MoveRecommendation
+    ) -> str:
+        """Generate game plan explanation.
+
+        Creates human-readable explanation of the strategy.
+
+        Args:
+            analysis: BoardAnalysis with game state info
+            primary_move: The selected primary move
+
+        Returns:
+            Game plan string
+        """
+        phase = analysis.game_phase
+        priority = primary_move.priority
+
+        if priority == MovePriority.IMMEDIATE_WIN:
+            return f"Win the game immediately by playing at ({primary_move.position.row}, {primary_move.position.col})"
+
+        if priority == MovePriority.BLOCK_THREAT:
+            return f"Block opponent's winning threat at ({primary_move.position.row}, {primary_move.position.col})"
+
+        if priority == MovePriority.CENTER_CONTROL:
+            return f"Control the center position to maximize future opportunities ({phase} phase)"
+
+        if priority == MovePriority.CORNER_CONTROL:
+            return f"Take corner position for strategic advantage ({phase} phase)"
+
+        if priority == MovePriority.EDGE_PLAY:
+            return f"Play edge position to maintain board presence ({phase} phase)"
+
+        return f"Make strategic move at ({primary_move.position.row}, {primary_move.position.col})"
+
+    def _assess_risk(self, analysis: BoardAnalysis) -> str:
+        """Assess risk level based on board analysis.
+
+        Risk levels:
+        - low: Winning position or no threats
+        - medium: Balanced position with some threats
+        - high: Multiple threats or losing position
+
+        Args:
+            analysis: BoardAnalysis with threats and evaluation
+
+        Returns:
+            Risk level: 'low', 'medium', or 'high'
+        """
+        threat_count = len(analysis.threats)
+        eval_score = analysis.board_evaluation_score
+
+        # High risk: Multiple threats or very negative evaluation
+        if threat_count >= 2 or eval_score <= -0.5:
+            return "high"
+
+        # Low risk: No threats and positive evaluation
+        if threat_count == 0 and eval_score >= 0.3:
+            return "low"
+
+        # Medium risk: Everything else
+        return "medium"

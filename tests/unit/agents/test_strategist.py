@@ -119,3 +119,142 @@ class TestPriorityBasedSelection:
         # Should take the win, not block the threat
         assert strategy.primary_move.position == Position(row=0, col=0)
         assert strategy.primary_move.priority == MovePriority.IMMEDIATE_WIN
+
+
+# ==============================================================================
+# SUBSECTION 3.1.2: Strategy Assembly
+# ==============================================================================
+class TestStrategyAssembly:
+    """Development tests for Strategy object assembly."""
+
+    def test_subsection_3_1_2_includes_primary_move(self) -> None:
+        """Subsection 3.1.2: Strategy includes primary move recommendation."""
+        strategist = StrategistAgent(ai_symbol="O")
+
+        analysis = BoardAnalysis(
+            threats=[],
+            opportunities=[
+                Opportunity(
+                    position=Position(row=1, col=1),
+                    line_type="diagonal",
+                    line_index=0,
+                    confidence=1.0,
+                )
+            ],
+            strategic_moves=[],
+            game_phase="opening",
+            board_evaluation_score=0.3,
+        )
+
+        result = strategist.plan(analysis)
+
+        assert result.success
+        strategy = result.data
+
+        # Primary move should exist and be valid
+        assert strategy.primary_move is not None
+        assert isinstance(strategy.primary_move, MoveRecommendation)
+        assert strategy.primary_move.position == Position(row=1, col=1)
+        assert strategy.primary_move.reasoning != ""
+
+    def test_subsection_3_1_2_includes_alternatives(self) -> None:
+        """Subsection 3.1.2: Strategy includes alternative moves sorted by priority."""
+        strategist = StrategistAgent(ai_symbol="O")
+
+        # Multiple strategic options
+        analysis = BoardAnalysis(
+            threats=[
+                Threat(
+                    position=Position(row=0, col=0),
+                    line_type="row",
+                    line_index=0,
+                    severity="critical",
+                )
+            ],
+            opportunities=[
+                Opportunity(
+                    position=Position(row=2, col=2),
+                    line_type="diagonal",
+                    line_index=1,
+                    confidence=1.0,
+                )
+            ],
+            strategic_moves=[
+                StrategicMove(
+                    position=Position(row=1, col=1),
+                    move_type="center",
+                    priority=5,
+                    reasoning="Control center",
+                )
+            ],
+            game_phase="opening",
+            board_evaluation_score=0.2,
+        )
+
+        result = strategist.plan(analysis)
+
+        assert result.success
+        strategy = result.data
+
+        # Should have at least 2 alternatives
+        assert len(strategy.alternatives) >= 2
+
+        # Alternatives should be sorted by priority (descending)
+        priorities = [alt.priority.value for alt in strategy.alternatives]
+        assert priorities == sorted(priorities, reverse=True)
+
+    def test_subsection_3_1_2_includes_game_plan(self) -> None:
+        """Subsection 3.1.2: Strategy includes game plan explanation."""
+        strategist = StrategistAgent(ai_symbol="O")
+
+        analysis = BoardAnalysis(
+            threats=[
+                Threat(
+                    position=Position(row=0, col=1),
+                    line_type="row",
+                    line_index=0,
+                    severity="critical",
+                )
+            ],
+            opportunities=[],
+            strategic_moves=[],
+            game_phase="midgame",
+            board_evaluation_score=-0.2,
+        )
+
+        result = strategist.plan(analysis)
+
+        assert result.success
+        strategy = result.data
+
+        # Game plan should be non-empty string and not the TODO placeholder
+        assert isinstance(strategy.game_plan, str)
+        assert len(strategy.game_plan) > 0
+        assert "TODO" not in strategy.game_plan
+
+    def test_subsection_3_1_2_includes_risk_assessment(self) -> None:
+        """Subsection 3.1.2: Strategy includes risk level assessment."""
+        strategist = StrategistAgent(ai_symbol="O")
+
+        analysis = BoardAnalysis(
+            threats=[],
+            opportunities=[],
+            strategic_moves=[
+                StrategicMove(
+                    position=Position(row=1, col=1),
+                    move_type="center",
+                    priority=5,
+                    reasoning="Control center",
+                )
+            ],
+            game_phase="opening",
+            board_evaluation_score=0.0,
+        )
+
+        result = strategist.plan(analysis)
+
+        assert result.success
+        strategy = result.data
+
+        # Risk assessment should be one of: low, medium, high
+        assert strategy.risk_assessment in ["low", "medium", "high"]
