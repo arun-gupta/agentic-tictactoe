@@ -256,3 +256,95 @@ class TestStrategyAssembly:
 
         # Risk assessment should be one of: low, medium, high
         assert strategy.risk_assessment in ["low", "medium", "high"]
+
+
+# ==============================================================================
+# SUBSECTION 3.1.3: Confidence Scoring
+# ==============================================================================
+class TestConfidenceScoring:
+    """Development tests for confidence value assignment."""
+
+    def test_subsection_3_1_3_immediate_win_confidence_1_0(self) -> None:
+        """Subsection 3.1.3: Immediate win gets confidence=1.0."""
+        strategist = StrategistAgent(ai_symbol="O")
+
+        analysis = BoardAnalysis(
+            threats=[],
+            opportunities=[
+                Opportunity(
+                    position=Position(row=2, col=0),
+                    line_type="column",
+                    line_index=0,
+                    confidence=1.0,
+                )
+            ],
+            strategic_moves=[],
+            game_phase="endgame",
+            board_evaluation_score=0.9,
+        )
+
+        result = strategist.plan(analysis)
+
+        assert result.success
+        strategy = result.data
+
+        # IMMEDIATE_WIN should have confidence 1.0
+        assert strategy.primary_move.priority == MovePriority.IMMEDIATE_WIN
+        assert strategy.primary_move.confidence == 1.0
+
+    def test_subsection_3_1_3_block_threat_confidence_0_95(self) -> None:
+        """Subsection 3.1.3: Block threat gets confidence=0.95."""
+        strategist = StrategistAgent(ai_symbol="O")
+
+        analysis = BoardAnalysis(
+            threats=[
+                Threat(
+                    position=Position(row=1, col=2),
+                    line_type="row",
+                    line_index=1,
+                    severity="critical",
+                )
+            ],
+            opportunities=[],
+            strategic_moves=[],
+            game_phase="midgame",
+            board_evaluation_score=-0.4,
+        )
+
+        result = strategist.plan(analysis)
+
+        assert result.success
+        strategy = result.data
+
+        # BLOCK_THREAT should have confidence 0.95
+        assert strategy.primary_move.priority == MovePriority.BLOCK_THREAT
+        assert strategy.primary_move.confidence == 0.95
+
+    def test_subsection_3_1_3_center_control_confidence_0_7(self) -> None:
+        """Subsection 3.1.3: Center control gets confidence=0.7."""
+        strategist = StrategistAgent(ai_symbol="O")
+
+        # Empty board analysis - should default to center
+        analysis = BoardAnalysis(
+            threats=[],
+            opportunities=[],
+            strategic_moves=[
+                StrategicMove(
+                    position=Position(row=1, col=1),
+                    move_type="center",
+                    priority=5,
+                    reasoning="Control center",
+                )
+            ],
+            game_phase="opening",
+            board_evaluation_score=0.0,
+        )
+
+        result = strategist.plan(analysis)
+
+        assert result.success
+        strategy = result.data
+
+        # CENTER_CONTROL should have confidence 0.7
+        assert strategy.primary_move.priority == MovePriority.CENTER_CONTROL
+        assert strategy.primary_move.confidence == 0.7

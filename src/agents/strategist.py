@@ -119,33 +119,27 @@ class StrategistAgent(BaseAgent):
         # Priority 1: IMMEDIATE_WIN - Take winning opportunity
         if analysis.opportunities:
             opportunity = analysis.opportunities[0]  # Take first opportunity
-            # Hardcoded confidence for now (will be 3.1.3)
-            return MoveRecommendation(
+            return self._create_recommendation(
                 position=opportunity.position,
                 priority=MovePriority.IMMEDIATE_WIN,
-                confidence=1.0,
                 reasoning="Take immediate winning move",
             )
 
         # Priority 2: BLOCK_THREAT - Block opponent win
         if analysis.threats:
             threat = analysis.threats[0]  # Block first threat
-            # Hardcoded confidence for now (will be 3.1.3)
-            return MoveRecommendation(
+            return self._create_recommendation(
                 position=threat.position,
                 priority=MovePriority.BLOCK_THREAT,
-                confidence=0.95,
                 reasoning="Block opponent's winning threat",
             )
 
         # Priority 5: CENTER_CONTROL - Take center if available
         center = Position(row=1, col=1)
         if self._is_strategic_position_available(analysis, center):
-            # Hardcoded confidence for now (will be 3.1.3)
-            return MoveRecommendation(
+            return self._create_recommendation(
                 position=center,
                 priority=MovePriority.CENTER_CONTROL,
-                confidence=0.7,
                 reasoning="Control center position for strategic advantage",
             )
 
@@ -158,11 +152,9 @@ class StrategistAgent(BaseAgent):
         ]
         for corner in corners:
             if self._is_strategic_position_available(analysis, corner):
-                # Hardcoded confidence for now (will be 3.1.3)
-                return MoveRecommendation(
+                return self._create_recommendation(
                     position=corner,
                     priority=MovePriority.CORNER_CONTROL,
-                    confidence=0.6,
                     reasoning="Take corner position for strategic control",
                 )
 
@@ -175,21 +167,17 @@ class StrategistAgent(BaseAgent):
         ]
         for edge in edges:
             if self._is_strategic_position_available(analysis, edge):
-                # Hardcoded confidence for now (will be 3.1.3)
-                return MoveRecommendation(
+                return self._create_recommendation(
                     position=edge,
                     priority=MovePriority.EDGE_PLAY,
-                    confidence=0.5,
                     reasoning="Take edge position",
                 )
 
         # Fallback: If no strategic moves found, return center
         # (This shouldn't happen in normal gameplay)
-        # Hardcoded confidence for now (will be 3.1.3)
-        return MoveRecommendation(
+        return self._create_recommendation(
             position=Position(row=1, col=1),
             priority=MovePriority.RANDOM_VALID,
-            confidence=0.3,
             reasoning="Fallback to center position",
         )
 
@@ -204,6 +192,53 @@ class StrategistAgent(BaseAgent):
             True if position is in strategic_moves list
         """
         return any(move.position == position for move in analysis.strategic_moves)
+
+    # =========================================================================
+    # 3.1.3: Confidence Scoring
+    # =========================================================================
+
+    def _create_recommendation(
+        self, position: Position, priority: MovePriority, reasoning: str
+    ) -> MoveRecommendation:
+        """Create MoveRecommendation with confidence based on priority.
+
+        Confidence mapping (Section 3.5):
+        - IMMEDIATE_WIN: 1.0
+        - BLOCK_THREAT: 0.95
+        - FORCE_WIN: 0.85
+        - PREVENT_FORK: 0.80
+        - CENTER_CONTROL: 0.70
+        - CORNER_CONTROL: 0.60
+        - EDGE_PLAY: 0.50
+        - RANDOM_VALID: 0.30
+
+        Args:
+            position: Position for the move
+            priority: Priority level
+            reasoning: Explanation of why this move
+
+        Returns:
+            MoveRecommendation with confidence score
+        """
+        confidence_map = {
+            MovePriority.IMMEDIATE_WIN: 1.0,
+            MovePriority.BLOCK_THREAT: 0.95,
+            MovePriority.FORCE_WIN: 0.85,
+            MovePriority.PREVENT_FORK: 0.80,
+            MovePriority.CENTER_CONTROL: 0.70,
+            MovePriority.CORNER_CONTROL: 0.60,
+            MovePriority.EDGE_PLAY: 0.50,
+            MovePriority.RANDOM_VALID: 0.30,
+        }
+
+        confidence = confidence_map.get(priority, 0.5)
+
+        return MoveRecommendation(
+            position=position,
+            priority=priority,
+            confidence=confidence,
+            reasoning=reasoning,
+        )
 
     # =========================================================================
     # 3.1.2: Strategy Assembly
@@ -230,10 +265,9 @@ class StrategistAgent(BaseAgent):
         for opp in analysis.opportunities:
             if opp.position != primary_move.position:
                 alternatives.append(
-                    MoveRecommendation(
+                    self._create_recommendation(
                         position=opp.position,
                         priority=MovePriority.IMMEDIATE_WIN,
-                        confidence=1.0,  # Hardcoded for now (will be 3.1.3)
                         reasoning="Alternative winning move",
                     )
                 )
@@ -242,10 +276,9 @@ class StrategistAgent(BaseAgent):
         for threat in analysis.threats:
             if threat.position != primary_move.position:
                 alternatives.append(
-                    MoveRecommendation(
+                    self._create_recommendation(
                         position=threat.position,
                         priority=MovePriority.BLOCK_THREAT,
-                        confidence=0.95,  # Hardcoded for now (will be 3.1.3)
                         reasoning="Alternative threat blocking move",
                     )
                 )
@@ -257,10 +290,9 @@ class StrategistAgent(BaseAgent):
             and center != primary_move.position
         ):
             alternatives.append(
-                MoveRecommendation(
+                self._create_recommendation(
                     position=center,
                     priority=MovePriority.CENTER_CONTROL,
-                    confidence=0.7,  # Hardcoded for now (will be 3.1.3)
                     reasoning="Alternative center control",
                 )
             )
@@ -278,10 +310,9 @@ class StrategistAgent(BaseAgent):
                 and corner != primary_move.position
             ):
                 alternatives.append(
-                    MoveRecommendation(
+                    self._create_recommendation(
                         position=corner,
                         priority=MovePriority.CORNER_CONTROL,
-                        confidence=0.6,  # Hardcoded for now (will be 3.1.3)
                         reasoning=f"Alternative corner at ({corner.row}, {corner.col})",
                     )
                 )
@@ -299,10 +330,9 @@ class StrategistAgent(BaseAgent):
                 and edge != primary_move.position
             ):
                 alternatives.append(
-                    MoveRecommendation(
+                    self._create_recommendation(
                         position=edge,
                         priority=MovePriority.EDGE_PLAY,
-                        confidence=0.5,  # Hardcoded for now (will be 3.1.3)
                         reasoning=f"Alternative edge at ({edge.row}, {edge.col})",
                     )
                 )

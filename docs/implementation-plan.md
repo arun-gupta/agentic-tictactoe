@@ -731,17 +731,17 @@ pre-commit install --overwrite
 - ✅ Strategy includes game plan explanation
 - ✅ Strategy includes risk assessment
 
-**3.1.3. Confidence Scoring**
-- Assign confidence values per priority level (spec Section 3.5)
-- IMMEDIATE_WIN: confidence = 1.0
-- BLOCK_THREAT: confidence = 0.95
-- CENTER_CONTROL: confidence = 0.7
-- etc.
+**3.1.3. Confidence Scoring** ✅
+- ✅ Assign confidence values per priority level (spec Section 3.5)
+- ✅ IMMEDIATE_WIN: confidence = 1.0
+- ✅ BLOCK_THREAT: confidence = 0.95
+- ✅ CENTER_CONTROL: confidence = 0.7
+- ✅ etc.
 
-**Subsection Tests** (3 tests for incremental development):
-- Immediate win gets confidence = 1.0
-- Block threat gets confidence = 0.95
-- Center control gets confidence = 0.7
+**Subsection Tests** (3 tests for incremental development): ✅
+- ✅ Immediate win gets confidence = 1.0
+- ✅ Block threat gets confidence = 0.95
+- ✅ Center control gets confidence = 0.7
 
 **Test Coverage**:
 - **Subsection Tests**: 10 tests (3 + 4 + 3) for incremental development and debugging
