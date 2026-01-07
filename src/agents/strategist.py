@@ -10,16 +10,13 @@ This is a rule-based implementation (Phase 3). LLM enhancement comes in Phase 5.
 """
 
 import time
-from typing import Optional
 
 from src.agents.base import BaseAgent
 from src.domain.agent_models import (
     BoardAnalysis,
-    MoveRecommendation,
     MovePriority,
-    Opportunity,
+    MoveRecommendation,
     Strategy,
-    Threat,
 )
 from src.domain.models import Position
 from src.domain.result import AgentResult
