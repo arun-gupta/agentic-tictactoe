@@ -692,13 +692,13 @@ pre-commit install --overwrite
 
 **Note**: LLM integration for Scout will be added in Phase 5. For now, rule-based analysis is sufficient and allows agents to function without LLM dependency.
 
-#### 3.1. Strategist Agent (Move Selection)
+#### 3.1. Strategist Agent (Move Selection) ✅
 
 **Spec Reference**: Section 3 - Agent Responsibilities - Strategist Agent
 
-**Files to Create:**
-- `src/agents/strategist.py`
-- `tests/unit/agents/test_strategist.py`
+**Files Created:**
+- ✅ `src/agents/strategist.py`
+- ✅ `tests/unit/agents/test_strategist.py`
 
 **Implementation:**
 
@@ -743,10 +743,10 @@ pre-commit install --overwrite
 - ✅ Block threat gets confidence = 0.95
 - ✅ Center control gets confidence = 0.7
 
-**Test Coverage**:
-- **Subsection Tests**: 10 tests (3 + 4 + 3) for incremental development and debugging
-- **Acceptance Criteria**: AC-3.2.1 through AC-3.2.8 (8 official tests for final verification)
-- **Total**: 18 tests for Phase 3.1
+**Test Coverage**: ✅
+- **Subsection Tests**: ✅ 10 tests (3 + 4 + 3) for incremental development and debugging
+- **Acceptance Criteria**: ✅ AC-3.2.1 through AC-3.2.8 (8 official tests for final verification)
+- **Total**: ✅ 18 tests for Phase 3.1 - ALL PASSING
 
 #### 3.2. Executor Agent (Move Execution)
 
