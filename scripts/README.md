@@ -18,7 +18,20 @@ Demonstrates Phase 2 (Game Engine):
 - State management
 - Random valid moves (stateless gameplay)
 
+**Run:** `python scripts/play_human_vs_human.py`
+
+### Human vs AI Game
+
+Demonstrates Phase 3 (Agent System):
+- Agent Pipeline orchestration (Scout → Strategist → Executor)
+- Scout Agent: Board analysis, threat/opportunity detection
+- Strategist Agent: Priority-based move selection
+- Executor Agent: Move validation and execution
+- Fallback strategies for timeouts and failures
+- Two modes: Interactive (human input) or Simulation (auto)
+
+**Run:** `python scripts/play_human_vs_ai.py`
+
 ### Coming Soon
 
-- Human vs AI - Phase 3 (Agent System)
 - AI vs AI - Phase 3 (Agent System)

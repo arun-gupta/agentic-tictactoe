@@ -8,7 +8,6 @@ the game engine correctly enforces rules, detects wins/draws, and manages state.
 
 import random
 
-from src.domain.models import Position
 from src.game.engine import GameEngine
 
 
@@ -57,7 +56,7 @@ def main() -> None:
 
     print(
         "\nNote: Players make random valid moves to demonstrate game engine.\n"
-        "      AI threat detection will be added in Phase 3 (Agent System).\n"
+        "      Phase 3 Agent System is now available - see play_human_vs_ai.py for AI gameplay.\n"
     )
 
     # Play game with random moves until someone wins or draw
@@ -100,7 +99,7 @@ def main() -> None:
             print(f"❌ MOVE FAILED: {error}")
             continue
 
-        print(f"✓ Move successful")
+        print("✓ Move successful")
 
         # Show board
         print_board(engine)
@@ -111,10 +110,10 @@ def main() -> None:
             print(f"\n{'=' * 50}")
             print(f"🎉 GAME OVER: {player_name} ({winner}) WINS!")
             print(f"{'=' * 50}")
-            print(f"\nFinal stats:")
+            print("\nFinal stats:")
             print(f"- Total moves: {engine.get_current_state().move_count}")
             print(f"- Winner: {winner}")
-            print(f"- Game state validation: ", end="")
+            print("- Game state validation: ", end="")
             is_valid, error = engine.validate_state()
             if is_valid:
                 print("✓ VALID")

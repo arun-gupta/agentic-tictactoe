@@ -37,11 +37,12 @@ fi
 # Show available demos
 echo -e "${BLUE}Available demos:${NC}"
 echo "  1) Human vs Human (Phase 2 - Game Engine)"
-echo "  2) Exit"
+echo "  2) Human vs AI (Phase 3 - Agent System)"
+echo "  3) Exit"
 echo ""
 
 # Get user choice
-read -p "Select demo to run (1-2): " choice
+read -p "Select demo to run (1-3): " choice
 
 case $choice in
     1)
@@ -49,6 +50,10 @@ case $choice in
         python -m scripts.play_human_vs_human
         ;;
     2)
+        echo -e "\n${BLUE}Running Human vs AI demo...${NC}\n"
+        python -m scripts.play_human_vs_ai
+        ;;
+    3)
         echo -e "${GREEN}Goodbye!${NC}"
         exit 0
         ;;
