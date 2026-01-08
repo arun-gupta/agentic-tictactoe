@@ -94,6 +94,7 @@ class AgentPipeline:
 
             # Handle Scout failure/timeout - use Fallback Rule Set 1
             fallback_metadata = {}
+            board_analysis: BoardAnalysis | None = None
             if not scout_result.success or scout_result.data is None:
                 # Fallback Rule Set 1: Use rule-based analysis (call Scout directly without timeout)
                 board_analysis = self._fallback_rule_set_1_rule_based_analysis(game_state)
@@ -112,7 +113,16 @@ class AgentPipeline:
                     )
                 fallback_metadata["fallback_used"] = "rule_based_analysis"
             else:
-                board_analysis: BoardAnalysis = scout_result.data
+                board_analysis = scout_result.data
+
+            # At this point, board_analysis is guaranteed to be not None
+            if board_analysis is None:
+                execution_time = (time.time() - pipeline_start_time) * 1000
+                return AgentResult[MoveExecution](
+                    success=False,
+                    error_message="Internal error: board_analysis is None",
+                    execution_time_ms=execution_time,
+                )
 
             # Check total pipeline timeout before continuing
             elapsed_time = time.time() - pipeline_start_time
@@ -133,6 +143,7 @@ class AgentPipeline:
             )
 
             # Handle Strategist failure/timeout - use Fallback Rule Set 2
+            strategy: Strategy | None = None
             if not strategist_result.success or strategist_result.data is None:
                 # Fallback Rule Set 2: Select from BoardAnalysis opportunities/strategic_moves
                 strategy = self._fallback_rule_set_2_scout_opportunity_fallback(board_analysis)
@@ -153,7 +164,16 @@ class AgentPipeline:
                     )
                 fallback_metadata["fallback_used"] = "scout_opportunity"
             else:
-                strategy: Strategy = strategist_result.data
+                strategy = strategist_result.data
+
+            # At this point, strategy is guaranteed to be not None
+            if strategy is None:
+                execution_time = (time.time() - pipeline_start_time) * 1000
+                return AgentResult[MoveExecution](
+                    success=False,
+                    error_message="Internal error: strategy is None",
+                    execution_time_ms=execution_time,
+                )
 
             # Check total pipeline timeout before continuing
             elapsed_time = time.time() - pipeline_start_time
@@ -307,7 +327,7 @@ class AgentPipeline:
                 selected_opp = opportunities_sorted[0]
                 primary_move = MoveRecommendation(
                     position=selected_opp.position,
-                    priority=MovePriority.IMMEDIATE_WIN.value,
+                    priority=MovePriority.IMMEDIATE_WIN,
                     confidence=selected_opp.confidence,
                     reasoning=f"Fallback: Using highest priority opportunity (IMMEDIATE_WIN, confidence={selected_opp.confidence})",
                 )
@@ -323,7 +343,7 @@ class AgentPipeline:
                 selected_threat = board_analysis.threats[0]  # All threats are critical
                 primary_move = MoveRecommendation(
                     position=selected_threat.position,
-                    priority=MovePriority.BLOCK_THREAT.value,
+                    priority=MovePriority.BLOCK_THREAT,
                     confidence=1.0,  # Critical threat, high confidence
                     reasoning="Fallback: Blocking threat (BLOCK_THREAT)",
                 )
@@ -345,11 +365,11 @@ class AgentPipeline:
                 # Map strategic move priority (1-10) to MovePriority
                 # Center=10 -> CENTER_CONTROL=50, Corner=7 -> CORNER_CONTROL=40, Edge=4 -> EDGE_PLAY=30
                 if selected_strategic.move_type == "center":
-                    priority = MovePriority.CENTER_CONTROL.value
+                    priority = MovePriority.CENTER_CONTROL
                 elif selected_strategic.move_type == "corner":
-                    priority = MovePriority.CORNER_CONTROL.value
+                    priority = MovePriority.CORNER_CONTROL
                 else:
-                    priority = MovePriority.EDGE_PLAY.value
+                    priority = MovePriority.EDGE_PLAY
                 primary_move = MoveRecommendation(
                     position=selected_strategic.position,
                     priority=priority,
@@ -437,7 +457,7 @@ class AgentPipeline:
                     validation_errors=[],
                     execution_time_ms=0.0,
                     reasoning=f"Fallback: Using first available empty cell at ({selected_pos.row}, {selected_pos.col})",
-                    actual_priority_used=MovePriority.RANDOM_VALID.value,
+                    actual_priority_used=MovePriority.RANDOM_VALID,
                 )
 
             return None
