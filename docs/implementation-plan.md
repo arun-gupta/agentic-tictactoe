@@ -805,18 +805,18 @@ pre-commit install --overwrite
 
 **Implementation:**
 
-**3.3.1. Pipeline Coordinator**
-- Orchestrate Scout → Strategist → Executor flow
-- Pass outputs between agents (typed domain models)
-- Handle agent failures gracefully
-- Implement timeout handling (Section 3.3)
+**3.3.1. Pipeline Coordinator** ✅
+- ✅ Orchestrate Scout → Strategist → Executor flow
+- ✅ Pass outputs between agents (typed domain models)
+- ✅ Handle agent failures gracefully
+- ⏸️ Implement timeout handling (Section 3.3) - Deferred to 3.3.2
 
-**Subsection Tests** (5 tests for incremental development):
-- Orchestrates Scout → Strategist → Executor in correct order
-- Passes BoardAnalysis from Scout to Strategist
-- Passes Strategy from Strategist to Executor
-- Returns final MoveExecution result
-- Handles agent failures and returns error result
+**Subsection Tests** (5 tests for incremental development): ✅
+- ✅ Orchestrates Scout → Strategist → Executor in correct order
+- ✅ Passes BoardAnalysis from Scout to Strategist
+- ✅ Passes Strategy from Strategist to Executor
+- ✅ Returns final MoveExecution result
+- ✅ Handles agent failures and returns error result
 
 **3.3.2. Timeout Configuration**
 - Per-agent timeouts: Scout (5s), Strategist (3s), Executor (2s)
