@@ -13,7 +13,13 @@ from typing import Any
 from src.agents.executor import ExecutorAgent
 from src.agents.scout import ScoutAgent
 from src.agents.strategist import StrategistAgent
-from src.domain.agent_models import BoardAnalysis, MoveExecution, Strategy
+from src.domain.agent_models import (
+    BoardAnalysis,
+    MoveExecution,
+    MovePriority,
+    MoveRecommendation,
+    Strategy,
+)
 from src.domain.errors import E_LLM_TIMEOUT
 from src.domain.models import GameState, PlayerSymbol
 from src.domain.result import AgentResult
@@ -86,20 +92,27 @@ class AgentPipeline:
                 self.scout.analyze, (game_state,), scout_timeout, "Scout"
             )
 
+            # Handle Scout failure/timeout - use Fallback Rule Set 1
+            fallback_metadata = {}
             if not scout_result.success or scout_result.data is None:
-                execution_time = (time.time() - pipeline_start_time) * 1000
-                return AgentResult[MoveExecution](
-                    success=False,
-                    error_code=(
-                        E_LLM_TIMEOUT
-                        if "timeout" in (scout_result.error_message or "").lower()
-                        else None
-                    ),
-                    error_message=f"Scout failed: {scout_result.error_message or 'unknown error'}",
-                    execution_time_ms=execution_time,
-                )
-
-            board_analysis: BoardAnalysis = scout_result.data
+                # Fallback Rule Set 1: Use rule-based analysis (call Scout directly without timeout)
+                board_analysis = self._fallback_rule_set_1_rule_based_analysis(game_state)
+                if board_analysis is None:
+                    execution_time = (time.time() - pipeline_start_time) * 1000
+                    return AgentResult[MoveExecution](
+                        success=False,
+                        error_code=(
+                            E_LLM_TIMEOUT
+                            if "timeout" in (scout_result.error_message or "").lower()
+                            else None
+                        ),
+                        error_message=f"Scout failed and fallback failed: {scout_result.error_message or 'unknown error'}",
+                        execution_time_ms=execution_time,
+                        metadata={"fallback_used": "rule_based_analysis"},
+                    )
+                fallback_metadata["fallback_used"] = "rule_based_analysis"
+            else:
+                board_analysis: BoardAnalysis = scout_result.data
 
             # Check total pipeline timeout before continuing
             elapsed_time = time.time() - pipeline_start_time
@@ -119,22 +132,28 @@ class AgentPipeline:
                 self.strategist.plan, (board_analysis,), strategist_timeout, "Strategist"
             )
 
+            # Handle Strategist failure/timeout - use Fallback Rule Set 2
             if not strategist_result.success or strategist_result.data is None:
-                execution_time = (time.time() - pipeline_start_time) * 1000
-                return AgentResult[MoveExecution](
-                    success=False,
-                    error_code=(
-                        E_LLM_TIMEOUT
-                        if "timeout" in (strategist_result.error_message or "").lower()
-                        else None
-                    ),
-                    error_message=(
-                        f"Strategist failed: {strategist_result.error_message or 'unknown error'}"
-                    ),
-                    execution_time_ms=execution_time,
-                )
-
-            strategy: Strategy = strategist_result.data
+                # Fallback Rule Set 2: Select from BoardAnalysis opportunities/strategic_moves
+                strategy = self._fallback_rule_set_2_scout_opportunity_fallback(board_analysis)
+                if strategy is None:
+                    execution_time = (time.time() - pipeline_start_time) * 1000
+                    return AgentResult[MoveExecution](
+                        success=False,
+                        error_code=(
+                            E_LLM_TIMEOUT
+                            if "timeout" in (strategist_result.error_message or "").lower()
+                            else None
+                        ),
+                        error_message=(
+                            f"Strategist failed and fallback failed: {strategist_result.error_message or 'unknown error'}"
+                        ),
+                        execution_time_ms=execution_time,
+                        metadata={**fallback_metadata, "fallback_used": "scout_opportunity"},
+                    )
+                fallback_metadata["fallback_used"] = "scout_opportunity"
+            else:
+                strategy: Strategy = strategist_result.data
 
             # Check total pipeline timeout before continuing
             elapsed_time = time.time() - pipeline_start_time
@@ -156,34 +175,41 @@ class AgentPipeline:
 
             execution_time = (time.time() - pipeline_start_time) * 1000
 
-            # Return the executor's result (which contains MoveExecution)
-            # If executor succeeded but returned MoveExecution, pass it through
-            if executor_result.success and executor_result.data:
+            # Handle Executor failure/timeout - use Fallback Rule Set 3
+            if (
+                not executor_result.success
+                or not executor_result.data
+                or not executor_result.data.success
+            ):
+                # Fallback Rule Set 3: Use Strategy primary move or alternatives, or random valid move
+                move_execution = self._fallback_rule_set_3_strategist_fallback(game_state, strategy)
+                if move_execution is None:
+                    return AgentResult[MoveExecution](
+                        success=False,
+                        error_code=(
+                            E_LLM_TIMEOUT
+                            if "timeout" in (executor_result.error_message or "").lower()
+                            else None
+                        ),
+                        error_message=executor_result.error_message
+                        or "Executor failed and fallback failed",
+                        execution_time_ms=execution_time,
+                        metadata={**fallback_metadata, "fallback_used": "strategist_primary"},
+                    )
                 return AgentResult[MoveExecution](
                     success=True,
-                    data=executor_result.data,
+                    data=move_execution,
                     execution_time_ms=execution_time,
+                    metadata={**fallback_metadata, "fallback_used": "strategist_primary"},
                 )
-            elif executor_result.data:
-                # Executor returned MoveExecution but with success=False
-                # This is valid - it means validation or execution failed
-                return AgentResult[MoveExecution](
-                    success=True,  # Pipeline succeeded, but MoveExecution indicates failure
-                    data=executor_result.data,
-                    execution_time_ms=execution_time,
-                )
-            else:
-                # Executor failed completely
-                return AgentResult[MoveExecution](
-                    success=False,
-                    error_code=(
-                        E_LLM_TIMEOUT
-                        if "timeout" in (executor_result.error_message or "").lower()
-                        else None
-                    ),
-                    error_message=executor_result.error_message or "Executor failed",
-                    execution_time_ms=execution_time,
-                )
+
+            # Executor succeeded
+            return AgentResult[MoveExecution](
+                success=True,
+                data=executor_result.data,
+                execution_time_ms=execution_time,
+                metadata=fallback_metadata if fallback_metadata else None,
+            )
 
         except Exception as e:
             execution_time = (time.time() - pipeline_start_time) * 1000
@@ -198,7 +224,11 @@ class AgentPipeline:
     # =========================================================================
 
     def _execute_with_timeout(
-        self, func: Callable[..., AgentResult[Any]], args: tuple, timeout: float, agent_name: str
+        self,
+        func: Callable[..., AgentResult[Any]],
+        args: tuple[Any, ...],
+        timeout: float,
+        agent_name: str,
     ) -> AgentResult[Any]:
         """Execute an agent method with timeout.
 
@@ -224,3 +254,192 @@ class AgentPipeline:
                     error_message=f"{agent_name} exceeded timeout of {timeout}s",
                     execution_time_ms=timeout * 1000,
                 )
+
+    # =========================================================================
+    # 3.3.3: Fallback Strategy
+    # =========================================================================
+
+    def _fallback_rule_set_1_rule_based_analysis(
+        self, game_state: GameState
+    ) -> BoardAnalysis | None:
+        """Fallback Rule Set 1: Generate rule-based BoardAnalysis when Scout fails.
+
+        Uses Scout's rule-based analysis directly (without timeout wrapper).
+
+        Args:
+            game_state: Current game state
+
+        Returns:
+            BoardAnalysis from rule-based analysis, or None if analysis fails
+        """
+        try:
+            # Call Scout's analyze directly (it's already rule-based, fast, no LLM)
+            scout_result = self.scout.analyze(game_state)
+            if scout_result.success and scout_result.data:
+                return scout_result.data
+            return None
+        except Exception:
+            return None
+
+    def _fallback_rule_set_2_scout_opportunity_fallback(
+        self, board_analysis: BoardAnalysis
+    ) -> Strategy | None:
+        """Fallback Rule Set 2: Select move from BoardAnalysis when Strategist fails.
+
+        Selects highest priority opportunity (IMMEDIATE_WIN), then threats (BLOCK_THREAT),
+        then strategic move, or first empty cell.
+
+        Args:
+            board_analysis: BoardAnalysis from Scout
+
+        Returns:
+            Strategy with selected move, or None if selection fails
+        """
+        try:
+            # Priority 1: Select opportunity (always IMMEDIATE_WIN=100)
+            if board_analysis.opportunities:
+                # Sort by confidence (highest first), all opportunities are IMMEDIATE_WIN
+                opportunities_sorted = sorted(
+                    board_analysis.opportunities,
+                    key=lambda opp: opp.confidence,
+                    reverse=True,
+                )
+                selected_opp = opportunities_sorted[0]
+                primary_move = MoveRecommendation(
+                    position=selected_opp.position,
+                    priority=MovePriority.IMMEDIATE_WIN.value,
+                    confidence=selected_opp.confidence,
+                    reasoning=f"Fallback: Using highest priority opportunity (IMMEDIATE_WIN, confidence={selected_opp.confidence})",
+                )
+                return Strategy(
+                    primary_move=primary_move,
+                    alternatives=[],
+                    game_plan="Fallback: Using Scout opportunity analysis",
+                    risk_assessment="medium",
+                )
+
+            # Priority 2: Select threat to block (BLOCK_THREAT=90)
+            if board_analysis.threats:
+                selected_threat = board_analysis.threats[0]  # All threats are critical
+                primary_move = MoveRecommendation(
+                    position=selected_threat.position,
+                    priority=MovePriority.BLOCK_THREAT.value,
+                    confidence=1.0,  # Critical threat, high confidence
+                    reasoning="Fallback: Blocking threat (BLOCK_THREAT)",
+                )
+                return Strategy(
+                    primary_move=primary_move,
+                    alternatives=[],
+                    game_plan="Fallback: Using Scout threat analysis",
+                    risk_assessment="medium",
+                )
+
+            # Priority 3: Select highest priority strategic move
+            if board_analysis.strategic_moves:
+                strategic_sorted = sorted(
+                    board_analysis.strategic_moves,
+                    key=lambda sm: sm.priority,
+                    reverse=True,
+                )
+                selected_strategic = strategic_sorted[0]
+                # Map strategic move priority (1-10) to MovePriority
+                # Center=10 -> CENTER_CONTROL=50, Corner=7 -> CORNER_CONTROL=40, Edge=4 -> EDGE_PLAY=30
+                if selected_strategic.move_type == "center":
+                    priority = MovePriority.CENTER_CONTROL.value
+                elif selected_strategic.move_type == "corner":
+                    priority = MovePriority.CORNER_CONTROL.value
+                else:
+                    priority = MovePriority.EDGE_PLAY.value
+                primary_move = MoveRecommendation(
+                    position=selected_strategic.position,
+                    priority=priority,
+                    confidence=0.7,  # Medium confidence for strategic moves
+                    reasoning=f"Fallback: Using highest priority strategic move ({selected_strategic.move_type})",
+                )
+                return Strategy(
+                    primary_move=primary_move,
+                    alternatives=[],
+                    game_plan="Fallback: Using Scout strategic position analysis",
+                    risk_assessment="medium",
+                )
+
+            # Should not reach here if BoardAnalysis is valid, but return None as fallback
+            return None
+        except Exception:
+            # Fallback failed - return None
+            return None
+
+    def _fallback_rule_set_3_strategist_fallback(
+        self, game_state: GameState, strategy: Strategy
+    ) -> MoveExecution | None:
+        """Fallback Rule Set 3: Select move when Executor fails.
+
+        Tries Strategy.primary_move, then alternatives, then random valid move.
+        Validates that game is not over and cell is empty.
+
+        Args:
+            game_state: Current game state
+            strategy: Strategy from Strategist
+
+        Returns:
+            MoveExecution with selected move, or None if all options fail
+        """
+        try:
+            # Check if game is over (no valid moves if game is won or draw)
+            winner = game_state._check_win()
+            if winner is not None:
+                # Game is already won
+                return MoveExecution(
+                    position=None,
+                    success=False,
+                    validation_errors=["E_GAME_ALREADY_OVER"],
+                    execution_time_ms=0.0,
+                    reasoning="Fallback: Game is already over, cannot make move",
+                    actual_priority_used=None,
+                )
+
+            # Try Strategy.primary_move first
+            if strategy.primary_move:
+                pos = strategy.primary_move.position
+                if 0 <= pos.row <= 2 and 0 <= pos.col <= 2 and game_state.board.is_empty(pos):
+                    return MoveExecution(
+                        position=pos,
+                        success=True,
+                        validation_errors=[],
+                        execution_time_ms=0.0,
+                        reasoning=f"Fallback: Using Strategy primary move at ({pos.row}, {pos.col})",
+                        actual_priority_used=strategy.primary_move.priority,
+                    )
+
+            # Try alternatives
+            if strategy.alternatives:
+                for alt in strategy.alternatives:
+                    pos = alt.position
+                    if 0 <= pos.row <= 2 and 0 <= pos.col <= 2 and game_state.board.is_empty(pos):
+                        return MoveExecution(
+                            position=pos,
+                            success=True,
+                            validation_errors=[],
+                            execution_time_ms=0.0,
+                            reasoning=f"Fallback: Using Strategy alternative at ({pos.row}, {pos.col})",
+                            actual_priority_used=alt.priority,
+                        )
+
+            # Last resort: Select random valid move (first empty cell in position order)
+            empty_positions = game_state.board.get_empty_positions()
+            if empty_positions:
+                # Sort by position order (0,0 < 0,1 < ... < 2,2)
+                empty_positions_sorted = sorted(empty_positions, key=lambda p: (p.row, p.col))
+                selected_pos = empty_positions_sorted[0]
+                return MoveExecution(
+                    position=selected_pos,
+                    success=True,
+                    validation_errors=[],
+                    execution_time_ms=0.0,
+                    reasoning=f"Fallback: Using first available empty cell at ({selected_pos.row}, {selected_pos.col})",
+                    actual_priority_used=MovePriority.RANDOM_VALID.value,
+                )
+
+            return None
+        except Exception:
+            return None
