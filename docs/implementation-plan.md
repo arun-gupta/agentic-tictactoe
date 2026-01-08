@@ -818,16 +818,16 @@ pre-commit install --overwrite
 - ✅ Returns final MoveExecution result
 - ✅ Handles agent failures and returns error result
 
-**3.3.2. Timeout Configuration**
-- Per-agent timeouts: Scout (5s), Strategist (3s), Executor (2s)
-- Total pipeline timeout: 15s (Section 3.6)
-- Trigger fallback after timeout
+**3.3.2. Timeout Configuration** ✅
+- ✅ Per-agent timeouts: Scout (5s), Strategist (3s), Executor (2s)
+- ✅ Total pipeline timeout: 15s (Section 3.6)
+- ⏸️ Trigger fallback after timeout - Deferred to 3.3.3
 
-**Subsection Tests** (4 tests for incremental development):
-- Enforces Scout timeout at 5 seconds
-- Enforces Strategist timeout at 3 seconds
-- Enforces Executor timeout at 2 seconds
-- Enforces total pipeline timeout at 15 seconds
+**Subsection Tests** (4 tests for incremental development): ✅
+- ✅ Enforces Scout timeout at 5 seconds
+- ✅ Enforces Strategist timeout at 3 seconds
+- ✅ Enforces Executor timeout at 2 seconds
+- ✅ Enforces total pipeline timeout at 15 seconds
 
 **3.3.3. Fallback Strategy**
 - On Scout timeout: Use rule-based analysis only
