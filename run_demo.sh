@@ -1,5 +1,11 @@
 #!/bin/bash
 # Simple script to setup environment and run demo scripts
+#
+# Usage:
+#   ./run_demo.sh              # Default: Human vs Agent (Phase 3 - Rule-based Agent System)
+#   ./run_demo.sh h2agent      # Human vs Agent (Phase 3 - Rule-based Agent System)
+#   ./run_demo.sh h2h          # Human vs Human (Phase 2 - Game Engine)
+#   ./run_demo.sh interactive  # Interactive menu
 
 set -e  # Exit on error
 
@@ -34,31 +40,78 @@ else
     echo -e "${GREEN}✓ Project already installed${NC}\n"
 fi
 
-# Show available demos
-echo -e "${BLUE}Available demos:${NC}"
-echo "  1) Human vs Human (Phase 2 - Game Engine)"
-echo "  2) Human vs AI (Phase 3 - Agent System)"
-echo "  3) Exit"
-echo ""
+# Parse command line argument
+choice=""
+if [ $# -eq 0 ]; then
+    # No argument provided - default to Human vs Agent (Phase 3 - Rule-based Agent System)
+    choice="phase3"
+elif [ $# -eq 1 ]; then
+    arg=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+    case $arg in
+        h2h|humanvshuman|human-vs-human)
+            choice="phase2"
+            ;;
+        h2agent|humanvsagent|human-vs-agent)
+            choice="phase3"
+            ;;
+        interactive|menu|i)
+            choice="interactive"
+            ;;
+        *)
+            echo -e "${YELLOW}Invalid argument: $1${NC}"
+            echo -e "${BLUE}Usage:${NC}"
+            echo "  ./run_demo.sh              # Default: Human vs Agent (Phase 3 - Rule-based Agent System)"
+            echo "  ./run_demo.sh h2agent      # Human vs Agent (Phase 3 - Rule-based Agent System)"
+            echo "  ./run_demo.sh h2h          # Human vs Human (Phase 2 - Game Engine)"
+            echo "  ./run_demo.sh interactive  # Interactive menu"
+            exit 1
+            ;;
+    esac
+else
+    echo -e "${YELLOW}Too many arguments. Usage: ./run_demo.sh [h2h|h2agent|interactive]${NC}"
+    exit 1
+fi
 
-# Get user choice
-read -p "Select demo to run (1-3): " choice
+# Run selected demo
+if [ "$choice" = "interactive" ]; then
+    # Interactive mode
+    echo -e "${BLUE}Available demos:${NC}"
+    echo "  1) Human vs Human (Phase 2 - Game Engine)"
+    echo "  2) Human vs Agent (Phase 3 - Rule-based Agent System)"
+    echo "  3) Exit"
+    echo ""
+    read -p "Select demo to run (1-3): " menu_choice
 
+    case $menu_choice in
+        1)
+            choice="phase2"
+            ;;
+        2)
+            choice="phase3"
+            ;;
+        3)
+            echo -e "${GREEN}Goodbye!${NC}"
+            exit 0
+            ;;
+        *)
+            echo -e "${YELLOW}Invalid choice. Exiting.${NC}"
+            exit 1
+            ;;
+    esac
+fi
+
+# Execute the selected demo
 case $choice in
-    1)
-        echo -e "\n${BLUE}Running Human vs Human demo...${NC}\n"
+    phase2)
+        echo -e "\n${BLUE}Running: Human vs Human (Phase 2 - Game Engine)${NC}\n"
         python -m scripts.play_human_vs_human
         ;;
-    2)
-        echo -e "\n${BLUE}Running Human vs AI demo...${NC}\n"
+    phase3)
+        echo -e "\n${BLUE}Running: Human vs Agent (Phase 3 - Rule-based Agent System)${NC}\n"
         python -m scripts.play_human_vs_ai
         ;;
-    3)
-        echo -e "${GREEN}Goodbye!${NC}"
-        exit 0
-        ;;
     *)
-        echo -e "${YELLOW}Invalid choice. Exiting.${NC}"
+        echo -e "${YELLOW}Invalid choice: $choice${NC}"
         exit 1
         ;;
 esac

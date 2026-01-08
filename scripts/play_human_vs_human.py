@@ -59,12 +59,20 @@ def main() -> None:
         "      Phase 3 Agent System is now available - see play_human_vs_ai.py for AI gameplay.\n"
     )
 
+    print("GAME START")
+    print("-" * 50)
+    print_board(engine)
+    print_game_status(engine)
+
     # Play game with random moves until someone wins or draw
-    moves = []
     max_moves = 9  # Maximum moves in tic-tac-toe
     move_count = 0
 
     while move_count < max_moves and not engine.is_game_over():
+        # Get current player before selecting move
+        current_player = engine.get_current_state().get_current_player()
+        player_name = "Player 1" if current_player == "X" else "Player 2"
+
         # Get available moves
         available = engine.get_available_moves()
         if not available:
@@ -72,29 +80,21 @@ def main() -> None:
 
         # Random move selection
         position = random.choice(available)
-        current_player = engine.get_current_state().get_current_player()
-        player_name = "Player 1" if current_player == "X" else "Player 2"
-
-        moves.append((position.row, position.col, current_player, player_name))
+        row, col = position.row, position.col
         move_count += 1
 
-    print("GAME START")
-    print("-" * 50)
-    print_board(engine)
-    print_game_status(engine)
-
-    # Play through the moves
-    for move_num, (row, col, player, player_name) in enumerate(moves, 1):
-        print(f"\n--- Move {move_num}: {player_name} ({player}) plays at ({row}, {col}) ---")
+        print(
+            f"\n--- Move {move_count}: {player_name} ({current_player}) plays at ({row}, {col}) ---"
+        )
 
         # Validate move first
-        is_valid, error = engine.validate_move(row, col, player)
+        is_valid, error = engine.validate_move(row, col, current_player)
         if not is_valid:
             print(f"❌ INVALID MOVE: {error}")
             continue
 
         # Execute move
-        success, error = engine.make_move(row, col, player)
+        success, error = engine.make_move(row, col, current_player)
         if not success:
             print(f"❌ MOVE FAILED: {error}")
             continue

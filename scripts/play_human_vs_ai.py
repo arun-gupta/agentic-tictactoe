@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-"""Human vs AI Tic-Tac-Toe game demo.
+"""Human vs Agent Tic-Tac-Toe game demo.
 
-This script demonstrates the complete Phase 3 Agent System by allowing
-a human player to play against an AI that uses the Agent Pipeline:
-- Scout Agent analyzes the board (threats, opportunities, strategic positions)
-- Strategist Agent selects optimal moves based on priority
-- Executor Agent executes moves with validation and fallback
+This script demonstrates the complete Phase 3 Rule-based Agent System by allowing
+a human player to play against rule-based agents using the Agent Pipeline:
+- Scout Agent: Rule-based board analysis (threats, opportunities, strategic positions)
+- Strategist Agent: Priority-based move selection using rule-based logic
+- Executor Agent: Move validation and execution with fallback strategies
+
+Note: This uses rule-based agents (not LLM-based AI). LLM integration comes in Phase 5.
 """
 
 import random
 import sys
+from typing import Literal
 
 from src.agents.pipeline import AgentPipeline
 from src.agents.scout import ScoutAgent
@@ -180,25 +183,53 @@ def simulate_human_move(engine: GameEngine) -> tuple[int, int] | None:
 def main() -> None:
     """Run a human vs AI game."""
     print("=" * 60)
-    print("TIC-TAC-TOE: Human vs AI")
+    print("TIC-TAC-TOE: Human vs Agent (Rule-based Agent System)")
     print("=" * 60)
-    print("\nDemonstrating Phase 3: Agent System")
+    print("\nDemonstrating Phase 3: Rule-based Agent System")
+    print("Note: Uses rule-based agents (not LLM-based AI). LLM integration in Phase 5.")
     print("- Scout Agent: Board analysis and threat detection")
     print("- Strategist Agent: Move selection with priority system")
     print("- Executor Agent: Move execution with validation")
     print("- Agent Pipeline: Complete orchestration with timeouts and fallbacks\n")
 
-    # Ask for game mode
-    print("Game Mode:")
-    print("1. Interactive (you make moves)")
-    print("2. Simulation (both players use AI/random)")
-    mode = input("Select mode (1 or 2, default=2): ").strip() or "2"
+    # Parse command line arguments if provided
+    mode: Literal["1", "2"] | None = None
+    verbose = False
+
+    if len(sys.argv) > 1:
+        # Command line mode specified
+        mode_arg = sys.argv[1].strip()
+        if mode_arg in ("1", "2"):
+            mode = mode_arg  # type: ignore[assignment]
+        else:
+            print(f"Invalid mode: {mode_arg}. Use 1 (interactive) or 2 (simulation)")
+            sys.exit(1)
+
+        # Check for verbose flag
+        if len(sys.argv) > 2 and sys.argv[2].strip().lower() in ("-v", "--verbose", "verbose", "y"):
+            verbose = True
+
+    # If no mode specified via arguments, always try to prompt (default to interactive for Human vs Agent)
+    if mode is None:
+        try:
+            print("Game Mode:")
+            print("1. Interactive (you make moves)")
+            print("2. Simulation (both players use AI/random)")
+            mode_input = input("Select mode (1 or 2, default=1): ").strip()
+            mode = mode_input if mode_input in ("1", "2") else "1"  # type: ignore[assignment]
+
+            if mode == "1":
+                verbose_input = (
+                    input("Show detailed AI analysis? (y/n, default=n): ").strip().lower()
+                )
+                verbose = verbose_input == "y"
+        except (EOFError, KeyboardInterrupt):
+            # If stdin is not available or interrupted, default to simulation mode
+            mode = "2"
+            verbose = False
+            print("\nNo input available. Running in Simulation mode.\n")
 
     interactive = mode == "1"
-    verbose = False
-    if interactive:
-        verbose_input = input("Show detailed AI analysis? (y/n, default=n): ").strip().lower()
-        verbose = verbose_input == "y"
 
     # Initialize game engine and AI pipeline
     engine = GameEngine(player_symbol="X", ai_symbol="O")
