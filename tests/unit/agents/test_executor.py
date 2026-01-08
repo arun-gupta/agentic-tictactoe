@@ -132,3 +132,127 @@ class TestMoveValidation:
         execution = result.data
         assert not execution.success
         assert E_GAME_ALREADY_OVER in execution.validation_errors
+
+
+# ==============================================================================
+# SUBSECTION 3.2.2: Move Execution
+# ==============================================================================
+class TestMoveExecution:
+    """Development tests for move execution logic."""
+
+    def test_subsection_3_2_2_executes_valid_move_via_engine(self) -> None:
+        """Subsection 3.2.2: Successfully executes valid move via game engine."""
+        executor = ExecutorAgent(ai_symbol="O")
+
+        # Create game state where it's AI's turn (odd move count)
+        # Player (X) has already made first move at (0,0)
+        board = Board(
+            cells=[
+                ["X", "EMPTY", "EMPTY"],
+                ["EMPTY", "EMPTY", "EMPTY"],
+                ["EMPTY", "EMPTY", "EMPTY"],
+            ]
+        )
+        game_state = GameState(board=board, player_symbol="X", ai_symbol="O", move_count=1)
+
+        # Create strategy with valid move
+        valid_move = MoveRecommendation(
+            position=Position(row=1, col=1),  # Center position
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.7,
+            reasoning="Take center",
+        )
+        strategy = Strategy(
+            primary_move=valid_move,
+            alternatives=[],
+            game_plan="Control center",
+            risk_assessment="low",
+        )
+
+        # Execute should succeed
+        result = executor.execute(game_state, strategy)
+
+        # Should return success result
+        assert result.success
+        assert result.data is not None
+        execution = result.data
+        assert execution.success
+        assert execution.position == Position(row=1, col=1)
+        assert execution.validation_errors == []
+
+    def test_subsection_3_2_2_tracks_execution_time(self) -> None:
+        """Subsection 3.2.2: Tracks execution time in milliseconds."""
+        executor = ExecutorAgent(ai_symbol="O")
+
+        # Create game state where it's AI's turn (odd move count)
+        # Player (X) has already made first move at (0,1)
+        board = Board(
+            cells=[
+                ["EMPTY", "X", "EMPTY"],
+                ["EMPTY", "EMPTY", "EMPTY"],
+                ["EMPTY", "EMPTY", "EMPTY"],
+            ]
+        )
+        game_state = GameState(board=board, player_symbol="X", ai_symbol="O", move_count=1)
+
+        # Create strategy with valid move
+        valid_move = MoveRecommendation(
+            position=Position(row=0, col=0),  # Corner position
+            priority=MovePriority.CORNER_CONTROL,
+            confidence=0.4,
+            reasoning="Take corner",
+        )
+        strategy = Strategy(
+            primary_move=valid_move,
+            alternatives=[],
+            game_plan="Take corner",
+            risk_assessment="low",
+        )
+
+        # Execute and check execution time
+        result = executor.execute(game_state, strategy)
+
+        # Should have execution time recorded
+        assert result.success
+        assert result.data is not None
+        execution = result.data
+        assert execution.execution_time_ms >= 0.0
+        assert result.execution_time_ms >= 0.0
+
+    def test_subsection_3_2_2_records_actual_priority_used(self) -> None:
+        """Subsection 3.2.2: Records actual priority used in MoveExecution."""
+        executor = ExecutorAgent(ai_symbol="O")
+
+        # Create game state where it's AI's turn (odd move count)
+        # Player (X) has already made first move at (2,2)
+        board = Board(
+            cells=[
+                ["EMPTY", "EMPTY", "EMPTY"],
+                ["EMPTY", "EMPTY", "EMPTY"],
+                ["EMPTY", "EMPTY", "X"],
+            ]
+        )
+        game_state = GameState(board=board, player_symbol="X", ai_symbol="O", move_count=1)
+
+        # Create strategy with high priority move
+        high_priority_move = MoveRecommendation(
+            position=Position(row=1, col=1),  # Center position
+            priority=MovePriority.IMMEDIATE_WIN,  # High priority
+            confidence=1.0,
+            reasoning="Winning move",
+        )
+        strategy = Strategy(
+            primary_move=high_priority_move,
+            alternatives=[],
+            game_plan="Win game",
+            risk_assessment="low",
+        )
+
+        # Execute and check priority is recorded
+        result = executor.execute(game_state, strategy)
+
+        # Should have actual_priority_used recorded
+        assert result.success
+        assert result.data is not None
+        execution = result.data
+        assert execution.actual_priority_used == MovePriority.IMMEDIATE_WIN

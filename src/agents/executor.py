@@ -24,6 +24,7 @@ from src.domain.errors import (
 )
 from src.domain.models import GameState, PlayerSymbol
 from src.domain.result import AgentResult
+from src.game.engine import GameEngine
 
 
 class ExecutorAgent(BaseAgent):
@@ -83,14 +84,15 @@ class ExecutorAgent(BaseAgent):
                     execution_time_ms=execution_time,
                 )
 
-            # 3.2.2: Move Execution (TODO)
+            # 3.2.2: Move Execution (IMPLEMENTING NOW)
+            move_execution = self._execute_move(game_state, strategy.primary_move)
+            execution_time = (time.time() - start_time) * 1000  # Convert to ms
+
             # 3.2.3: Fallback Handling (TODO)
 
-            # Temporary return for 3.2.1 only
-            execution_time = (time.time() - start_time) * 1000
             return AgentResult[MoveExecution](
-                success=False,
-                error_message="Move execution (3.2.2) not yet implemented",
+                success=move_execution.success,
+                data=move_execution,
                 execution_time_ms=execution_time,
             )
 
@@ -146,3 +148,62 @@ class ExecutorAgent(BaseAgent):
             errors.append(E_GAME_ALREADY_OVER)
 
         return errors
+
+    # =========================================================================
+    # 3.2.2: Move Execution
+    # =========================================================================
+
+    def _execute_move(
+        self, game_state: GameState, move_recommendation: MoveRecommendation
+    ) -> MoveExecution:
+        """Execute a validated move recommendation via GameEngine.
+
+        Creates a GameEngine instance from the GameState, executes the move,
+        tracks execution time, and returns MoveExecution with success status
+        and actual priority used.
+
+        Args:
+            game_state: Current game state
+            move_recommendation: MoveRecommendation from Strategist (already validated)
+
+        Returns:
+            MoveExecution with execution result, including actual priority used
+        """
+        execution_start = time.time()
+        position = move_recommendation.position
+
+        # Create GameEngine instance from GameState
+        # Extract player and AI symbols from game_state
+        engine = GameEngine(
+            player_symbol=game_state.player_symbol,
+            ai_symbol=game_state.ai_symbol,
+        )
+        # Set engine's game_state to match the current state
+        engine.game_state = game_state.model_copy(deep=True)
+
+        # Execute the move via GameEngine
+        success, error_code = engine.make_move(
+            row=position.row, col=position.col, player=self.ai_symbol
+        )
+
+        execution_time = (time.time() - execution_start) * 1000  # Convert to ms
+
+        if success:
+            return MoveExecution(
+                position=position,
+                success=True,
+                validation_errors=[],
+                execution_time_ms=execution_time,
+                reasoning=move_recommendation.reasoning,
+                actual_priority_used=move_recommendation.priority,
+            )
+        else:
+            # Move execution failed (shouldn't happen after validation, but handle it)
+            return MoveExecution(
+                position=position,
+                success=False,
+                validation_errors=[error_code] if error_code else [],
+                execution_time_ms=execution_time,
+                reasoning=f"Move execution failed: {error_code or 'unknown error'}",
+                actual_priority_used=move_recommendation.priority,
+            )
