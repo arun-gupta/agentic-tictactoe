@@ -9,11 +9,13 @@ The Executor Agent executes moves recommended by the Strategist:
 This is a rule-based implementation (Phase 3). LLM enhancement comes in Phase 5.
 """
 
+import random
 import time
 
 from src.agents.base import BaseAgent
 from src.domain.agent_models import (
     MoveExecution,
+    MovePriority,
     MoveRecommendation,
     Strategy,
 )
@@ -66,29 +68,31 @@ class ExecutorAgent(BaseAgent):
         start_time = time.time()
 
         try:
-            # 3.2.1: Move Validation (IMPLEMENTING NOW)
+            # 3.2.1: Move Validation
             validation_errors = self._validate_move(game_state, strategy.primary_move)
 
-            # If validation fails, return error result (execution happens in 3.2.2)
+            # If primary move validation fails, try fallback
             if validation_errors:
-                execution_time = (time.time() - start_time) * 1000  # Convert to ms
+                move_execution = self._handle_fallback(
+                    game_state, strategy, start_time, "primary validation failed"
+                )
+                execution_time = (time.time() - start_time) * 1000
                 return AgentResult[MoveExecution](
-                    success=False,
-                    data=MoveExecution(
-                        position=None,
-                        success=False,
-                        validation_errors=validation_errors,
-                        execution_time_ms=execution_time,
-                        reasoning=f"Move validation failed: {', '.join(validation_errors)}",
-                    ),
+                    success=move_execution.success,
+                    data=move_execution,
                     execution_time_ms=execution_time,
                 )
 
-            # 3.2.2: Move Execution (IMPLEMENTING NOW)
+            # 3.2.2: Move Execution
             move_execution = self._execute_move(game_state, strategy.primary_move)
             execution_time = (time.time() - start_time) * 1000  # Convert to ms
 
-            # 3.2.3: Fallback Handling (TODO)
+            # 3.2.3: Fallback Handling - If primary execution failed, try alternatives
+            if not move_execution.success:
+                move_execution = self._handle_fallback(
+                    game_state, strategy, start_time, "primary execution failed"
+                )
+                execution_time = (time.time() - start_time) * 1000
 
             return AgentResult[MoveExecution](
                 success=move_execution.success,
@@ -207,3 +211,76 @@ class ExecutorAgent(BaseAgent):
                 reasoning=f"Move execution failed: {error_code or 'unknown error'}",
                 actual_priority_used=move_recommendation.priority,
             )
+
+    # =========================================================================
+    # 3.2.3: Fallback Handling
+    # =========================================================================
+
+    def _handle_fallback(
+        self,
+        game_state: GameState,
+        strategy: Strategy,
+        start_time: float,
+        reason: str,
+    ) -> MoveExecution:
+        """Handle fallback when primary move fails.
+
+        Tries alternatives in order, then falls back to random valid move.
+        Always returns a valid move or clear error.
+
+        Args:
+            game_state: Current game state
+            strategy: Strategy from Strategist containing alternatives
+            start_time: Start time of the execute() call (for execution time calculation)
+            reason: Reason why fallback was triggered
+
+        Returns:
+            MoveExecution with success status (always tries to return a valid move)
+        """
+        # Try alternatives from Strategy
+        for alt_move in strategy.alternatives:
+            validation_errors = self._validate_move(game_state, alt_move)
+            if not validation_errors:
+                # Alternative is valid, try to execute it
+                move_execution = self._execute_move(game_state, alt_move)
+                if move_execution.success:
+                    # Update reasoning to indicate fallback was used
+                    move_execution.reasoning = (
+                        f"Fallback: {reason}. Used alternative: {alt_move.reasoning}"
+                    )
+                    return move_execution
+
+        # All alternatives failed, try random valid move
+        available_moves = game_state.board.get_empty_positions()
+        if available_moves:
+            # Select random valid position
+            random_position = random.choice(available_moves)
+            random_move = MoveRecommendation(
+                position=random_position,
+                priority=MovePriority.RANDOM_VALID,
+                confidence=0.1,
+                reasoning="Random valid move (all recommended moves failed)",
+            )
+
+            # Try to execute random move
+            move_execution = self._execute_move(game_state, random_move)
+            if move_execution.success:
+                move_execution.reasoning = (
+                    f"Fallback: {reason}. All alternatives failed. "
+                    f"Selected random valid move at ({random_position.row}, {random_position.col})"
+                )
+                return move_execution
+
+        # No valid moves available - game must be over or board full
+        execution_time = (time.time() - start_time) * 1000
+        return MoveExecution(
+            position=None,
+            success=False,
+            validation_errors=["E_GAME_ALREADY_OVER"] if game_state.is_game_over() else [],
+            execution_time_ms=execution_time,
+            reasoning=(
+                f"Fallback: {reason}. No valid moves available. "
+                f"Game over: {game_state.is_game_over()}"
+            ),
+            actual_priority_used=None,
+        )

@@ -60,7 +60,8 @@ class TestMoveValidation:
         """Subsection 3.2.1: Validates cell is empty."""
         executor = ExecutorAgent(ai_symbol="O")
 
-        # Create game state with occupied cell
+        # Create game state with occupied cell - need to test validation directly
+        # since fallback will now succeed with a random move
         board = Board(
             cells=[
                 ["X", "EMPTY", "EMPTY"],
@@ -70,29 +71,19 @@ class TestMoveValidation:
         )
         game_state = GameState(board=board, player_symbol="X", ai_symbol="O", move_count=1)
 
-        # Create strategy with move to occupied cell
+        # Create move recommendation to occupied cell
         invalid_move = MoveRecommendation(
             position=Position(row=0, col=0),  # Already occupied by X
             priority=MovePriority.BLOCK_THREAT,
             confidence=0.95,
             reasoning="Block threat",
         )
-        strategy = Strategy(
-            primary_move=invalid_move,
-            alternatives=[],
-            game_plan="Block opponent",
-            risk_assessment="medium",
-        )
 
-        # Execute should return validation error
-        result = executor.execute(game_state, strategy)
+        # Test validation directly
+        validation_errors = executor._validate_move(game_state, invalid_move)
 
-        # Should return error result with validation errors
-        assert not result.success
-        assert result.data is not None
-        execution = result.data
-        assert not execution.success
-        assert E_CELL_OCCUPIED in execution.validation_errors
+        # Should have validation error for occupied cell
+        assert E_CELL_OCCUPIED in validation_errors
 
     def test_subsection_3_2_1_validates_game_not_over(self) -> None:
         """Subsection 3.2.1: Validates game is not over."""
@@ -256,3 +247,149 @@ class TestMoveExecution:
         assert result.data is not None
         execution = result.data
         assert execution.actual_priority_used == MovePriority.IMMEDIATE_WIN
+
+
+# ==============================================================================
+# SUBSECTION 3.2.3: Fallback Handling
+# ==============================================================================
+class TestFallbackHandling:
+    """Development tests for fallback handling logic."""
+
+    def test_subsection_3_2_3_falls_back_to_first_alternative(self) -> None:
+        """Subsection 3.2.3: Falls back to first alternative when primary move fails."""
+        executor = ExecutorAgent(ai_symbol="O")
+
+        # Create game state where primary move position is occupied
+        # Player (X) has moved at (1,1), so primary move to center will fail
+        board = Board(
+            cells=[
+                ["EMPTY", "EMPTY", "EMPTY"],
+                ["EMPTY", "X", "EMPTY"],  # Center occupied
+                ["EMPTY", "EMPTY", "EMPTY"],
+            ]
+        )
+        game_state = GameState(board=board, player_symbol="X", ai_symbol="O", move_count=1)
+
+        # Create strategy with invalid primary move (occupied) and valid alternative
+        invalid_primary = MoveRecommendation(
+            position=Position(row=1, col=1),  # Occupied by X
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.7,
+            reasoning="Take center",
+        )
+        valid_alternative = MoveRecommendation(
+            position=Position(row=0, col=0),  # Valid corner
+            priority=MovePriority.CORNER_CONTROL,
+            confidence=0.4,
+            reasoning="Take corner",
+        )
+        strategy = Strategy(
+            primary_move=invalid_primary,
+            alternatives=[valid_alternative],
+            game_plan="Control board",
+            risk_assessment="low",
+        )
+
+        # Execute should fallback to alternative
+        result = executor.execute(game_state, strategy)
+
+        # Should succeed using alternative
+        assert result.success
+        assert result.data is not None
+        execution = result.data
+        assert execution.success
+        assert execution.position == Position(row=0, col=0)
+        assert "Fallback" in execution.reasoning
+        assert "alternative" in execution.reasoning.lower()
+
+    def test_subsection_3_2_3_falls_back_to_random_valid_move(self) -> None:
+        """Subsection 3.2.3: Falls back to random valid move when all alternatives fail."""
+        executor = ExecutorAgent(ai_symbol="O")
+
+        # Create game state where both primary and alternatives are invalid
+        # Player (X) has moved at (0,0) and (1,1), AI (O) needs to move (odd move count)
+        board = Board(
+            cells=[
+                ["X", "EMPTY", "EMPTY"],
+                ["EMPTY", "X", "EMPTY"],
+                ["EMPTY", "EMPTY", "EMPTY"],
+            ]
+        )
+        game_state = GameState(board=board, player_symbol="X", ai_symbol="O", move_count=3)
+
+        # Create strategy with invalid primary and invalid alternatives (all occupied)
+        invalid_primary = MoveRecommendation(
+            position=Position(row=0, col=0),  # Occupied
+            priority=MovePriority.CORNER_CONTROL,
+            confidence=0.4,
+            reasoning="Take corner",
+        )
+        invalid_alt1 = MoveRecommendation(
+            position=Position(row=1, col=1),  # Occupied
+            priority=MovePriority.CENTER_CONTROL,
+            confidence=0.7,
+            reasoning="Take center",
+        )
+        strategy = Strategy(
+            primary_move=invalid_primary,
+            alternatives=[invalid_alt1],
+            game_plan="Control board",
+            risk_assessment="low",
+        )
+
+        # Execute should fallback to random valid move
+        result = executor.execute(game_state, strategy)
+
+        # Should succeed using random valid move
+        assert result.success
+        assert result.data is not None
+        execution = result.data
+        assert execution.success
+        assert execution.position is not None
+        # Position should be one of the empty cells: (0,1), (0,2), (1,0), (1,2), (2,0), (2,1), (2,2)
+        assert execution.position.row in [0, 1, 2]
+        assert execution.position.col in [0, 1, 2]
+        assert board.get_cell(execution.position) == "EMPTY"  # Should be empty
+        assert "Fallback" in execution.reasoning
+        assert "random" in execution.reasoning.lower()
+
+    def test_subsection_3_2_3_returns_error_when_no_valid_moves(self) -> None:
+        """Subsection 3.2.3: Returns clear error when no valid moves available."""
+        executor = ExecutorAgent(ai_symbol="O")
+
+        # Create game state with board full (game over)
+        board = Board(
+            cells=[
+                ["X", "O", "X"],
+                ["O", "X", "O"],
+                ["X", "O", "X"],  # Board full, draw
+            ]
+        )
+        game_state = GameState(board=board, player_symbol="X", ai_symbol="O", move_count=9)
+
+        # Create strategy with any move (doesn't matter, board is full)
+        invalid_primary = MoveRecommendation(
+            position=Position(row=0, col=0),  # Occupied
+            priority=MovePriority.CORNER_CONTROL,
+            confidence=0.4,
+            reasoning="Take corner",
+        )
+        strategy = Strategy(
+            primary_move=invalid_primary,
+            alternatives=[],
+            game_plan="Control board",
+            risk_assessment="low",
+        )
+
+        # Execute should return error
+        result = executor.execute(game_state, strategy)
+
+        # Should return error result
+        assert not result.success
+        assert result.data is not None
+        execution = result.data
+        assert not execution.success
+        assert execution.position is None
+        assert (
+            "No valid moves available" in execution.reasoning or "Game over" in execution.reasoning
+        )
