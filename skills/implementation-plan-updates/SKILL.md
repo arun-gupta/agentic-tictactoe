@@ -1,24 +1,24 @@
 ---
 name: implementation-plan-updates
-description: Defines the pattern for updating the implementation plan when completing phases. Use when marking phases as complete to ensure consistent documentation of implementation status, test coverage, and deliverables.
+description: Defines the pattern for updating project documentation when completing features. Use when marking features as complete to ensure consistent documentation of implementation status, test coverage, and deliverables.
 license: MIT
 metadata:
   version: "1.0.0"
-  file: "docs/implementation-plan.md"
+  documentation: "project documentation files"
 ---
 
-# Implementation Plan Updates Pattern
+# Documentation Updates Pattern
 
-This skill defines how to update `docs/implementation-plan.md` when completing phases.
+This skill defines how to update project documentation when completing features or milestones.
 
 ## Update Locations
 
-### Phase Header
+### Feature Header
 
 Add completion marker:
 
 ```markdown
-**4.1.1. GET /health** ✅ **COMPLETE**
+**Feature: Health Endpoint** ✅ **COMPLETE**
 ```
 
 ### Implementation Notes Section
@@ -57,72 +57,51 @@ Update with actual counts:
 - **Test File**: `tests/integration/api/test_api_health.py`
 ```
 
-## Update Pattern by Phase Type
+## Update Pattern by Feature Type
 
-### Domain Models (Phase 1)
+### Core Business Logic
 
 ```markdown
-**1.0. Position Model** ✅ **COMPLETE**
+**Feature: Data Validation** ✅ **COMPLETE**
 
 **Implementation Notes:**
-- Implemented Position as Pydantic model with row/col validation
-- Added bounds checking (0-2) with error codes
+- Implemented validation layer with input validation
+- Added bounds checking with error codes
 - Tests cover all validation cases
 
 **Test Coverage**: ✅
-- **Subsection Tests**: 10 tests implemented
-- **Acceptance Criteria**: AC-2.1.1 through AC-2.1.10 verified
-- **Test File**: `tests/unit/domain/test_position.py`
+- **Tests**: 10 tests implemented
+- **Acceptance Criteria**: All requirements verified
+- **Test File**: `tests/unit/core/test_validation.py`
 ```
 
-### Game Engine (Phase 2)
+### Service Layer
 
 ```markdown
-**2.1. Win Condition Detection** ✅ **COMPLETE**
+**Feature: Processing Service** ✅ **COMPLETE**
 
 **Implementation Notes:**
-- Implemented check_winner() with row, column, diagonal checks
-- Returns winner symbol or None
-- Handles tie scenarios correctly
+- Implemented processing logic with error handling
+- Returns result wrapper with success/error states
+- Handles edge cases correctly
 
 **Test Coverage**: ✅
-- **Subsection Tests**: 10 tests implemented
-- **Acceptance Criteria**: AC-4.1.1.1 through AC-4.1.1.10 verified
-- **Test File**: `tests/unit/game/test_win_conditions.py`
+- **Tests**: 10 tests implemented
+- **Acceptance Criteria**: All requirements verified
+- **Test File**: `tests/unit/services/test_processing.py`
 ```
 
-### Agent System (Phase 3)
+### API Endpoints
 
 ```markdown
-**3.2.1. Move Validation** ✅ **COMPLETE**
+**Feature: Health Endpoint** ✅ **COMPLETE**
 
 **Implementation Notes:**
-- Implemented _validate_move() with bounds, cell, and game state checks
-- Returns list of error codes for multiple validation failures
-- Used Position.model_construct() in tests to bypass Pydantic validation
-
-**Subsection Tests** ✅:
-- ✅ Validates position bounds (0-2)
-- ✅ Validates cell is empty
-- ✅ Validates game is not over
-
-**Test Coverage**: ✅
-- **Subsection Tests**: 3 tests implemented
-- **Acceptance Criteria**: AC-3.4.1 through AC-3.4.3 verified
-- **Test File**: `tests/unit/agents/test_executor.py`
-```
-
-### API Endpoints (Phase 4)
-
-```markdown
-**4.1.1. GET /health** ✅ **COMPLETE**
-
-**Implementation Notes:**
-- Implemented server state tracking with globals
+- Implemented server state tracking
 - Uptime calculated from server start time
 - Shutdown state tracked in lifespan context manager
 
-**Subsection Tests** ✅:
+**Tests** ✅:
 - ✅ Returns 200 with status="healthy" when server is running
 - ✅ Response includes timestamp in ISO 8601 format
 - ✅ Response includes uptime_seconds with 2 decimal precision
@@ -130,36 +109,36 @@ Update with actual counts:
 - ✅ Returns 503 with status="unhealthy" when shutting down
 
 **Test Coverage** ✅:
-- **Subsection Tests**: 5 tests implemented and passing
-- **Acceptance Criteria**: AC-5.1.1, AC-5.1.2, AC-5.1.3 verified
-- **Test File**: `tests/integration/api/test_api_health.py`
+- **Tests**: 5 tests implemented and passing
+- **Acceptance Criteria**: All requirements verified
+- **Test File**: `tests/integration/api/test_health.py`
 ```
 
-## Phase Deliverables Section
+## Deliverables Section
 
-Update the "Phase X Deliverables" section at the end of each phase:
+Update the deliverables section for the milestone:
 
 ```markdown
-**Phase 4 Deliverables:**
-- ✅ GET /health endpoint implemented and tested
-- ✅ GET /ready endpoint implemented (if complete)
+**Milestone Deliverables:**
+- ✅ Health endpoint implemented and tested
+- ✅ Ready endpoint implemented (if complete)
 - ✅ 5 API integration tests passing
 - ✅ Error handling with proper HTTP status codes
-- ⚠️ POST /api/game/new endpoint (in progress)
-- ⚠️ POST /api/game/move endpoint (not started)
+- ⚠️ Create endpoint (in progress)
+- ⚠️ Update endpoint (not started)
 ```
 
 **Note**: Only mark deliverables as ✅ when fully complete. Use ⚠️ for in-progress items.
 
-## Spec References
+## Specification References
 
-Ensure spec references are correct:
+Ensure specification references are correct:
 
 ```markdown
 **Spec References:**
-- Section 5: API Design
-- Section 5.1: Health and Readiness Endpoints
-- Section 5.6: HTTP Status Code Mapping
+- API Design Specification
+- Health and Readiness Endpoints
+- HTTP Status Code Mapping
 ```
 
 ## Common Update Patterns
@@ -202,49 +181,49 @@ Include:
 ### ❌ Don't Mark Unfinished Work
 
 ```markdown
-**4.2.1. POST /api/game/new** ✅ **COMPLETE**  # WRONG - not implemented yet
+**Feature: Create Endpoint** ✅ **COMPLETE**  # WRONG - not implemented yet
 ```
 
 ### ❌ Don't Overcount Tests
 
 ```markdown
-**Subsection Tests**: 10 tests  # WRONG - only 5 were implemented
+**Tests**: 10 tests  # WRONG - only 5 were implemented
 ```
 
 ### ❌ Don't Forget Deliverables
 
 ```markdown
-**Phase 4 Deliverables:**
-- ✅ GET /health endpoint  # Missing other endpoints status
+**Milestone Deliverables:**
+- ✅ Health endpoint  # Missing other endpoints status
 ```
 
 ### ✅ Correct Format
 
 ```markdown
-**4.1.1. GET /health** ✅ **COMPLETE**
+**Feature: Health Endpoint** ✅ **COMPLETE**
 
 **Implementation Notes:**
 - [Specific implementation details]
 
-**Subsection Tests** ✅:
+**Tests** ✅:
 - ✅ [List of tests with checkmarks]
 
 **Test Coverage** ✅:
-- **Subsection Tests**: 5 tests implemented and passing
-- **Acceptance Criteria**: AC-5.1.1, AC-5.1.2, AC-5.1.3 verified
-- **Test File**: `tests/integration/api/test_api_health.py`
+- **Tests**: 5 tests implemented and passing
+- **Acceptance Criteria**: All requirements verified
+- **Test File**: `tests/integration/api/test_health.py`
 ```
 
 ## Checklist for Updates
 
-When marking a phase complete, ensure:
+When marking a feature complete, ensure:
 
-- [ ] Phase header marked with ✅ **COMPLETE**
+- [ ] Feature header marked with ✅ **COMPLETE**
 - [ ] Implementation Notes section added
-- [ ] All subsection tests marked with ✅
+- [ ] All tests marked with ✅
 - [ ] Test Coverage section updated with actual counts
 - [ ] Acceptance Criteria status noted
 - [ ] Test file path is correct
-- [ ] Phase Deliverables section updated
-- [ ] Spec References are accurate
+- [ ] Deliverables section updated
+- [ ] Specification References are accurate
 - [ ] File paths in "Files:" section are correct

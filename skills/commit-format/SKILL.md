@@ -1,6 +1,6 @@
 ---
 name: commit-format
-description: Ensures all git commits follow the Conventional Commits specification with project-specific types and scopes. Use this skill when making any commit to maintain consistent commit message format, improve git history readability, and enable automatic changelog generation.
+description: Ensures all git commits follow the Conventional Commits specification with consistent types and scopes. Use this skill when making any commit to maintain consistent commit message format, improve git history readability, and enable automatic changelog generation.
 license: MIT
 metadata:
   version: "1.0.0"
@@ -42,21 +42,23 @@ All commits MUST follow the [Conventional Commits](https://www.conventionalcommi
 - `ci`: CI/CD configuration changes
 - `chore`: Other changes (maintenance tasks, tooling, etc.)
 
-## Project Scopes
+## Common Scopes
 
-Common scopes used in this project:
+Scopes help categorize commits by area of the codebase. Examples:
 
-- `api`: API layer (`src/api/`)
-- `game`: Game engine (`src/game/`)
-- `agents`: Agent system (`src/agents/`)
-- `domain`: Domain models (`src/domain/`)
-- `services`: Service layer (`src/services/`)
-- `ui`: UI components (`src/ui/`)
-- `utils`: Utility functions (`src/utils/`)
-- `tests`: Test files (`tests/`)
-- `docs`: Documentation (`docs/`)
-- `scripts`: Scripts (`scripts/`)
+- `api`: API layer
+- `auth`: Authentication/authorization
+- `db`: Database related
+- `ui`: User interface components
+- `core`: Core business logic
+- `utils`: Utility functions
+- `tests`: Test files
+- `docs`: Documentation
+- `scripts`: Scripts and tooling
 - `config`: Configuration files
+- `deps`: Dependencies
+
+**Note**: Choose scopes that match your project structure. Scopes should be lowercase and descriptive.
 
 ## Examples
 
@@ -64,39 +66,42 @@ Common scopes used in this project:
 
 ```
 feat(api): Add GET /health endpoint
-feat(agents): Implement Scout agent analysis
-feat(game): Add draw detection with inevitable draw logic
+feat(auth): Implement OAuth2 authentication
+feat(ui): Add user dashboard component
+feat(core): Add data validation layer
 ```
 
 ### Fix Commits
 
 ```
-fix(game): Correct turn validation for out-of-bounds moves
 fix(api): Handle shutdown state in health endpoint
-fix(agents): Fix timeout handling in pipeline fallback
+fix(db): Correct connection pool timeout
+fix(ui): Fix form validation error display
+fix(core): Resolve race condition in cache
 ```
 
 ### Documentation Commits
 
 ```
-docs(plan): Mark Phase 4.1.1 as complete
-docs(readme): Update project status and metrics
+docs(readme): Update setup instructions
 docs(api): Add API endpoint documentation
+docs(contributing): Add contribution guidelines
 ```
 
 ### Test Commits
 
 ```
 test(api): Add integration tests for health endpoint
-test(agents): Add executor fallback tests
-test(game): Add comprehensive draw condition tests
+test(core): Add unit tests for validation layer
+test(ui): Add component rendering tests
 ```
 
 ### Refactoring Commits
 
 ```
-refactor(agents): Extract fallback logic into separate methods
-refactor(domain): Simplify Board model validation
+refactor(core): Extract validation logic into separate module
+refactor(api): Simplify error handling middleware
+refactor(db): Optimize query performance
 ```
 
 ### Multi-scope Commits
@@ -104,8 +109,8 @@ refactor(domain): Simplify Board model validation
 When changes span multiple areas, use the primary scope or omit scope:
 
 ```
-feat: Implement Phase 4.1.1 with health endpoint and tests
-fix: Resolve validation errors across game and agents modules
+feat: Implement authentication with API and UI updates
+fix: Resolve validation errors across core and api modules
 ```
 
 ### Detailed Commits (with body)
@@ -116,34 +121,17 @@ feat(api): Implement GET /health endpoint
 - Track server start time for uptime calculation
 - Track shutdown state for unhealthy status (503)
 - Return status, timestamp (ISO 8601), uptime_seconds, version
-- Complete within 100ms (AC-5.1.2)
+- Complete within 100ms
 
 Tests:
 - Add 5 integration tests for health endpoint
 - Test healthy status (200), timestamp format, uptime precision
 - Test response time (<100ms), shutdown status (503)
-- All acceptance criteria verified (AC-5.1.1, AC-5.1.2, AC-5.1.3)
 
 Files:
 - src/api/main.py: Add /health endpoint with state tracking
-- tests/integration/api/test_api_health.py: Add comprehensive tests
-- docs/implementation-plan.md: Mark Phase 4.1.1 as complete
-```
-
-## Phase Implementation Commits
-
-For phase implementation commits, use this format:
-
-```
-feat(<scope>): Implement Phase X.Y.Z <brief description>
-
-[Optional detailed description of what was implemented]
-
-Tests:
-- [List of tests added or updated]
-
-Files:
-- [List of files changed with brief description]
+- tests/integration/api/test_health.py: Add comprehensive tests
+- docs/api.md: Update API documentation
 ```
 
 ## Best Practices
@@ -167,12 +155,12 @@ Files:
 
 ## Multiple Commits for Large Changes
 
-For large features (e.g., implementing a full phase), you may make multiple commits:
+For large features, you may make multiple commits:
 
 ```
-feat(api): Implement Phase 4.1.1 GET /health endpoint
+feat(api): Implement GET /health endpoint
 test(api): Add integration tests for health endpoint
-docs(plan): Mark Phase 4.1.1 as complete
+docs(api): Update API documentation
 ```
 
 Or combine into a single detailed commit if all changes are tightly coupled.
@@ -204,14 +192,14 @@ Fixes #123
 When multiple related files are changed for a single feature:
 
 ```
-feat(agents): Add timeout handling
+feat(core): Add timeout handling
 
-- Add timeout configuration to AgentPipeline
+- Add timeout configuration to service layer
 - Implement timeout enforcement with ThreadPoolExecutor
-- Add fallback mechanisms for each agent stage
+- Add fallback mechanisms for each service stage
 
 Files:
-- src/agents/pipeline.py: Core timeout logic
-- tests/integration/test_agent_pipeline.py: Timeout tests
-- docs/implementation-plan.md: Mark Phase 3.3.2 complete
+- src/core/service.py: Core timeout logic
+- tests/integration/test_service.py: Timeout tests
+- docs/architecture.md: Update architecture documentation
 ```

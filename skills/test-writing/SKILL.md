@@ -1,6 +1,6 @@
 ---
 name: test-writing
-description: Defines patterns for writing tests in this project, including subsection tests for incremental development and acceptance criteria verification. Use when writing any tests to ensure consistent naming, structure, and coverage patterns.
+description: Defines patterns for writing tests, including subsection tests for incremental development and acceptance criteria verification. Use when writing any tests to ensure consistent naming, structure, and coverage patterns.
 license: MIT
 metadata:
   version: "1.0.0"
@@ -10,7 +10,7 @@ metadata:
 
 # Test Writing Pattern
 
-This skill defines how to write tests for this project following established patterns.
+This skill defines how to write tests following established patterns and best practices.
 
 ## Test Structure
 
@@ -23,7 +23,7 @@ This skill defines how to write tests for this project following established pat
 ### Test Class Structure
 
 ```python
-"""Tests for Phase X.Y.Z: <description>.
+"""Tests for <component>: <description>.
 
 Tests verify:
 - <key requirement 1>
@@ -43,10 +43,10 @@ def <fixture_name>():
 
 
 class Test<ComponentName>:
-    """Test Phase X.Y.Z: <description>."""
+    """Test <component>: <description>."""
 
-    def test_subsection_X_Y_Z_description(self, fixture) -> None:
-        """Test specific subsection requirement."""
+    def test_feature_description(self, fixture) -> None:
+        """Test specific feature requirement."""
         # Arrange
         # Act
         # Assert
@@ -64,9 +64,9 @@ def test_subsection_X_Y_Z_requirement_description(self) -> None:
 ```
 
 Examples:
-- `test_subsection_3_2_1_validates_position_bounds`
-- `test_subsection_4_1_1_returns_200_with_healthy_status`
-- `test_subsection_3_3_2_enforces_scout_timeout`
+- `test_subsection_1_2_3_validates_input_bounds`
+- `test_subsection_2_1_1_returns_200_with_healthy_status`
+- `test_subsection_3_2_1_enforces_timeout`
 
 ### Acceptance Criteria Tests
 
@@ -78,8 +78,8 @@ def test_ac_X_Y_Z_requirement_description(self) -> None:
 ```
 
 Examples:
-- `test_ac_4_1_1_returns_200_with_health_status`
-- `test_ac_5_1_2_response_completes_within_100ms`
+- `test_ac_2_1_1_returns_200_with_health_status`
+- `test_ac_3_2_1_response_completes_within_100ms`
 
 ### General Tests
 
@@ -125,21 +125,21 @@ Test interactions between components:
 
 ```python
 @pytest.fixture
-def game_engine():
-    """Create game engine for testing."""
-    return GameEngine()
+def service():
+    """Create service for testing."""
+    return Service()
 
-def test_agent_pipeline_integration(self, game_engine) -> None:
-    """Test full agent pipeline."""
-    # Set up game state
-    game_state = create_test_game_state()
+def test_service_pipeline_integration(self, service) -> None:
+    """Test full service pipeline."""
+    # Set up test data
+    test_data = create_test_data()
 
     # Run pipeline
-    result = pipeline.execute_pipeline(game_state)
+    result = service.process(test_data)
 
     # Verify result
     assert result.success is True
-    assert result.data.move_execution is not None
+    assert result.data is not None
 ```
 
 ### API Tests
@@ -197,21 +197,18 @@ assert response.status_code == 503  # Service Unavailable
 
 ```python
 @pytest.fixture
-def game_state():
-    """Create test game state."""
-    return GameState(
-        board=Board(),
-        current_player="X",
-        move_count=0,
-        status="IN_PROGRESS",
-        player_symbol="X",
-        ai_symbol="O"
-    )
+def sample_data():
+    """Create sample test data."""
+    return {
+        "id": "test-id",
+        "name": "Test Item",
+        "status": "active"
+    }
 
 @pytest.fixture
-def game_engine():
-    """Create game engine."""
-    return GameEngine()
+def service():
+    """Create service instance."""
+    return Service()
 ```
 
 ### Autouse Fixtures
@@ -229,36 +226,37 @@ def reset_state():
 
 ## Test Coverage Requirements
 
-### Domain Models (Phase 1)
+### Core Business Logic
 
 - **Target**: 100% coverage
 - Test all validators
 - Test all edge cases
 - Test model creation and serialization
-
-### Game Engine (Phase 2)
-
-- **Target**: 100% coverage
-- Test all win conditions
-- Test all draw conditions
-- Test move validation
 - Test state transitions
 
-### Agent System (Phase 3)
+### Service Layer
 
-- **Target**: ≥80% coverage
-- Test each agent in isolation
-- Test pipeline integration
+- **Target**: ≥90% coverage
+- Test each service in isolation
+- Test service integration
 - Test timeout mechanisms
-- Test fallback strategies
+- Test error handling
 
-### API Endpoints (Phase 4)
+### API Endpoints
 
 - **Target**: ≥80% coverage
 - Test all endpoints
 - Test success and error cases
 - Test request/response models
 - Test error code mapping
+
+### UI Components
+
+- **Target**: ≥70% coverage
+- Test component rendering
+- Test user interactions
+- Test state management
+- Test error boundaries
 
 ## Best Practices
 
@@ -292,7 +290,7 @@ def test_enforces_timeout(self) -> None:
     result = slow_operation()
     elapsed_time = time.time() - start_time
 
-    assert result.error_code == "E_LLM_TIMEOUT"
+    assert result.error_code == "E_TIMEOUT"
     # Note: Don't assert exact timing, just that timeout occurred
 ```
 

@@ -1,24 +1,24 @@
 ---
 name: phase-implementation
-description: Guides implementation of phases from the implementation plan following the established workflow pattern. Use when implementing any phase or sub-phase to ensure consistent process: read plan, create todos, implement code, write tests, mark complete, commit and push.
+description: Guides implementation of features following an established workflow pattern. Use when implementing any feature to ensure consistent process: read requirements, create todos, implement code, write tests, update documentation, commit and push.
 license: MIT
 metadata:
   version: "1.0.0"
-  workflow: "plan -> todos -> code -> tests -> update plan -> commit"
+  workflow: "requirements -> todos -> code -> tests -> update docs -> commit"
 ---
 
-# Phase Implementation Pattern
+# Feature Implementation Pattern
 
-This skill defines the standard workflow for implementing phases from `docs/implementation-plan.md`.
+This skill defines the standard workflow for implementing features from your project's requirements or implementation plan.
 
 ## Implementation Workflow
 
-### 1. Read Implementation Plan
+### 1. Read Requirements
 
-- Locate the phase/sub-phase in `docs/implementation-plan.md`
-- Understand the requirements, acceptance criteria, and test coverage
+- Locate the feature/requirement in your project documentation
+- Understand the requirements, acceptance criteria, and test coverage expectations
 - Identify files to create/modify
-- Note any spec references
+- Note any specification references
 
 ### 2. Create TODO List
 
@@ -26,9 +26,9 @@ Use `todo_write` tool to track implementation tasks:
 
 ```python
 todo_write(merge=False, todos=[
-    {'id': 'phase_X_Y_implementation', 'content': 'Implement Phase X.Y', 'status': 'in_progress'},
-    {'id': 'phase_X_Y_tests', 'content': 'Write tests for Phase X.Y', 'status': 'pending'},
-    {'id': 'phase_X_Y_mark_complete', 'content': 'Mark complete in implementation plan', 'status': 'pending'}
+    {'id': 'feature_implementation', 'content': 'Implement feature X', 'status': 'in_progress'},
+    {'id': 'feature_tests', 'content': 'Write tests for feature X', 'status': 'pending'},
+    {'id': 'feature_docs', 'content': 'Update documentation', 'status': 'pending'}
 ])
 ```
 
@@ -36,16 +36,16 @@ todo_write(merge=False, todos=[
 
 - Create/modify source files as specified
 - Follow project conventions (type hints, docstrings, error codes)
-- Use domain models from `src/domain/`
+- Use established patterns and models
 - Implement error handling with custom error codes
 - Add necessary imports
 
 ### 4. Write Tests
 
 Follow the test-writing pattern:
-- Write subsection tests first (for incremental development)
-- Then verify acceptance criteria (AC-X.Y.Z format)
-- Use descriptive test names: `test_subsection_X_Y_Z_description`
+- Write incremental tests first (for development)
+- Then verify acceptance criteria
+- Use descriptive test names
 - Add type annotations: `-> None`
 - Test both success and error cases
 
@@ -57,22 +57,22 @@ Before marking complete:
 - Run tests: `pytest tests/ -v`
 - Fix any issues
 
-### 6. Update Implementation Plan
+### 6. Update Documentation
 
-Mark the phase as complete in `docs/implementation-plan.md`:
+Update project documentation:
 
-- Add ✅ **COMPLETE** marker to phase header
+- Mark feature as complete in relevant docs
 - Add **Implementation Notes** section with key details
-- Mark all subsection tests with ✅
-- Update **Test Coverage** section
-- Update **Acceptance Criteria** status
+- Update test coverage documentation
+- Update acceptance criteria status
+- Update any API or user documentation
 
 ### 7. Commit and Push
 
-Follow commit format from `skills/commit-format/SKILL.md`:
+Follow commit format conventions:
 
 ```
-feat(<scope>): Implement Phase X.Y.Z <brief description>
+feat(<scope>): Implement <feature name>
 
 - [List of key implementations]
 - [Key features added]
@@ -82,66 +82,64 @@ Tests:
 
 Files:
 - [List of files changed with descriptions]
-
-- docs/implementation-plan.md: Mark Phase X.Y.Z as complete
 ```
 
 Then push to GitHub.
 
-## Phase Types
+## Feature Types
 
-### Domain Models (Phase 1)
+### Core Business Logic
 
-- Implement Pydantic models in `src/domain/`
-- Add validators for business rules
-- Write unit tests in `tests/unit/domain/`
-- Target: 100% coverage on domain layer
-
-### Game Engine (Phase 2)
-
-- Implement game logic in `src/game/engine.py`
+- Implement domain models and business rules
+- Add validators for data integrity
 - Write comprehensive unit tests
-- Test all edge cases (win, draw, invalid moves)
-- Target: 100% coverage on game engine
+- Target: 100% coverage on core logic
 
-### Agent System (Phase 3)
+### Service Layer
 
-- Implement agents in `src/agents/`
-- Write unit tests for each agent
-- Write integration tests for pipeline
-- Test timeout and fallback mechanisms
+- Implement service logic
+- Write comprehensive unit tests
+- Test all edge cases and error scenarios
+- Target: ≥90% coverage on services
 
-### API Endpoints (Phase 4)
+### API Endpoints
 
-- Follow `skills/api-endpoint-implementation/SKILL.md`
-- Create FastAPI routes in `src/api/`
-- Write integration tests with TestClient
+- Follow API endpoint implementation patterns
+- Create REST routes
+- Write integration tests with test client
 - Verify acceptance criteria
+
+### UI Components
+
+- Implement user interface components
+- Write component tests
+- Test user interactions and state management
+- Verify accessibility and responsiveness
 
 ## Common Patterns
 
 ### Error Handling
 
-- Use error codes from `src/domain/errors.py`
-- Return `AgentResult` with error codes for agents
+- Use consistent error codes
+- Return appropriate result wrappers with error codes
 - Return HTTP status codes for API endpoints
-- Follow `skills/error-handling/SKILL.md`
+- Follow error handling patterns
 
 ### Test Organization
 
 - Unit tests: `tests/unit/<module>/test_<component>.py`
 - Integration tests: `tests/integration/test_<feature>.py`
-- API tests: `tests/integration/api/test_api_<endpoint>.py`
+- API tests: `tests/integration/api/test_<endpoint>.py`
 
 ### File Structure
 
-- Source files: `src/<module>/<component>.py`
+- Source files: Follow project structure conventions
 - Test files mirror source structure
-- Follow naming conventions (snake_case)
+- Follow naming conventions (snake_case for Python)
 
 ## Best Practices
 
-1. **Start with implementation plan**: Always read the plan first
+1. **Start with requirements**: Always read requirements first
 2. **Create todos**: Track progress with todo list
 3. **Test-driven**: Write tests alongside implementation
 4. **Incremental**: Implement one sub-phase at a time

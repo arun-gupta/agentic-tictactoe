@@ -1,10 +1,10 @@
 ---
 name: error-handling
-description: Defines error handling patterns using custom error codes, AgentResult wrapper, and HTTP status code mapping. Use when implementing error handling in agents, game engine, or API endpoints to ensure consistent error responses.
+description: Defines error handling patterns using custom error codes, result wrappers, and HTTP status code mapping. Use when implementing error handling in services, business logic, or API endpoints to ensure consistent error responses.
 license: MIT
 metadata:
   version: "1.0.0"
-  error_system: "custom error codes, AgentResult, HTTP mapping"
+  error_system: "custom error codes, result wrappers, HTTP mapping"
 ---
 
 # Error Handling Pattern
@@ -15,20 +15,23 @@ This skill defines how to handle errors consistently across the codebase.
 
 ### Error Code Definition
 
-All error codes are defined in `src/domain/errors.py`:
+Define error codes in a central location (e.g., `errors.py` or constants module):
 
 ```python
-# Game Engine Errors
-E_POSITION_OUT_OF_BOUNDS = "E_POSITION_OUT_OF_BOUNDS"
-E_CELL_OCCUPIED = "E_CELL_OCCUPIED"
-E_GAME_ALREADY_OVER = "E_GAME_ALREADY_OVER"
-E_INVALID_PLAYER = "E_INVALID_PLAYER"
-E_INVALID_TURN = "E_INVALID_TURN"
+# Validation Errors
+E_INVALID_INPUT = "E_INVALID_INPUT"
+E_OUT_OF_BOUNDS = "E_OUT_OF_BOUNDS"
+E_MISSING_REQUIRED_FIELD = "E_MISSING_REQUIRED_FIELD"
 
-# Agent Errors
-E_INVALID_EXECUTION_TIME = "E_INVALID_EXECUTION_TIME"
-E_MISSING_REASONING = "E_MISSING_REASONING"
-E_LLM_TIMEOUT = "E_LLM_TIMEOUT"
+# Resource Errors
+E_RESOURCE_NOT_FOUND = "E_RESOURCE_NOT_FOUND"
+E_RESOURCE_CONFLICT = "E_RESOURCE_CONFLICT"
+E_RESOURCE_LOCKED = "E_RESOURCE_LOCKED"
+
+# Service Errors
+E_SERVICE_TIMEOUT = "E_SERVICE_TIMEOUT"
+E_SERVICE_UNAVAILABLE = "E_SERVICE_UNAVAILABLE"
+E_EXTERNAL_SERVICE_ERROR = "E_EXTERNAL_SERVICE_ERROR"
 
 # API Errors
 E_INVALID_REQUEST = "E_INVALID_REQUEST"
@@ -39,64 +42,81 @@ E_SERVICE_NOT_READY = "E_SERVICE_NOT_READY"
 ### Using Error Codes
 
 ```python
-from src.domain.errors import E_POSITION_OUT_OF_BOUNDS
+from errors import E_OUT_OF_BOUNDS
 
-if not (0 <= row <= 2) or not (0 <= col <= 2):
+if not (0 <= value <= max_value):
     raise ValueError(
-        f"Position ({row}, {col}) is out of bounds. "
-        f"Error code: {E_POSITION_OUT_OF_BOUNDS}"
+        f"Value {value} is out of bounds (0-{max_value}). "
+        f"Error code: {E_OUT_OF_BOUNDS}"
     )
 ```
 
-## AgentResult Pattern
+## Result Wrapper Pattern
 
-### AgentResult Structure
+### Result Wrapper Structure
 
-For agent operations, use `AgentResult[T]` wrapper:
+For operations that can fail, use a result wrapper:
 
 ```python
-from src.domain.result import AgentResult
+from typing import Generic, TypeVar
 
-# Success case
-result = AgentResult.success(data=move_execution)
+T = TypeVar("T")
 
-# Error case
-result = AgentResult.error(
-    error_code="E_LLM_TIMEOUT",
-    error_message="Agent exceeded timeout",
-    metadata={"timeout_ms": 5000}
-)
+class Result(Generic[T]):
+    """Generic result wrapper for operations that can fail."""
+    success: bool
+    data: T | None = None
+    error_code: str | None = None
+    error_message: str | None = None
+    metadata: dict | None = None
+
+    @classmethod
+    def success_result(cls, data: T) -> "Result[T]":
+        """Create successful result."""
+        return cls(success=True, data=data)
+
+    @classmethod
+    def error_result(
+        cls, error_code: str, error_message: str, metadata: dict | None = None
+    ) -> "Result[T]":
+        """Create error result."""
+        return cls(
+            success=False,
+            error_code=error_code,
+            error_message=error_message,
+            metadata=metadata
+        )
 ```
 
-### AgentResult Usage
+### Result Wrapper Usage
 
 ```python
-def analyze(game_state: GameState) -> AgentResult[BoardAnalysis]:
-    """Analyze board state."""
+def process_data(input_data: InputData) -> Result[OutputData]:
+    """Process data with error handling."""
     try:
-        analysis = perform_analysis(game_state)
-        return AgentResult.success(data=analysis)
+        output = perform_processing(input_data)
+        return Result.success_result(data=output)
     except TimeoutError as e:
-        return AgentResult.error(
-            error_code="E_LLM_TIMEOUT",
-            error_message=f"Analysis exceeded timeout: {e}",
+        return Result.error_result(
+            error_code="E_SERVICE_TIMEOUT",
+            error_message=f"Processing exceeded timeout: {e}",
             metadata={"timeout_seconds": 10}
         )
     except Exception as e:
-        return AgentResult.error(
+        return Result.error_result(
             error_code="E_INTERNAL_ERROR",
-            error_message=f"Analysis failed: {e}"
+            error_message=f"Processing failed: {e}"
         )
 ```
 
-### Checking AgentResult
+### Checking Result
 
 ```python
-result = agent.analyze(game_state)
+result = service.process(data)
 
 if result.success:
-    analysis = result.data  # Type-safe access
-    # Use analysis
+    output = result.data  # Type-safe access
+    # Use output
 else:
     error_code = result.error_code
     error_message = result.error_message
@@ -107,7 +127,7 @@ else:
 
 ### Standard Error Response Format
 
-Follow Section 5.4 error response schema:
+Use a consistent error response format:
 
 ```python
 from fastapi.responses import JSONResponse
@@ -135,17 +155,19 @@ def error_response(
 
 ### HTTP Status Code Mapping
 
-Follow Section 5.6 mapping:
+Map error codes to appropriate HTTP status codes:
 
-| Error Code | HTTP Status | Description |
-|------------|-------------|-------------|
-| `E_POSITION_OUT_OF_BOUNDS` | 400 Bad Request | Invalid position coordinates |
-| `E_CELL_OCCUPIED` | 409 Conflict | Cell already occupied |
-| `E_GAME_ALREADY_OVER` | 409 Conflict | Game has ended |
-| `E_INVALID_REQUEST` | 400 Bad Request | Invalid request format |
-| `E_SERVICE_NOT_READY` | 503 Service Unavailable | Service not ready |
-| `E_LLM_TIMEOUT` | 504 Gateway Timeout | LLM/Agent timeout |
-| `E_INTERNAL_ERROR` | 500 Internal Server Error | Unexpected error |
+| Error Code | HTTP Status | Use Case |
+|------------|-------------|----------|
+| `E_INVALID_REQUEST` | 400 Bad Request | Invalid request format or validation failure |
+| `E_OUT_OF_BOUNDS` | 400 Bad Request | Invalid input values |
+| `E_RESOURCE_NOT_FOUND` | 404 Not Found | Resource doesn't exist |
+| `E_RESOURCE_CONFLICT` | 409 Conflict | Resource already exists or state conflict |
+| `E_UNAUTHORIZED` | 401 Unauthorized | Authentication required |
+| `E_FORBIDDEN` | 403 Forbidden | Insufficient permissions |
+| `E_SERVICE_NOT_READY` | 503 Service Unavailable | Service dependencies not ready |
+| `E_SERVICE_TIMEOUT` | 504 Gateway Timeout | Service timeout |
+| `E_INTERNAL_ERROR` | 500 Internal Server Error | Unexpected server error |
 
 ### Exception Handlers
 
@@ -191,65 +213,69 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
     )
 ```
 
-## Game Engine Error Handling
+## Service Error Handling
 
-### Move Validation Errors
+### Input Validation Errors
 
 ```python
-def validate_move(self, position: Position) -> None:
-    """Validate move and raise ValueError with error code."""
+def validate_input(self, data: InputData) -> None:
+    """Validate input and raise ValueError with error code."""
     # Bounds check
-    if not (0 <= position.row <= 2) or not (0 <= position.col <= 2):
+    if not (min_value <= data.value <= max_value):
         raise ValueError(
-            f"Position ({position.row}, {position.col}) is out of bounds. "
-            f"Error code: {E_POSITION_OUT_OF_BOUNDS}"
+            f"Value {data.value} is out of bounds ({min_value}-{max_value}). "
+            f"Error code: {E_OUT_OF_BOUNDS}"
         )
 
-    # Cell check
-    if not self.board.is_empty(position):
+    # Required field check
+    if not data.required_field:
         raise ValueError(
-            f"Cell ({position.row}, {position.col}) is already occupied. "
-            f"Error code: {E_CELL_OCCUPIED}"
+            f"Required field 'required_field' is missing. "
+            f"Error code: {E_MISSING_REQUIRED_FIELD}"
         )
 
-    # Game state check
-    if self.game_state.status != "IN_PROGRESS":
+    # State check
+    if data.status != "ACTIVE":
         raise ValueError(
-            f"Game is already over (status: {self.game_state.status}). "
-            f"Error code: {E_GAME_ALREADY_OVER}"
+            f"Resource is not in active state (status: {data.status}). "
+            f"Error code: {E_RESOURCE_CONFLICT}"
         )
 ```
 
 ### Error Propagation
 
 ```python
-def make_move(self, position: Position) -> MoveResult:
-    """Make a move, handling errors."""
+def process_data(self, data: InputData) -> Result[OutputData]:
+    """Process data, handling errors."""
     try:
-        self.validate_move(position)
-        # Execute move
-        return MoveResult(success=True, ...)
+        self.validate_input(data)
+        # Process data
+        output = perform_processing(data)
+        return Result.success_result(data=output)
     except ValueError as e:
         # Extract error code from exception message
         error_code = extract_error_code(str(e))
-        return MoveResult(success=False, error_code=error_code, error_message=str(e))
+        return Result.error_result(
+            error_code=error_code,
+            error_message=str(e)
+        )
 ```
 
-## Agent Error Handling
+## Service Error Handling
 
 ### Timeout Handling
 
 ```python
-def execute_with_timeout(self, func, timeout: float) -> AgentResult[T]:
+def execute_with_timeout(self, func, timeout: float) -> Result[T]:
     """Execute function with timeout."""
     try:
         with ThreadPoolExecutor() as executor:
             future = executor.submit(func)
             result = future.result(timeout=timeout)
-            return AgentResult.success(data=result)
+            return Result.success_result(data=result)
     except TimeoutError:
-        return AgentResult.error(
-            error_code="E_LLM_TIMEOUT",
+        return Result.error_result(
+            error_code="E_SERVICE_TIMEOUT",
             error_message=f"Operation exceeded timeout of {timeout}s",
             metadata={"timeout_seconds": timeout}
         )
@@ -258,13 +284,13 @@ def execute_with_timeout(self, func, timeout: float) -> AgentResult[T]:
 ### Fallback Strategies
 
 ```python
-def execute_pipeline(self, game_state: GameState) -> AgentResult[MoveExecution]:
-    """Execute agent pipeline with fallbacks."""
-    # Try Scout
-    scout_result = self.scout.analyze(game_state)
-    if not scout_result.success:
-        # Fallback to rule-based analysis
-        return self._fallback_rule_based_analysis(game_state)
+def execute_pipeline(self, input_data: InputData) -> Result[OutputData]:
+    """Execute service pipeline with fallbacks."""
+    # Try primary service
+    primary_result = self.primary_service.process(input_data)
+    if not primary_result.success:
+        # Fallback to secondary service
+        return self._fallback_secondary_service(input_data)
 
     # Continue pipeline...
 ```
@@ -328,12 +354,11 @@ def test_error_message_includes_error_code(self) -> None:
 
 ### Categories
 
-- `POSITION_*`: Position/coordinate errors
-- `CELL_*`: Cell state errors
-- `GAME_*`: Game state errors
 - `INVALID_*`: Validation errors
-- `LLM_*`: LLM/Agent errors
-- `SERVICE_*`: Service availability errors
+- `RESOURCE_*`: Resource-related errors
+- `SERVICE_*`: Service availability/timeout errors
+- `AUTH_*`: Authentication/authorization errors
+- `EXTERNAL_*`: External service errors
 - `INTERNAL_*`: Unexpected errors
 
 ## Common Patterns
