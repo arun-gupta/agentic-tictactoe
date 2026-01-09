@@ -2130,9 +2130,29 @@ GOOGLE_API_KEY=...
 - API usage examples
 - License and contributing
 
+**Subsection Tests**:
+- README.md exists and contains all required sections (overview, quick start, installation, usage, configuration, API examples)
+- docs/API.md exists with complete API endpoint documentation and request/response examples
+- docs/DEPLOYMENT.md exists with deployment instructions for Docker, Kubernetes, and cloud platforms
+- docs/DEVELOPMENT.md exists with developer setup guide (environment setup, running tests, contributing)
+- docs/ARCHITECTURE.md exists with system architecture overview (component diagrams, data flow)
+- All documentation files use consistent formatting and are up-to-date
+- Code examples in documentation are tested and working
+
 #### 9.1. Docker Containerization
 
 **Spec Reference**: Section 10 - Deployment Considerations
+
+**Subsection Tests**:
+- Dockerfile exists and follows multi-stage build pattern
+- Dockerfile builds successfully without errors
+- Docker image runs application correctly (uvicorn starts on port 8000)
+- Docker image health check works (HEALTHCHECK command responds correctly)
+- .dockerignore file excludes unnecessary files (.venv, __pycache__, tests, etc.)
+- Docker image size is optimized (uses slim base image, multi-stage build)
+- Docker image runs as non-root user (appuser)
+- Dockerfile exposes correct port (8000)
+- Docker image includes all required dependencies
 
 **Create `Dockerfile`:**
 
@@ -2199,6 +2219,15 @@ tests/
 .env
 .env.local
 ```
+
+**Subsection Tests** (continued):
+- docker-compose.yml for local development exists and works
+- docker-compose.yml for production exists with correct configuration
+- docker-compose up starts all services successfully
+- docker-compose volumes mount correctly (src/ for hot reload, logs/)
+- docker-compose environment variables are configured correctly
+- docker-compose health checks work correctly
+- docker-compose secrets management works (production config)
 
 **Create `docker-compose.yml` for Local Development:**
 
@@ -2274,6 +2303,17 @@ secrets:
 
 **Spec Reference**: Section 10.1 - Local Development
 
+**Subsection Tests**:
+- Local deployment instructions are clear and complete
+- Installation script/commands work (venv creation, pip install)
+- .env.example file exists with all required variables documented
+- Environment variables can be set and loaded correctly
+- Application starts locally with `uvicorn src.api.main:app --reload`
+- Local deployment can run tests successfully (`pytest` command works)
+- Local deployment can access UI at http://localhost:8000
+- Local deployment logs are written to logs/ directory
+- Local deployment supports hot reload during development
+
 **Setup:**
 ```bash
 # Clone repository
@@ -2303,6 +2343,17 @@ open http://localhost:8000
 
 **Spec Reference**: Section 10.2 - Production Deployment
 
+**Subsection Tests**:
+- Production deployment guide documents all three deployment options (Docker on VM, Kubernetes, Serverless)
+- Docker on Cloud VM deployment instructions are complete (reverse proxy, SSL/TLS setup)
+- Kubernetes manifests are created (Deployment, Service, Ingress)
+- Kubernetes ConfigMap and Secrets are configured correctly
+- Kubernetes autoscaling configuration is documented
+- Serverless deployment considerations are documented (timeout adjustments, limitations)
+- Production deployment includes monitoring and alerting setup
+- Production deployment includes backup and recovery procedures
+- Production deployment includes security best practices (non-root user, secrets management, network policies)
+
 **Deployment Options:**
 
 **Option 1: Docker on Cloud VM**
@@ -2323,6 +2374,16 @@ open http://localhost:8000
 - Limitations: May need to adjust timeout values
 
 #### 9.4. Add Docker Build to CI Pipeline
+
+**Subsection Tests**:
+- CI pipeline includes Docker build job
+- Docker build job runs after test job passes
+- Docker build job builds image successfully
+- Docker build job tests image (import test, health check)
+- Docker build job only runs on main branch (or specified conditions)
+- Docker build uses Buildx for multi-platform support (if needed)
+- Docker build job fails appropriately on build errors
+- Docker build cache is used for faster builds
 
 **Update `.github/workflows/ci.yml`** to add Docker build verification:
 
@@ -2396,6 +2457,17 @@ jobs:
 
 **Files to Create:**
 - `.github/workflows/deploy.yml`
+
+**Subsection Tests**:
+- CD pipeline (deploy.yml) exists and is configured correctly
+- CD pipeline triggers on push to main branch or version tags (v*)
+- CD pipeline builds Docker image with correct tags
+- CD pipeline pushes Docker image to registry (Docker Hub, ECR, GCR, etc.)
+- CD pipeline deploys to production environment
+- CD pipeline runs smoke tests after deployment
+- CD pipeline handles deployment failures gracefully (rollback capability)
+- CD pipeline requires manual approval for production (if configured)
+- CD pipeline secrets are configured correctly (DOCKER_USERNAME, DOCKER_PASSWORD, cloud credentials)
 
 **CD Pipeline:**
 
@@ -2506,15 +2578,24 @@ jobs:
 - Protocol message definitions (JSON-RPC)
 - Transport layer (HTTP, WebSocket, or stdio)
 
-**Test Coverage**: MCP Protocol Implementation (Section 15.2 - Mode 2: Distributed MCP)
-- MCP client implementation (protocol compliance, message serialization)
-- MCP server implementation (request handling, response formatting)
-- Protocol message definitions (JSON-RPC validation)
-- Transport layer (HTTP, WebSocket, stdio)
-- Protocol error handling
-- Connection management
+**Subsection Tests**:
+- MCP client implements protocol correctly (JSON-RPC message format)
+- MCP client serializes messages correctly (request/response)
+- MCP client handles connection errors gracefully
+- MCP server handles incoming requests correctly
+- MCP server formats responses according to protocol spec
+- Protocol message definitions validate JSON-RPC structure
+- Transport layer (HTTP) works correctly (client-server communication)
+- Transport layer (WebSocket) works correctly (if implemented)
+- Transport layer (stdio) works correctly (if implemented)
+- Protocol error handling returns appropriate error codes
+- Connection management handles reconnection on failure
+- Connection management handles connection timeouts
 
-**Test Files**: `tests/unit/mcp/test_client.py`, `tests/unit/mcp/test_server.py`, `tests/unit/mcp/test_protocol.py`
+**Test Coverage**:
+- **Subsection Tests**: ~12 tests for Phase 10.0 incremental development
+- **Acceptance Criteria**: MCP Protocol Implementation (Section 15.2 - Mode 2: Distributed MCP) - protocol compliance, message serialization, transport, error handling
+- **Test Files**: `tests/unit/mcp/test_client.py`, `tests/unit/mcp/test_server.py`, `tests/unit/mcp/test_protocol.py`
 
 #### 10.1. Agent MCP Adaptation
 
@@ -2524,15 +2605,24 @@ jobs:
 - Wrap Executor agent as MCP server
 - Coordinator communicates via MCP protocol
 
-**Test Coverage**: Agent MCP Adaptation (Section 15.2)
-- Scout agent MCP server wrapper (tool exposure, request handling)
-- Strategist agent MCP server wrapper (tool exposure, request handling)
-- Executor agent MCP server wrapper (tool exposure, request handling)
-- Coordinator MCP client communication
-- Agent behavior consistency (local vs MCP mode)
-- Distributed agent coordination
+**Subsection Tests**:
+- Scout agent MCP server exposes analyze() method as MCP tool
+- Scout agent MCP server handles analyze requests correctly
+- Strategist agent MCP server exposes plan() method as MCP tool
+- Strategist agent MCP server handles plan requests correctly
+- Executor agent MCP server exposes execute() method as MCP tool
+- Executor agent MCP server handles execute requests correctly
+- Coordinator MCP client can communicate with Scout MCP server
+- Coordinator MCP client can communicate with Strategist MCP server
+- Coordinator MCP client can communicate with Executor MCP server
+- Agent behavior is consistent between local mode and MCP mode (same outputs for same inputs)
+- Distributed agent coordination works correctly (pipeline executes via MCP)
+- MCP agents handle errors and timeouts consistently with local agents
 
-**Test Files**: `tests/integration/test_mcp_agents.py`, `tests/integration/test_mcp_coordinator.py`
+**Test Coverage**:
+- **Subsection Tests**: ~12 tests for Phase 10.1 incremental development
+- **Acceptance Criteria**: Agent MCP Adaptation (Section 15.2) - tool exposure, request handling, behavior consistency, coordination
+- **Test Files**: `tests/integration/test_mcp_agents.py`, `tests/integration/test_mcp_coordinator.py`
 
 #### 10.2. Mode Switching
 
@@ -2542,15 +2632,22 @@ jobs:
 - Same interface regardless of mode
 - Runtime mode switching (optional)
 
-**Test Coverage**: Mode Switching (Section 15 - Agent Mode Architecture)
-- Configuration-based mode selection (`AGENT_MODE=local` vs `AGENT_MODE=mcp`)
-- Factory pattern implementation (local agent creation, MCP agent creation)
-- Interface consistency (same interface regardless of mode)
-- Runtime mode switching (if implemented)
-- Fallback from MCP to local mode on failure
-- Mode switching error handling
+**Subsection Tests**:
+- Configuration `AGENT_MODE=local` creates local agents (Scout, Strategist, Executor)
+- Configuration `AGENT_MODE=mcp` creates MCP client agents
+- Factory pattern creates correct agent type based on configuration
+- Local agents and MCP agents implement same interface (BaseAgent)
+- Runtime mode switching works (if implemented, agents can switch modes without restart)
+- Fallback from MCP to local mode triggers on MCP connection failure
+- Fallback from MCP to local mode triggers on MCP timeout
+- Mode switching error handling returns appropriate error messages
+- Mode switching preserves game state (agents continue with same game state)
+- Mode switching logs mode change events
 
-**Test Files**: `tests/integration/test_mode_switching.py`, `tests/integration/test_mcp_fallback.py`
+**Test Coverage**:
+- **Subsection Tests**: ~10 tests for Phase 10.2 incremental development
+- **Acceptance Criteria**: Mode Switching (Section 15 - Agent Mode Architecture) - configuration-based selection, factory pattern, interface consistency, fallback, error handling
+- **Test Files**: `tests/integration/test_mode_switching.py`, `tests/integration/test_mcp_fallback.py`
 
 **Phase 10 Deliverables:**
 - ✅ MCP protocol implementation
