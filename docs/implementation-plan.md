@@ -1120,11 +1120,11 @@ pre-commit install --overwrite
 - **Note**: Error handling is tested as part of endpoint tests, but dedicated tests verify error code → HTTP status mapping
 
 **Phase 4 Deliverables:**
-- ✅ Complete REST API with all endpoints
-- ✅ 36 API integration tests passing
-- ✅ Error handling with proper HTTP status codes
-- ✅ API can be tested with curl/Postman
-- ✅ Game playable via API calls
+- Complete REST API with all endpoints
+- 36 API integration tests passing
+- Error handling with proper HTTP status codes
+- API can be tested with curl/Postman
+- Game playable via API calls
 
 **Spec References:**
 - Section 5: API Design (complete)
@@ -1367,12 +1367,12 @@ GOOGLE_API_KEY=...
 - **Test Files**: `tests/unit/metrics/test_llm_metrics.py`, `tests/integration/test_llm_tracking.py`
 
 **Phase 5 Deliverables:**
-- ✅ LLM providers integrated (OpenAI, Anthropic, Google)
-- ✅ Scout and Strategist enhanced with LLM intelligence
-- ✅ Fallback to rule-based logic still works
-- ✅ Configuration supports provider switching
-- ✅ Metrics tracked for all LLM calls
-- ✅ Comprehensive test coverage for LLM integration (provider abstraction, agent integration, configuration, metrics)
+- LLM providers integrated (OpenAI, Anthropic, Google)
+- Scout and Strategist enhanced with LLM intelligence
+- Fallback to rule-based logic still works
+- Configuration supports provider switching
+- Metrics tracked for all LLM calls
+- Comprehensive test coverage for LLM integration (provider abstraction, agent integration, configuration, metrics)
 
 **Spec References:**
 - Section 16: LLM Integration (provider and model configuration)
@@ -1810,11 +1810,11 @@ GOOGLE_API_KEY=...
 - **Acceptance Criteria**: AC-US025.1 through AC-US025.3 (3 official tests for final verification)
 
 **Phase 6 Deliverables:**
-- ✅ Complete web UI with all 25 user stories implemented
-- ✅ Responsive design (desktop-first per spec)
-- ✅ All UI acceptance criteria met (104 total)
-- ✅ Visual design matches ui-spec.md
-- ✅ Full game playable in browser
+- Complete web UI with all 25 user stories implemented
+- Responsive design (desktop-first per spec)
+- All UI acceptance criteria met (104 total)
+- Visual design matches ui-spec.md
+- Full game playable in browser
 
 **Spec References:**
 - Section 6: Web UI Functional Requirements (all 25 user stories)
@@ -1932,11 +1932,11 @@ GOOGLE_API_KEY=...
 - Resilience test: Invalid API key (simulate 401/403, verify fallback and error messaging)
 
 **Phase 7 Deliverables:**
-- ✅ 399 tests passing (one per acceptance criterion)
-- ✅ ≥80% code coverage overall
-- ✅ 100% coverage on domain models and game engine
-- ✅ All performance requirements met
-- ✅ Resilience scenarios validated
+- 399 tests passing (one per acceptance criterion)
+- ≥80% code coverage overall
+- 100% coverage on domain models and game engine
+- All performance requirements met
+- Resilience scenarios validated
 
 **Spec References:**
 - Section 11: Testing Strategy
@@ -2093,11 +2093,11 @@ GOOGLE_API_KEY=...
 - **Test Files**: `tests/integration/test_health_checks.py`
 
 **Phase 8 Deliverables:**
-- ✅ Configuration system supporting multiple environments
-- ✅ Structured logging with JSON format
-- ✅ Comprehensive metrics collection
-- ✅ Health check endpoints ready for orchestration
-- ✅ Comprehensive test coverage for configuration, logging, metrics, and health checks
+- Configuration system supporting multiple environments
+- Structured logging with JSON format
+- Comprehensive metrics collection
+- Health check endpoints ready for orchestration
+- Comprehensive test coverage for configuration, logging, metrics, and health checks
 
 **Spec References:**
 - Section 9: Configuration Management
@@ -2540,12 +2540,12 @@ jobs:
 - Cloud platform credentials (if deploying to AWS/GCP/Azure)
 
 **Phase 9 Deliverables:**
-- ✅ Complete documentation (README, API docs, deployment guide)
-- ✅ Docker containerization (Dockerfile, docker-compose.yml, .dockerignore)
-- ✅ Docker build added to CI pipeline
-- ✅ CD pipeline configured for automatic deployment
-- ✅ Production deployment ready
-- ✅ Monitoring and alerting set up
+- Complete documentation (README, API docs, deployment guide)
+- Docker containerization (Dockerfile, docker-compose.yml, .dockerignore)
+- Docker build added to CI pipeline
+- CD pipeline configured for automatic deployment
+- Production deployment ready
+- Monitoring and alerting set up
 
 **Spec References:**
 - Section 10: Deployment Considerations
@@ -2650,11 +2650,11 @@ jobs:
 - **Test Files**: `tests/integration/test_mode_switching.py`, `tests/integration/test_mcp_fallback.py`
 
 **Phase 10 Deliverables:**
-- ✅ MCP protocol implementation
-- ✅ Agents runnable as MCP servers
-- ✅ Coordinator communicates via MCP
-- ✅ Mode switching between local and MCP
-- ✅ Comprehensive test coverage for MCP protocol, agent adaptation, and mode switching
+- MCP protocol implementation
+- Agents runnable as MCP servers
+- Coordinator communicates via MCP
+- Mode switching between local and MCP
+- Comprehensive test coverage for MCP protocol, agent adaptation, and mode switching
 
 **Spec References:**
 - Section 15: Agent Mode Architecture
