@@ -1,10 +1,17 @@
-# Agent Skills Guide
+---
+name: commit-format
+description: Ensures all git commits follow the Conventional Commits specification with project-specific types and scopes. Use this skill when making any commit to maintain consistent commit message format, improve git history readability, and enable automatic changelog generation.
+license: MIT
+metadata:
+  version: "1.0.0"
+  specification: "https://www.conventionalcommits.org/"
+---
 
-This document defines conventions and best practices for AI assistants working on this codebase.
+# Commit Message Format
 
-## Commit Message Format
+All commits MUST follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
 
-All commits MUST follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+## Format Structure
 
 ```
 <type>(<scope>): <description>
@@ -22,7 +29,7 @@ All commits MUST follow the [Conventional Commits](https://www.conventionalcommi
 - **Body** (optional): Detailed explanation, wrapped at 72 characters
 - **Footer** (optional): Breaking changes or issue references
 
-### Commit Types
+## Commit Types
 
 - `feat`: New feature for users
 - `fix`: Bug fix
@@ -35,7 +42,7 @@ All commits MUST follow the [Conventional Commits](https://www.conventionalcommi
 - `ci`: CI/CD configuration changes
 - `chore`: Other changes (maintenance tasks, tooling, etc.)
 
-### Project Scopes
+## Project Scopes
 
 Common scopes used in this project:
 
@@ -51,50 +58,58 @@ Common scopes used in this project:
 - `scripts`: Scripts (`scripts/`)
 - `config`: Configuration files
 
-### Examples
+## Examples
 
-#### Feature Commits
+### Feature Commits
+
 ```
 feat(api): Add GET /health endpoint
 feat(agents): Implement Scout agent analysis
 feat(game): Add draw detection with inevitable draw logic
 ```
 
-#### Fix Commits
+### Fix Commits
+
 ```
 fix(game): Correct turn validation for out-of-bounds moves
 fix(api): Handle shutdown state in health endpoint
 fix(agents): Fix timeout handling in pipeline fallback
 ```
 
-#### Documentation Commits
+### Documentation Commits
+
 ```
 docs(plan): Mark Phase 4.1.1 as complete
 docs(readme): Update project status and metrics
 docs(api): Add API endpoint documentation
 ```
 
-#### Test Commits
+### Test Commits
+
 ```
 test(api): Add integration tests for health endpoint
 test(agents): Add executor fallback tests
 test(game): Add comprehensive draw condition tests
 ```
 
-#### Refactoring Commits
+### Refactoring Commits
+
 ```
 refactor(agents): Extract fallback logic into separate methods
 refactor(domain): Simplify Board model validation
 ```
 
-#### Multi-scope Commits
+### Multi-scope Commits
+
 When changes span multiple areas, use the primary scope or omit scope:
+
 ```
 feat: Implement Phase 4.1.1 with health endpoint and tests
 fix: Resolve validation errors across game and agents modules
 ```
 
-#### Detailed Commits (with body)
+### Detailed Commits (with body)
+
 ```
 feat(api): Implement GET /health endpoint
 
@@ -115,7 +130,7 @@ Files:
 - docs/implementation-plan.md: Mark Phase 4.1.1 as complete
 ```
 
-### Phase Implementation Commits
+## Phase Implementation Commits
 
 For phase implementation commits, use this format:
 
@@ -131,7 +146,7 @@ Files:
 - [List of files changed with brief description]
 ```
 
-### Best Practices
+## Best Practices
 
 1. **Be specific**: "Add health endpoint" is better than "Update API"
 2. **Use imperative mood**: "Add feature" not "Added feature" or "Adds feature"
@@ -141,7 +156,7 @@ Files:
 6. **List files changed**: Especially useful for larger commits
 7. **Group related changes**: One logical change per commit
 
-### When to Use Each Type
+## When to Use Each Type
 
 - **feat**: New functionality that users/consumers will see or use
 - **fix**: Correcting bugs or incorrect behavior
@@ -150,7 +165,7 @@ Files:
 - **refactor**: Code restructuring without changing behavior
 - **chore**: Maintenance tasks, dependency updates, tooling changes
 
-### Multiple Commits for Large Changes
+## Multiple Commits for Large Changes
 
 For large features (e.g., implementing a full phase), you may make multiple commits:
 
@@ -162,6 +177,41 @@ docs(plan): Mark Phase 4.1.1 as complete
 
 Or combine into a single detailed commit if all changes are tightly coupled.
 
----
+## Common Edge Cases
 
-**Remember**: Always use this format for consistency, better git history, and automatic changelog generation.
+### Handling Breaking Changes
+
+Use the `BREAKING CHANGE:` footer for breaking changes:
+
+```
+feat(api): Change response format
+
+BREAKING CHANGE: Response now uses snake_case instead of camelCase
+```
+
+### Referencing Issues
+
+Reference issues in the footer:
+
+```
+fix(game): Resolve validation bug
+
+Fixes #123
+```
+
+### Combining Multiple Related Changes
+
+When multiple related files are changed for a single feature:
+
+```
+feat(agents): Add timeout handling
+
+- Add timeout configuration to AgentPipeline
+- Implement timeout enforcement with ThreadPoolExecutor
+- Add fallback mechanisms for each agent stage
+
+Files:
+- src/agents/pipeline.py: Core timeout logic
+- tests/integration/test_agent_pipeline.py: Timeout tests
+- docs/implementation-plan.md: Mark Phase 3.3.2 complete
+```
