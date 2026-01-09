@@ -911,28 +911,33 @@ pre-commit install --overwrite
 - **Test File**: ✅ `tests/integration/api/test_api_foundation.py`
 - **Note**: Foundation setup doesn't have official AC numbers (AC-5.X.Y starts at 5.1.1 for /health endpoint)
 
-**4.0.2. Request/Response Models**
-- Implement Pydantic models per Section 5.3:
-  - `MoveRequest` (row, col) - validation for bounds (0-2)
-  - `MoveResponse` (updated state, AI move) - includes success, position, updated_game_state, ai_move_execution, error_message
-  - `GameStatusResponse` (complete game state) - includes GameState, agent_status, metrics
-  - `ErrorResponse` (error code, message, details) - follows Section 5.4 error response schema
+**4.0.2. Request/Response Models** ✅
+- ✅ Implement Pydantic models per Section 5.3:
+  - ✅ `MoveRequest` (row, col) - validation for bounds (0-2)
+  - ✅ `MoveResponse` (updated state, AI move) - includes success, position, updated_game_state, ai_move_execution, error_message
+  - ✅ `GameStatusResponse` (complete game state) - includes GameState, agent_status, metrics
+  - ✅ `ErrorResponse` (error code, message, details) - follows Section 5.4 error response schema
 
-**Subsection Tests**:
-- MoveRequest validation (row/col bounds 0-2)
-- MoveRequest rejects invalid values (row/col < 0 or > 2)
-- MoveResponse structure (success, position, updated_game_state when success=True)
-- MoveResponse includes ai_move_execution when AI moved
-- MoveResponse includes error_message when success=False
-- GameStatusResponse structure (game_state, agent_status, metrics)
-- ErrorResponse structure (status="failure", error_code, message, timestamp, details)
-- ErrorResponse timestamp is ISO 8601 format
-- All models serialize to JSON correctly
-- All models deserialize from JSON correctly
+**Subsection Tests** (16 tests for incremental development): ✅
+- ✅ MoveRequest validation (row/col bounds 0-2)
+- ✅ MoveRequest rejects invalid values (row/col < 0 or > 2)
+- ✅ MoveResponse structure (success, position, updated_game_state when success=True)
+- ✅ MoveResponse includes ai_move_execution when AI moved
+- ✅ MoveResponse includes error_message when success=False
+- ✅ MoveResponse rejects empty error_message
+- ✅ MoveResponse rounds execution time to 2 decimals
+- ✅ GameStatusResponse structure (game_state, agent_status, metrics)
+- ✅ GameStatusResponse optional fields (agent_status, metrics can be None)
+- ✅ ErrorResponse structure (status="failure", error_code, message, timestamp, details)
+- ✅ ErrorResponse timestamp is ISO 8601 format
+- ✅ ErrorResponse timestamp defaults to current time
+- ✅ ErrorResponse status must be "failure"
+- ✅ All models serialize to JSON correctly
+- ✅ All models deserialize from JSON correctly
 
-**Test Coverage** (planned):
-- **Subsection Tests**: ~10 tests for Phase 4.0.2 model validation and serialization
-- **Test File**: `tests/integration/api/test_api_models.py` (or add to existing test file)
+**Test Coverage**: ✅
+- **Subsection Tests**: ✅ 16 tests for Phase 4.0.2 model validation and serialization
+- **Test File**: ✅ `tests/integration/api/test_api_models.py`
 - **Note**: Model validation tests verify Section 5.3 constraints. Actual endpoint usage covered in AC-5.4.X, AC-5.5.X, etc.
 
 #### 4.1. Health and Readiness Endpoints
