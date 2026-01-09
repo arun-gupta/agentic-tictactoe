@@ -887,11 +887,12 @@ pre-commit install --overwrite
 - `src/api/errors.py` (error handling)
 - `tests/integration/api/test_api.py`
 
-**4.0.1. FastAPI Application Setup**
-- Create FastAPI app instance
-- Configure CORS (Section 5)
-- Set up exception handlers
-- Configure logging middleware
+**4.0.1. FastAPI Application Setup** ✅
+- ✅ Create FastAPI app instance
+- ✅ Configure CORS (Section 5) - allows all origins with credentials support
+- ✅ Set up exception handlers (ValueError → 400, Exception → 500)
+- ✅ Configure logging middleware (request/response logging with process time)
+- ✅ Root endpoint (GET /) returns API information
 
 **4.0.2. Request/Response Models**
 - Implement Pydantic models per Section 5.3:
