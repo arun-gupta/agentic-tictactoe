@@ -1,11 +1,11 @@
 ---
 name: api-endpoint-implementation
-description: Defines the pattern for implementing FastAPI REST endpoints, including route definition, request/response models, error handling, and integration tests. Use when implementing any API endpoint to ensure consistency with existing endpoints.
+description: Defines patterns for implementing FastAPI REST endpoints, including route definition, request/response models, error handling, and integration tests. Use when implementing any API endpoint to ensure consistency and best practices across endpoints.
 license: MIT
 metadata:
   version: "1.0.0"
   framework: "FastAPI"
-  conventions: "Pydantic models, TestClient, error codes"
+  conventions: "Pydantic models, TestClient, error codes, HTTP status mapping"
 ---
 
 # API Endpoint Implementation Pattern
@@ -19,20 +19,23 @@ This skill defines how to implement FastAPI REST endpoints following established
 ```python
 from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
-from src.api.models import RequestModel, ResponseModel
+from datetime import UTC, datetime
 
-@app.get("/endpoint")
-async def endpoint_handler() -> JSONResponse:
-    """Endpoint description.
+@app.get("/api/items")
+async def list_items() -> JSONResponse:
+    """List all items.
 
     Returns:
-        JSONResponse with status 200 and data
+        JSONResponse with status 200 and list of items
     """
     # Implementation
+    items = get_items()  # Your business logic
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={
-            "field": "value"
+            "items": items,
+            "count": len(items),
+            "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z")
         }
     )
 ```
@@ -40,23 +43,43 @@ async def endpoint_handler() -> JSONResponse:
 ### Endpoint with Request Body
 
 ```python
-from src.api.models import MoveRequest, MoveResponse
+from pydantic import BaseModel
 
-@app.post("/api/game/move")
-async def make_move(request: MoveRequest) -> JSONResponse:
-    """Make a move in the game.
+class CreateItemRequest(BaseModel):
+    """Request model for creating an item."""
+    name: str
+    description: str | None = None
+    price: float = Field(ge=0, description="Price must be non-negative")
+
+class ItemResponse(BaseModel):
+    """Response model for item operations."""
+    id: str
+    name: str
+    description: str | None
+    price: float
+    created_at: datetime
+
+@app.post("/api/items")
+async def create_item(request: CreateItemRequest) -> JSONResponse:
+    """Create a new item.
 
     Args:
-        request: Move request with row and col
+        request: Item creation request
 
     Returns:
-        JSONResponse with updated game state and AI move
+        JSONResponse with created item data
     """
     # Validate and process
-    # Return response
+    item = create_item_logic(request)  # Your business logic
     return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=MoveResponse(...).model_dump()
+        status_code=status.HTTP_201_CREATED,
+        content=ItemResponse(
+            id=item.id,
+            name=item.name,
+            description=item.description,
+            price=item.price,
+            created_at=item.created_at
+        ).model_dump()
     )
 ```
 
@@ -64,48 +87,86 @@ async def make_move(request: MoveRequest) -> JSONResponse:
 
 ### Request Models
 
-Define in `src/api/models.py`:
+Define Pydantic models for request validation:
 
 ```python
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
-class MoveRequest(BaseModel):
-    """Request model for making a move."""
+class CreateItemRequest(BaseModel):
+    """Request model for creating an item."""
 
-    row: int = Field(ge=0, le=2, description="Row index (0-2)")
-    col: int = Field(ge=0, le=2, description="Column index (0-2)")
+    name: str = Field(min_length=1, max_length=100, description="Item name")
+    description: str | None = Field(None, max_length=500, description="Optional description")
+    price: float = Field(ge=0, description="Price must be non-negative")
+    tags: list[str] = Field(default_factory=list, description="Item tags")
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        """Validate item name."""
+        if not v.strip():
+            raise ValueError("Name cannot be empty")
+        return v.strip()
 ```
 
 ### Response Models
 
 ```python
-class MoveResponse(BaseModel):
-    """Response model for move endpoint."""
+class ItemResponse(BaseModel):
+    """Response model for item operations."""
 
-    success: bool
-    position: Position | None = None
-    updated_game_state: GameState | None = None
-    ai_move_execution: MoveExecution | None = None
-    error_message: str | None = None
-    fallback_used: bool = False
-    total_execution_time_ms: float | None = None
+    id: str
+    name: str
+    description: str | None
+    price: float
+    tags: list[str]
+    created_at: datetime
+    updated_at: datetime
+
+class ErrorResponse(BaseModel):
+    """Standard error response model."""
+
+    status: str = "failure"
+    error_code: str
+    message: str
+    timestamp: datetime
+    details: dict | None = None
 ```
 
 ## Error Handling
 
 ### Standard Error Response
 
-Use error codes from `src/domain/errors.py`:
+Define error codes in your project (e.g., `errors.py` or constants):
 
 ```python
-from src.domain.errors import E_INVALID_REQUEST, E_SERVICE_NOT_READY
+# Define error codes (e.g., in errors.py)
+E_INVALID_REQUEST = "E_INVALID_REQUEST"
+E_RESOURCE_NOT_FOUND = "E_RESOURCE_NOT_FOUND"
+E_RESOURCE_CONFLICT = "E_RESOURCE_CONFLICT"
+E_SERVICE_NOT_READY = "E_SERVICE_NOT_READY"
+E_INTERNAL_ERROR = "E_INTERNAL_ERROR"
 
-@app.post("/endpoint")
-async def endpoint() -> JSONResponse:
-    """Endpoint handler."""
+@app.post("/api/items")
+async def create_item(request: CreateItemRequest) -> JSONResponse:
+    """Create item endpoint."""
     try:
-        # Implementation
-        return JSONResponse(status_code=200, content={...})
+        # Validate business rules
+        if item_exists(request.name):
+            return JSONResponse(
+                status_code=status.HTTP_409_CONFLICT,
+                content={
+                    "status": "failure",
+                    "error_code": "E_RESOURCE_CONFLICT",
+                    "message": f"Item with name '{request.name}' already exists",
+                    "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                    "details": {"field": "name", "value": request.name}
+                }
+            )
+
+        # Create item
+        item = create_item_logic(request)
+        return JSONResponse(status_code=201, content=item.model_dump())
     except ValueError as e:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -121,58 +182,92 @@ async def endpoint() -> JSONResponse:
 
 ### Error Code to HTTP Status Mapping
 
-Follow Section 5.6 mapping:
+Map error codes to appropriate HTTP status codes:
 
-- `E_POSITION_OUT_OF_BOUNDS` → 400 Bad Request
-- `E_CELL_OCCUPIED` → 409 Conflict
-- `E_GAME_ALREADY_OVER` → 409 Conflict
-- `E_INVALID_REQUEST` → 400 Bad Request
-- `E_SERVICE_NOT_READY` → 503 Service Unavailable
-- `E_LLM_TIMEOUT` → 504 Gateway Timeout
-- `E_INTERNAL_ERROR` → 500 Internal Server Error
+| Error Code | HTTP Status | Use Case |
+|------------|-------------|----------|
+| `E_INVALID_REQUEST` | 400 Bad Request | Invalid input data, validation failures |
+| `E_RESOURCE_NOT_FOUND` | 404 Not Found | Resource doesn't exist |
+| `E_RESOURCE_CONFLICT` | 409 Conflict | Resource already exists, state conflict |
+| `E_UNAUTHORIZED` | 401 Unauthorized | Authentication required |
+| `E_FORBIDDEN` | 403 Forbidden | Insufficient permissions |
+| `E_SERVICE_NOT_READY` | 503 Service Unavailable | Service dependencies not ready |
+| `E_SERVICE_TIMEOUT` | 504 Gateway Timeout | External service timeout |
+| `E_INTERNAL_ERROR` | 500 Internal Server Error | Unexpected server error |
 
 ## Integration Tests
 
 ### Test Structure
 
 ```python
-"""Tests for Phase X.Y.Z: GET /endpoint endpoint.
+"""Tests for GET /api/items endpoint.
 
 Tests verify:
 - Endpoint returns 200 with correct data
 - Error handling works correctly
 - Response format matches schema
+- Request validation works
 """
 
 import pytest
 from fastapi.testclient import TestClient
 
-from src import api
+from your_app import app  # Import your FastAPI app
 
 @pytest.fixture
 def client() -> TestClient:
     """Create test client."""
-    return TestClient(api.main.app)
+    return TestClient(app)
 
-class TestEndpoint:
-    """Test Phase X.Y.Z: GET /endpoint endpoint."""
+class TestItemsEndpoint:
+    """Test GET /api/items endpoint."""
 
-    def test_get_endpoint_returns_200(self, client: TestClient) -> None:
-        """Test GET /endpoint returns 200 with correct data."""
-        response = client.get("/endpoint")
+    def test_get_items_returns_200(self, client: TestClient) -> None:
+        """Test GET /api/items returns 200 with list of items."""
+        response = client.get("/api/items")
 
         assert response.status_code == 200
         data = response.json()
-        assert data["field"] == expected_value
+        assert "items" in data
+        assert "count" in data
+        assert isinstance(data["items"], list)
+
+    def test_create_item_returns_201(self, client: TestClient) -> None:
+        """Test POST /api/items creates item successfully."""
+        response = client.post(
+            "/api/items",
+            json={"name": "Test Item", "price": 10.99}
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["name"] == "Test Item"
+        assert data["price"] == 10.99
+        assert "id" in data
+
+    def test_create_item_validates_request(self, client: TestClient) -> None:
+        """Test POST /api/items validates request data."""
+        response = client.post(
+            "/api/items",
+            json={"name": "", "price": -5}  # Invalid data
+        )
+
+        assert response.status_code == 422  # Pydantic validation error
+        data = response.json()
+        assert "detail" in data
 
     def test_endpoint_handles_errors(self, client: TestClient) -> None:
-        """Test endpoint handles errors correctly."""
-        response = client.post("/endpoint", json={"invalid": "data"})
+        """Test endpoint handles business logic errors correctly."""
+        # Simulate conflict scenario
+        response = client.post(
+            "/api/items",
+            json={"name": "Existing Item", "price": 10.99}
+        )
 
-        assert response.status_code == 400
+        assert response.status_code == 409
         data = response.json()
         assert data["status"] == "failure"
-        assert data["error_code"] == "E_INVALID_REQUEST"
+        assert data["error_code"] == "E_RESOURCE_CONFLICT"
 ```
 
 ## Health and Ready Endpoints
@@ -210,59 +305,133 @@ async def health() -> JSONResponse:
 ```python
 @app.get("/ready")
 async def ready() -> JSONResponse:
-    """Readiness probe - checks dependencies."""
+    """Readiness probe - checks dependencies and service state."""
     checks = {
-        "game_engine": "ok",
-        "agents": "ok",
-        "llm_configuration": "ok"  # Optional in Phase 4
+        "database": check_database_connection(),
+        "cache": check_cache_connection(),
+        "external_api": check_external_service(),
+        # Add other critical dependencies
     }
 
     if all(v == "ok" for v in checks.values()):
         return JSONResponse(
             status_code=status.HTTP_200_OK,
-            content={"status": "ready", "checks": checks}
+            content={
+                "status": "ready",
+                "checks": checks,
+                "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z")
+            }
         )
     else:
+        failed_checks = {k: v for k, v in checks.items() if v != "ok"}
         return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            content={"status": "not_ready", "checks": checks}
+            content={
+                "status": "not_ready",
+                "checks": checks,
+                "failed_checks": list(failed_checks.keys()),
+                "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z")
+            }
         )
+
+def check_database_connection() -> str:
+    """Check if database is accessible."""
+    try:
+        # Your database health check logic
+        return "ok"
+    except Exception:
+        return "error"
+
+def check_cache_connection() -> str:
+    """Check if cache is accessible."""
+    try:
+        # Your cache health check logic
+        return "ok"
+    except Exception:
+        return "error"
+
+def check_external_service() -> str:
+    """Check if external service is reachable."""
+    try:
+        # Your external service check logic
+        return "ok"
+    except Exception:
+        return "error"
 ```
 
-## Game Control Endpoints
+## Resource Management Endpoints
 
-### POST /api/game/new
+### CRUD Pattern Example
 
 ```python
-@app.post("/api/game/new")
-async def new_game(player_symbol: str = "X") -> JSONResponse:
-    """Create new game session."""
-    game_engine = GameEngine()
-    game_state = game_engine.get_current_state()
-    game_id = str(uuid.uuid4())
+import uuid
+from fastapi import Path, Query
 
-    # Store game session (implementation specific)
-
+# GET - List resources
+@app.get("/api/items")
+async def list_items(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000)
+) -> JSONResponse:
+    """List items with pagination."""
+    items = get_items(skip=skip, limit=limit)
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={
-            "game_id": game_id,
-            "game_state": game_state.model_dump()
+            "items": [item.model_dump() for item in items],
+            "count": len(items),
+            "skip": skip,
+            "limit": limit
         }
     )
-```
 
-### POST /api/game/move
+# GET - Get single resource
+@app.get("/api/items/{item_id}")
+async def get_item(item_id: str = Path(...)) -> JSONResponse:
+    """Get item by ID."""
+    item = get_item_by_id(item_id)
+    if not item:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={
+                "status": "failure",
+                "error_code": "E_RESOURCE_NOT_FOUND",
+                "message": f"Item with ID '{item_id}' not found",
+                "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z")
+            }
+        )
+    return JSONResponse(status_code=200, content=item.model_dump())
 
-```python
-@app.post("/api/game/move")
-async def make_move(request: MoveRequest, game_id: str) -> JSONResponse:
-    """Make a move in the game."""
-    # Get game session
-    # Validate move
-    # Execute player move
-    # Run agent pipeline for AI move
-    # Return updated state
+# POST - Create resource
+@app.post("/api/items")
+async def create_item(request: CreateItemRequest) -> JSONResponse:
+    """Create new item."""
+    item = create_item_logic(request)
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content=item.model_dump()
+    )
+
+# PUT - Update resource
+@app.put("/api/items/{item_id}")
+async def update_item(
+    item_id: str = Path(...),
+    request: UpdateItemRequest
+) -> JSONResponse:
+    """Update existing item."""
+    item = update_item_logic(item_id, request)
+    if not item:
+        return JSONResponse(status_code=404, content={"error": "Not found"})
+    return JSONResponse(status_code=200, content=item.model_dump())
+
+# DELETE - Delete resource
+@app.delete("/api/items/{item_id}")
+async def delete_item(item_id: str = Path(...)) -> JSONResponse:
+    """Delete item."""
+    success = delete_item_logic(item_id)
+    if not success:
+        return JSONResponse(status_code=404, content={"error": "Not found"})
+    return JSONResponse(status_code=204)  # No Content
 ```
 
 ## Testing Requirements
@@ -277,12 +446,20 @@ Each endpoint should have tests for:
 4. **Response format**: Matches defined schema
 5. **Edge cases**: Boundary conditions and error scenarios
 
-### Test File Location
+### Test File Organization
 
-- API foundation tests: `tests/integration/api/test_api_foundation.py`
-- Endpoint-specific tests: `tests/integration/api/test_api_<endpoint>.py`
-- Model tests: `tests/integration/api/test_api_models.py`
-- Error tests: `tests/integration/api/test_api_errors.py`
+Organize tests by feature or endpoint:
+
+- Foundation tests: `tests/integration/api/test_foundation.py`
+- Feature-specific tests: `tests/integration/api/test_items.py`
+- Model validation tests: `tests/integration/api/test_models.py`
+- Error handling tests: `tests/integration/api/test_errors.py`
+
+Or organize by endpoint:
+
+- `tests/integration/api/test_health.py`
+- `tests/integration/api/test_ready.py`
+- `tests/integration/api/test_items.py`
 
 ## Best Practices
 
@@ -298,34 +475,86 @@ Each endpoint should have tests for:
 
 ### Stateful Endpoints
 
-For endpoints that need to track state:
+For endpoints that need to track state or sessions:
 
 ```python
-# Use global state or session storage
-_game_sessions: dict[str, GameEngine] = {}
+# Use in-memory storage, database, or cache
+_active_sessions: dict[str, SessionData] = {}
 
-@app.post("/api/game/move")
-async def make_move(request: MoveRequest, game_id: str) -> JSONResponse:
-    if game_id not in _game_sessions:
-        return JSONResponse(status_code=404, content={"error": "Game not found"})
+@app.post("/api/sessions/{session_id}/action")
+async def perform_action(
+    session_id: str = Path(...),
+    request: ActionRequest
+) -> JSONResponse:
+    """Perform action on session."""
+    if session_id not in _active_sessions:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={
+                "status": "failure",
+                "error_code": "E_RESOURCE_NOT_FOUND",
+                "message": f"Session '{session_id}' not found"
+            }
+        )
 
-    game_engine = _game_sessions[game_id]
-    # Use game_engine
+    session = _active_sessions[session_id]
+    result = process_action(session, request)
+    return JSONResponse(status_code=200, content=result)
 ```
 
 ### Async Operations
 
-For endpoints that trigger async operations:
+For endpoints that trigger async or long-running operations:
 
 ```python
-@app.post("/api/game/move")
-async def make_move(request: MoveRequest) -> JSONResponse:
-    """Make move and trigger AI agent pipeline."""
-    # Execute player move (synchronous)
-    game_engine.make_move(position)
+import asyncio
+from typing import Awaitable
 
-    # Trigger AI pipeline (can be async)
-    if game_engine.get_current_state().status == "IN_PROGRESS":
-        pipeline_result = await pipeline.execute_pipeline(game_state)
-        # Handle result
+@app.post("/api/items/{item_id}/process")
+async def process_item(item_id: str = Path(...)) -> JSONResponse:
+    """Trigger async processing for item."""
+    # Validate item exists
+    item = get_item_by_id(item_id)
+    if not item:
+        return JSONResponse(status_code=404, content={"error": "Not found"})
+
+    # Trigger async processing
+    task_id = str(uuid.uuid4())
+    asyncio.create_task(process_item_async(item_id, task_id))
+
+    return JSONResponse(
+        status_code=status.HTTP_202_ACCEPTED,
+        content={
+            "task_id": task_id,
+            "status": "processing",
+            "message": "Item processing started"
+        }
+    )
+
+async def process_item_async(item_id: str, task_id: str) -> None:
+    """Background task to process item."""
+    # Long-running or async operation
+    pass
+```
+
+### Dependency Injection
+
+For endpoints that need shared dependencies:
+
+```python
+from fastapi import Depends
+
+def get_database():
+    """Dependency to get database connection."""
+    db = get_db_connection()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/api/items")
+async def list_items(db = Depends(get_database)) -> JSONResponse:
+    """List items using database dependency."""
+    items = db.query_items()
+    return JSONResponse(status_code=200, content={"items": items})
 ```
