@@ -894,12 +894,46 @@ pre-commit install --overwrite
 - ✅ Configure logging middleware (request/response logging with process time)
 - ✅ Root endpoint (GET /) returns API information
 
+**Subsection Tests** (10 tests for incremental development): ✅
+- ✅ App instance created with correct metadata (title, description, version)
+- ✅ Root endpoint returns API information
+- ✅ CORS headers present in responses (access-control-allow-origin, access-control-allow-credentials)
+- ✅ CORS preflight (OPTIONS) requests work
+- ✅ Logging middleware adds X-Process-Time header
+- ✅ ValueError exception handler returns 400 with error response format
+- ✅ General Exception handler returns 500 with error response format
+- ✅ Exception handlers registered in app
+- ✅ OpenAPI/Swagger docs available at /docs
+- ✅ OpenAPI JSON schema available at /openapi.json
+
+**Test Coverage**: ✅
+- **Subsection Tests**: ✅ 10 tests for Phase 4.0.1 foundation verification
+- **Test File**: ✅ `tests/integration/api/test_api_foundation.py`
+- **Note**: Foundation setup doesn't have official AC numbers (AC-5.X.Y starts at 5.1.1 for /health endpoint)
+
 **4.0.2. Request/Response Models**
 - Implement Pydantic models per Section 5.3:
-  - `MoveRequest` (row, col)
-  - `MoveResponse` (updated state, AI move)
-  - `GameStatusResponse` (complete game state)
-  - `ErrorResponse` (error code, message, details)
+  - `MoveRequest` (row, col) - validation for bounds (0-2)
+  - `MoveResponse` (updated state, AI move) - includes success, position, updated_game_state, ai_move_execution, error_message
+  - `GameStatusResponse` (complete game state) - includes GameState, agent_status, metrics
+  - `ErrorResponse` (error code, message, details) - follows Section 5.4 error response schema
+
+**Subsection Tests**:
+- MoveRequest validation (row/col bounds 0-2)
+- MoveRequest rejects invalid values (row/col < 0 or > 2)
+- MoveResponse structure (success, position, updated_game_state when success=True)
+- MoveResponse includes ai_move_execution when AI moved
+- MoveResponse includes error_message when success=False
+- GameStatusResponse structure (game_state, agent_status, metrics)
+- ErrorResponse structure (status="failure", error_code, message, timestamp, details)
+- ErrorResponse timestamp is ISO 8601 format
+- All models serialize to JSON correctly
+- All models deserialize from JSON correctly
+
+**Test Coverage** (planned):
+- **Subsection Tests**: ~10 tests for Phase 4.0.2 model validation and serialization
+- **Test File**: `tests/integration/api/test_api_models.py` (or add to existing test file)
+- **Note**: Model validation tests verify Section 5.3 constraints. Actual endpoint usage covered in AC-5.4.X, AC-5.5.X, etc.
 
 #### 4.1. Health and Readiness Endpoints
 
@@ -910,7 +944,17 @@ pre-commit install --overwrite
 - Check if API is running
 - No dependencies checked
 
-**Test Coverage**: AC-5.1.1 through AC-5.1.4 (4 acceptance criteria)
+**Subsection Tests**:
+- GET /health returns 200 with status="healthy" when server is running
+- GET /health response includes timestamp in ISO 8601 format
+- GET /health response includes uptime_seconds as float with 2 decimal precision
+- GET /health response completes within 100ms
+- GET /health returns 503 with status="unhealthy" when shutting down (if shutdown state tracked)
+
+**Test Coverage** (planned):
+- **Subsection Tests**: ~4-5 tests for Phase 4.1.1 incremental development
+- **Acceptance Criteria**: AC-5.1.1 through AC-5.1.4 (4 official tests for final verification)
+- **Test File**: `tests/integration/api/test_api_health.py`
 
 **4.1.2. GET /ready**
 - Check game engine is initialized
@@ -918,7 +962,19 @@ pre-commit install --overwrite
 - Verify LLM providers are configured (optional in Phase 4)
 - Return detailed readiness status
 
-**Test Coverage**: AC-5.2.1 through AC-5.2.6 (6 acceptance criteria)
+**Subsection Tests**:
+- GET /ready returns 200 with status="ready" when all checks pass
+- GET /ready response includes checks object with game_engine status
+- GET /ready response includes checks object with configuration status
+- GET /ready returns checks.llm_configuration="ok" when LLM keys configured (optional in Phase 4)
+- GET /ready returns 503 with status="not_ready" when LLM keys missing (optional in Phase 4)
+- GET /ready returns 503 with errors array when checks fail
+- Game endpoints return 503 when /ready returns 503 (E_SERVICE_NOT_READY)
+
+**Test Coverage** (planned):
+- **Subsection Tests**: ~6-7 tests for Phase 4.1.2 incremental development
+- **Acceptance Criteria**: AC-5.2.1 through AC-5.2.6 (6 official tests for final verification)
+- **Test File**: `tests/integration/api/test_api_ready.py`
 
 #### 4.2. Game Control Endpoints
 
@@ -928,7 +984,17 @@ pre-commit install --overwrite
 - Return game ID and initial state
 - Optionally accept player symbol preference
 
-**Test Coverage**: AC-5.3.1 through AC-5.3.3 (3 acceptance criteria)
+**Subsection Tests**:
+- POST /api/game/new creates new game session and returns 200
+- POST /api/game/new returns game_id in response
+- POST /api/game/new returns initial GameState with MoveCount=0, empty board
+- POST /api/game/new accepts optional player_symbol preference
+- POST /api/game/new defaults to X for player if not specified
+
+**Test Coverage** (planned):
+- **Subsection Tests**: ~5 tests for Phase 4.2.1 incremental development
+- **Acceptance Criteria**: AC-5.3.1 through AC-5.3.3 (3 official tests for final verification)
+- **Test File**: `tests/integration/api/test_api_game.py`
 
 **4.2.2. POST /api/game/move**
 - Accept player move (row, col)
@@ -937,28 +1003,72 @@ pre-commit install --overwrite
 - Return updated game state + AI move
 - Handle errors per Section 5.4
 
-**Test Coverage**: AC-5.4.1 through AC-5.4.8 (8 acceptance criteria)
+**Subsection Tests**:
+- POST /api/game/move accepts valid MoveRequest and returns 200
+- POST /api/game/move validates move bounds (rejects row/col < 0 or > 2) → 400 E_MOVE_OUT_OF_BOUNDS
+- POST /api/game/move validates cell is empty (rejects occupied cell) → 400 E_CELL_OCCUPIED
+- POST /api/game/move validates game is not over (rejects if game ended) → 400 E_GAME_ALREADY_OVER
+- POST /api/game/move triggers AI agent pipeline after valid player move
+- POST /api/game/move returns MoveResponse with updated_game_state and ai_move_execution
+- POST /api/game/move handles game win condition (sets IsGameOver=true, winner)
+- POST /api/game/move handles malformed JSON → 422 Unprocessable Entity
+- POST /api/game/move handles server errors → 500 with error message
+
+**Test Coverage** (planned):
+- **Subsection Tests**: ~8-9 tests for Phase 4.2.2 incremental development
+- **Acceptance Criteria**: AC-5.4.1 through AC-5.4.8 (8 official tests for final verification)
+- **Test File**: `tests/integration/api/test_api_game.py`
 
 **4.2.3. GET /api/game/status**
 - Return current game state
 - Include board, move history, game over status
 - Return agent insights (if available)
 
-**Test Coverage**: AC-5.5.1 through AC-5.5.4 (4 acceptance criteria)
+**Subsection Tests**:
+- GET /api/game/status returns 200 with GameStatusResponse when game active
+- GET /api/game/status includes current GameState (board, move_count, current_player)
+- GET /api/game/status returns 404 when no active game exists
+- GET /api/game/status includes agent_status when AI is processing
+- GET /api/game/status includes metrics dictionary when game is completed
+
+**Test Coverage** (planned):
+- **Subsection Tests**: ~5 tests for Phase 4.2.3 incremental development
+- **Acceptance Criteria**: AC-5.5.1 through AC-5.5.4 (4 official tests for final verification)
+- **Test File**: `tests/integration/api/test_api_game.py`
 
 **4.2.4. POST /api/game/reset**
 - Reset current game to initial state
 - Clear move history
 - Reinitialize agents
 
-**Test Coverage**: AC-5.6.1 through AC-5.6.3 (3 acceptance criteria)
+**Subsection Tests**:
+- POST /api/game/reset returns 200 with new GameState
+- POST /api/game/reset resets board to empty (all cells EMPTY)
+- POST /api/game/reset sets MoveCount=0 and CurrentPlayer=X
+- POST /api/game/reset clears move_history
+- POST /api/game/reset returns new game_id
+
+**Test Coverage** (planned):
+- **Subsection Tests**: ~5 tests for Phase 4.2.4 incremental development
+- **Acceptance Criteria**: AC-5.6.1 through AC-5.6.3 (3 official tests for final verification)
+- **Test File**: `tests/integration/api/test_api_game.py`
 
 **4.2.5. GET /api/game/history**
 - Return complete move history
 - Include both player and AI moves
 - Include timestamps and agent reasoning
 
-**Test Coverage**: AC-5.7.1 through AC-5.7.3 (3 acceptance criteria)
+**Subsection Tests**:
+- GET /api/game/history returns 200 with array of MoveHistory objects
+- GET /api/game/history returns moves in chronological order (oldest first)
+- GET /api/game/history returns empty array when no moves made
+- GET /api/game/history includes player, position, timestamp, move_number for each move
+- GET /api/game/history includes AI moves with agent reasoning (if available)
+
+**Test Coverage** (planned):
+- **Subsection Tests**: ~5 tests for Phase 4.2.5 incremental development
+- **Acceptance Criteria**: AC-5.7.1 through AC-5.7.3 (3 official tests for final verification)
+- **Test File**: `tests/integration/api/test_api_game.py`
 
 #### 4.3. Agent Status Endpoints
 
@@ -969,7 +1079,17 @@ pre-commit install --overwrite
 - Include current processing agent
 - Show elapsed time for current operation
 
-**Test Coverage**: AC-5.8.1 through AC-5.8.5 (5 acceptance criteria)
+**Subsection Tests**:
+- GET /api/agents/scout/status returns 200 with status="idle" when agent idle
+- GET /api/agents/scout/status returns status="processing" with elapsed_time_ms when running
+- GET /api/agents/strategist/status returns execution_time_ms and success=true when completed
+- GET /api/agents/executor/status returns error_message and success=false when failed/timed out
+- GET /api/agents/{invalid}/status returns 404 for invalid agent name
+
+**Test Coverage** (planned):
+- **Subsection Tests**: ~5 tests for Phase 4.3.1 incremental development
+- **Acceptance Criteria**: AC-5.8.1 through AC-5.8.5 (5 official tests for final verification)
+- **Test File**: `tests/integration/api/test_api_agents.py`
 
 #### 4.4. Error Handling
 
@@ -983,6 +1103,21 @@ pre-commit install --overwrite
   - E_GAME_ALREADY_OVER → 409 Conflict
   - Agent timeout → 504 Gateway Timeout
 - Return consistent error structure with error code, message, details
+
+**Subsection Tests**:
+- Error responses follow ErrorResponse schema (status="failure", error_code, message, timestamp, details)
+- E_MOVE_OUT_OF_BOUNDS maps to 400 Bad Request
+- E_CELL_OCCUPIED maps to 409 Conflict
+- E_GAME_ALREADY_OVER maps to 409 Conflict
+- E_SERVICE_NOT_READY maps to 503 Service Unavailable
+- Agent timeout errors map to 504 Gateway Timeout
+- Error response timestamp is ISO 8601 format
+- Error response details include field/expected/actual when applicable
+
+**Test Coverage** (planned):
+- **Subsection Tests**: ~7-8 tests for Phase 4.4 incremental development
+- **Test File**: `tests/integration/api/test_api_errors.py` (or integrated into endpoint tests)
+- **Note**: Error handling is tested as part of endpoint tests, but dedicated tests verify error code → HTTP status mapping
 
 **Phase 4 Deliverables:**
 - ✅ Complete REST API with all endpoints
@@ -1025,18 +1160,51 @@ pre-commit install --overwrite
 - Methods: `generate(prompt, model, max_tokens, temperature)`
 - Return structured response with text, tokens, latency
 
+**Subsection Tests**:
+- Abstract LLMProvider interface defines generate() method signature
+- LLMProvider.generate() accepts prompt, model, max_tokens, temperature parameters
+- LLMProvider.generate() returns structured response with text, tokens_used, latency_ms fields
+- Cannot instantiate abstract LLMProvider directly (TypeError)
+
 **5.0.2. OpenAI Provider**
 - Implement using `openai` SDK
 - Support models: gpt-4o, gpt-4o-mini, gpt-3.5-turbo
 - Handle API errors and retries
 
+**Subsection Tests**:
+- OpenAIProvider implements LLMProvider interface
+- OpenAIProvider.generate() calls OpenAI API with correct parameters
+- OpenAIProvider supports gpt-4o, gpt-4o-mini, gpt-3.5-turbo models
+- OpenAIProvider handles API timeout errors (retries 3 times with exponential backoff)
+- OpenAIProvider handles rate limit errors (429) with Retry-After header
+- OpenAIProvider handles authentication errors (401/403) without retry
+- OpenAIProvider returns structured response with text, tokens_used, latency_ms
+
 **5.0.3. Anthropic Provider**
 - Implement using `anthropic` SDK
 - Support models: claude-3-5-sonnet, claude-3-opus, claude-3-haiku
 
+**Subsection Tests**:
+- AnthropicProvider implements LLMProvider interface
+- AnthropicProvider.generate() calls Anthropic API with correct parameters
+- AnthropicProvider supports claude-3-5-sonnet, claude-3-opus, claude-3-haiku models
+- AnthropicProvider handles API timeout errors (retries 3 times with exponential backoff)
+- AnthropicProvider handles rate limit errors (429) with Retry-After header
+- AnthropicProvider handles authentication errors (401/403) without retry
+- AnthropicProvider returns structured response with text, tokens_used, latency_ms
+
 **5.0.4. Google Gemini Provider**
 - Implement using Google SDK
 - Support models: gemini-1.5-pro, gemini-1.5-flash
+
+**Subsection Tests**:
+- GeminiProvider implements LLMProvider interface
+- GeminiProvider.generate() calls Google Gemini API with correct parameters
+- GeminiProvider supports gemini-1.5-pro, gemini-1.5-flash models
+- GeminiProvider handles API timeout errors (retries 3 times with exponential backoff)
+- GeminiProvider handles rate limit errors (429) with Retry-After header
+- GeminiProvider handles authentication errors (401/403) without retry
+- GeminiProvider returns structured response with text, tokens_used, latency_ms
 
 **5.0.5. Pydantic AI Implementation**
 
@@ -1058,16 +1226,20 @@ pre-commit install --overwrite
 
 **Note**: See Section 19 for comprehensive framework comparison. While Pydantic AI is selected for this implementation, the abstraction layer allows switching frameworks if needed (per Section 19 implementation strategy).
 
-**Test Coverage**: LLM Provider Abstraction (Section 16)
-- Provider interface contract validation
-- OpenAI provider implementation (model support, error handling, retries)
-- Anthropic provider implementation (model support, error handling)
-- Google Gemini provider implementation (model support, error handling)
-- Pydantic AI structured output validation against domain models
-- Error handling and retry logic
-- Token usage and latency tracking
+**Subsection Tests**:
+- Pydantic AI Agent created with BoardAnalysis as response model (for Scout)
+- Pydantic AI Agent created with Strategy as response model (for Strategist)
+- Pydantic AI validates LLM output against BoardAnalysis domain model (rejects invalid structure)
+- Pydantic AI validates LLM output against Strategy domain model (rejects invalid structure)
+- Pydantic AI multi-provider support (OpenAI, Anthropic, Google Gemini via configuration)
+- Pydantic AI error handling catches parse errors and triggers retry logic
+- Pydantic AI tracks token usage and latency automatically
+- Pydantic AI retry mechanism respects exponential backoff (1s, 2s, 4s)
 
-**Test Files**: `tests/unit/llm/test_providers.py`
+**Test Coverage** (planned):
+- **Subsection Tests**: ~20-25 tests for Phase 5.0 incremental development (4 + 7 + 7 + 7 + 8)
+- **Acceptance Criteria**: LLM Provider Abstraction (Section 16) - provider contract, error handling, retry logic
+- **Test Files**: `tests/unit/llm/test_providers.py`
 
 #### 5.1. Agent LLM Integration with Pydantic AI
 
@@ -1081,6 +1253,16 @@ pre-commit install --overwrite
 - Fallback to rule-based if LLM fails/times out
 - Update `src/agents/scout.py`
 
+**Subsection Tests**:
+- ScoutAgent.analyze() calls Pydantic AI Agent when LLM enabled
+- ScoutAgent.analyze() prompts LLM with board state and game context
+- ScoutAgent.analyze() receives BoardAnalysis from Pydantic AI structured output
+- ScoutAgent.analyze() falls back to rule-based analysis on LLM timeout (>5s)
+- ScoutAgent.analyze() falls back to rule-based analysis on LLM parse error
+- ScoutAgent.analyze() falls back to rule-based analysis on LLM authentication error
+- ScoutAgent.analyze() retries LLM call on timeout (3 retries with exponential backoff)
+- ScoutAgent.analyze() logs LLM call metadata (prompt, response, tokens, latency, model)
+
 **5.1.2. Strategist LLM Enhancement (Pydantic AI)**
 - Create Pydantic AI Agent with `Strategy` as response model
 - Define prompt: "Given this analysis, recommend best move..."
@@ -1089,18 +1271,30 @@ pre-commit install --overwrite
 - Fallback to priority-based selection if LLM fails
 - Update `src/agents/strategist.py`
 
+**Subsection Tests**:
+- StrategistAgent.plan() calls Pydantic AI Agent when LLM enabled
+- StrategistAgent.plan() prompts LLM with BoardAnalysis and game context
+- StrategistAgent.plan() receives Strategy from Pydantic AI structured output
+- StrategistAgent.plan() falls back to priority-based selection on LLM timeout (>5s)
+- StrategistAgent.plan() falls back to priority-based selection on LLM parse error
+- StrategistAgent.plan() falls back to priority-based selection on LLM authentication error
+- StrategistAgent.plan() retries LLM call on timeout (3 retries with exponential backoff)
+- StrategistAgent.plan() logs LLM call metadata (prompt, response, tokens, latency, model)
+
 **5.1.3. Executor (No LLM)**
 - Executor remains rule-based (no LLM needed for validation/execution)
 - Keeps execution fast and deterministic
 
-**Test Coverage**: Agent LLM Integration (Section 16.3)
-- Scout LLM enhancement (prompt engineering, response parsing, fallback)
-- Strategist LLM enhancement (prompt engineering, response parsing, fallback)
-- Executor remains rule-based (no LLM calls)
-- Fallback to rule-based logic on LLM failure/timeout
-- LLM response parsing into domain models (BoardAnalysis, Strategy)
+**Subsection Tests**:
+- ExecutorAgent.execute() remains rule-based (no LLM calls)
+- ExecutorAgent.execute() validates moves without LLM
+- ExecutorAgent.execute() executes moves deterministically
+- ExecutorAgent.execute() performance unaffected by LLM integration (no latency impact)
 
-**Test Files**: `tests/unit/agents/test_scout_llm.py`, `tests/unit/agents/test_strategist_llm.py`, `tests/integration/test_llm_fallback.py`
+**Test Coverage** (planned):
+- **Subsection Tests**: ~18 tests for Phase 5.1 incremental development (8 + 8 + 4)
+- **Acceptance Criteria**: Agent LLM Integration (Section 16.3) - prompt engineering, response parsing, fallback strategies
+- **Test Files**: `tests/unit/agents/test_scout_llm.py`, `tests/unit/agents/test_strategist_llm.py`, `tests/integration/test_llm_fallback.py`
 
 #### 5.2. Configuration and Settings
 
@@ -1125,15 +1319,22 @@ ANTHROPIC_API_KEY=sk-ant-...
 GOOGLE_API_KEY=...
 ```
 
-**Test Coverage**: LLM Configuration (Section 9, Section 16)
-- Load provider from environment variables
-- Support `.env` file for local development
-- Configuration hierarchy (env vars > .env file > defaults)
-- Runtime provider switching
-- Model selection per provider (one model per provider constraint)
-- API key validation and error handling
+**Subsection Tests**:
+- LLMConfig loads provider from LLM_PROVIDER environment variable
+- LLMConfig loads model from LLM_MODEL environment variable
+- LLMConfig loads API keys from provider-specific environment variables (OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY)
+- LLMConfig supports .env file for local development (reads .env if present)
+- LLMConfig configuration hierarchy: env vars > .env file > defaults
+- LLMConfig validates API key format (basic validation, not actual API check)
+- LLMConfig validates provider value (must be openai, anthropic, or gemini)
+- LLMConfig validates model value per provider (gpt-4o for openai, claude-3-5-sonnet for anthropic, etc.)
+- LLMConfig runtime provider switching (updates provider/model without restart)
+- LLMConfig returns error when required API key missing for selected provider
 
-**Test Files**: `tests/unit/config/test_llm_config.py`
+**Test Coverage** (planned):
+- **Subsection Tests**: ~10 tests for Phase 5.2.1 incremental development
+- **Acceptance Criteria**: LLM Configuration (Section 9, Section 16) - environment variables, .env support, hierarchy, validation
+- **Test Files**: `tests/unit/config/test_llm_config.py`
 
 #### 5.3. Metrics and Tracking
 
@@ -1149,14 +1350,21 @@ GOOGLE_API_KEY=...
 - Store in game session metadata
 - Enable post-game analysis (Section 6 - US-015)
 
-**Test Coverage**: LLM Metrics and Tracking (Section 12.1)
-- LLM call tracking per agent (Scout, Strategist)
-- Metadata recording (prompt, response, tokens, latency, model, provider)
-- Game session metadata storage
-- Post-game analysis data availability
-- Metrics export format validation
+**Subsection Tests**:
+- LLMMetrics.track_call() records LLM call with agent_name, prompt, response, tokens_used, latency_ms, model, provider
+- LLMMetrics.get_agent_calls(agent_name) returns all calls for specific agent (Scout, Strategist)
+- LLMMetrics.get_game_session_metadata() returns aggregated metrics for current game session
+- LLMMetrics stores metadata in game session (persists across game state)
+- LLMMetrics export format includes all required fields (timestamp, agent, prompt, response, tokens, latency, model, provider)
+- LLMMetrics tracks total tokens used per game session
+- LLMMetrics tracks total LLM latency per game session
+- LLMMetrics tracks LLM calls count per agent
+- LLMMetrics enables post-game analysis (data available after game ends)
 
-**Test Files**: `tests/unit/metrics/test_llm_metrics.py`, `tests/integration/test_llm_tracking.py`
+**Test Coverage** (planned):
+- **Subsection Tests**: ~9 tests for Phase 5.3 incremental development
+- **Acceptance Criteria**: LLM Metrics and Tracking (Section 12.1) - call tracking, metadata recording, session storage, export format
+- **Test Files**: `tests/unit/metrics/test_llm_metrics.py`, `tests/integration/test_llm_tracking.py`
 
 **Phase 5 Deliverables:**
 - ✅ LLM providers integrated (OpenAI, Anthropic, Google)

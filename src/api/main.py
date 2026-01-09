@@ -143,19 +143,9 @@ async def logging_middleware(request: Request, call_next: Any) -> Any:
         response.headers["X-Process-Time"] = str(round(process_time * 1000, 2))
         return response
 
-    except Exception as exc:
-        process_time = time.time() - start_time
-        logger.error(
-            "Request failed",
-            extra={
-                "event_type": "error",
-                "method": request.method,
-                "path": request.url.path,
-                "process_time_ms": round(process_time * 1000, 2),
-                "error": {"message": str(exc), "type": type(exc).__name__},
-            },
-            exc_info=True,
-        )
+    except Exception:
+        # Don't log here - let exception handlers log it
+        # Just re-raise so FastAPI's exception handlers can catch it
         raise
 
 
@@ -168,3 +158,16 @@ async def root() -> dict[str, str]:
         "version": "0.1.0",
         "status": "running",
     }
+
+
+# Test endpoint for exception handlers (for testing only)
+@app.get("/test/value-error")
+async def test_value_error() -> None:
+    """Test endpoint that raises ValueError (for testing exception handlers)."""
+    raise ValueError("Test ValueError for exception handler")
+
+
+@app.get("/test/general-error")
+async def test_general_error() -> None:
+    """Test endpoint that raises general Exception (for testing exception handlers)."""
+    raise RuntimeError("Test RuntimeError for exception handler")
