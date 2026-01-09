@@ -1842,6 +1842,15 @@ GOOGLE_API_KEY=...
 
 **Deliverable**: Coverage report showing ≥80% overall, 100% for critical paths
 
+**Subsection Tests**:
+- Coverage report generated with pytest --cov=src --cov-report=html
+- Domain models have 100% test coverage (Position, Board, GameState, AgentResult, etc.)
+- Game engine has 100% test coverage (GameEngine, win conditions, draw conditions, move validation)
+- Overall code coverage ≥80%
+- All acceptance criteria have corresponding unit tests
+- Coverage gaps identified and filled
+- Coverage report accessible in htmlcov/index.html
+
 #### 7.1. Integration Tests
 
 **Files to Create:**
@@ -1853,6 +1862,14 @@ GOOGLE_API_KEY=...
 - Agent pipeline with all three agents
 - API endpoints with real game engine and agents
 - Error handling across layers
+
+**Subsection Tests**:
+- test_full_pipeline.py tests complete game flow (player move → AI move → repeat until win/draw)
+- test_full_pipeline.py tests agent pipeline with all three agents (Scout → Strategist → Executor)
+- test_api_integration.py tests API endpoints with real game engine and agents
+- test_api_integration.py tests error handling across layers (validation → agent → execution)
+- Integration tests verify state transitions across components
+- Integration tests verify data flow between API, game engine, and agents
 
 #### 7.2. End-to-End Tests
 
@@ -1867,6 +1884,14 @@ GOOGLE_API_KEY=...
 - Agent timeout triggers fallback
 - LLM provider failure
 
+**Subsection Tests**:
+- E2E test: Player wins scenario (player makes winning moves, AI responds, game ends with player win)
+- E2E test: AI wins scenario (AI makes winning moves, player responds, game ends with AI win)
+- E2E test: Draw scenario (9 moves made, no winner, game ends in draw)
+- E2E test: Player makes invalid move (out of bounds, occupied cell, game over) → error displayed
+- E2E test: Agent timeout triggers fallback (simulate slow agent, verify fallback move executed)
+- E2E test: LLM provider failure (simulate LLM error, verify fallback to rule-based logic)
+
 #### 7.3. Performance Tests
 
 **Spec Reference**: Section 15 - Performance Optimization
@@ -1879,6 +1904,13 @@ GOOGLE_API_KEY=...
 - UI updates within 100ms of state change (AC-US023.3)
 - Agent status updates within 500ms (AC-US023.4)
 
+**Subsection Tests**:
+- Performance test: Agent pipeline completes within 15s (measure end-to-end pipeline execution time)
+- Performance test: UI updates within 100ms of state change (measure DOM update latency)
+- Performance test: Agent status updates within 500ms (measure status update propagation)
+- Performance test: Move validation completes within 10ms (measure validation latency)
+- Performance test: API response time < 200ms for game status endpoint (measure API latency)
+
 #### 7.4. Resilience Tests
 
 **Spec Reference**: Section 12 - Error Handling and Resilience
@@ -1889,6 +1921,15 @@ GOOGLE_API_KEY=...
 - Invalid API responses
 - Concurrent API requests
 - Agent crash and recovery
+
+**Subsection Tests**:
+- Resilience test: Network timeout (simulate network delay, verify timeout handling and fallback)
+- Resilience test: LLM API failure (simulate 500 error, verify fallback to rule-based logic)
+- Resilience test: Invalid API responses (simulate malformed JSON, verify error handling)
+- Resilience test: Concurrent API requests (multiple simultaneous game requests, verify no state leakage)
+- Resilience test: Agent crash and recovery (simulate agent failure, verify system continues with fallback)
+- Resilience test: Rate limiting (simulate 429 error, verify retry with backoff)
+- Resilience test: Invalid API key (simulate 401/403, verify fallback and error messaging)
 
 **Phase 7 Deliverables:**
 - ✅ 399 tests passing (one per acceptance criterion)
@@ -1932,16 +1973,20 @@ GOOGLE_API_KEY=...
 - Logging levels
 - Feature flags (e.g., enable LLM, enable metrics)
 
-**Test Coverage**: Configuration Management (Section 9)
-- Environment-based configuration (dev, staging, prod)
-- Configuration validation on startup
-- Environment variables support
-- Config file support (YAML/JSON)
-- Configuration hierarchy (env vars > config file > defaults)
-- Hot-reload for non-critical settings
-- Configuration error handling
+**Subsection Tests**:
+- Configuration loads from environment variables (LLM_PROVIDER, LLM_MODEL, etc.)
+- Configuration loads from config file (YAML/JSON) if provided
+- Configuration hierarchy respected (env vars > config file > defaults)
+- Configuration validation on startup (invalid values rejected with clear errors)
+- Environment-based configuration (dev, staging, prod) loads correct settings
+- Hot-reload works for non-critical settings (logging level, feature flags)
+- Configuration error handling (missing required values, invalid types)
+- LLM provider settings validated (provider name, model name per provider)
 
-**Test Files**: `tests/unit/config/test_settings.py`, `tests/integration/test_config_loading.py`
+**Test Coverage**:
+- **Subsection Tests**: ~8 tests for Phase 8.0 incremental development
+- **Acceptance Criteria**: Configuration Management (Section 9) - environment support, validation, hierarchy, error handling
+- **Test Files**: `tests/unit/config/test_settings.py`, `tests/integration/test_config_loading.py`
 
 #### 8.1. Logging
 
@@ -1960,15 +2005,22 @@ GOOGLE_API_KEY=...
 - Errors and exceptions
 - State transitions
 
-**Test Coverage**: Logging (Section 17 - Log Format Specification)
-- Structured logging (JSON format validation)
-- Log levels (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-- Contextual logging (request ID, game ID, agent ID)
-- Log rotation and retention
-- Log event types (API requests/responses, agent execution, LLM calls, errors, state transitions)
-- Log format compliance (timestamp, level, message, context)
+**Subsection Tests**:
+- Structured logging outputs JSON format (valid JSON per log entry)
+- Log levels work correctly (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- Contextual logging includes request ID, game ID, agent ID when available
+- Log rotation works (log files rotated when size/age limits reached)
+- Log retention policy enforced (old logs deleted after retention period)
+- API request/response events logged with correct format
+- Agent execution events logged (start, end, duration)
+- LLM call events logged (prompt, response, tokens, latency)
+- Error and exception events logged with stack traces
+- State transition events logged (game state changes)
 
-**Test Files**: `tests/unit/test_logging.py`, `tests/integration/test_logging_integration.py`
+**Test Coverage**:
+- **Subsection Tests**: ~10 tests for Phase 8.1 incremental development
+- **Acceptance Criteria**: Logging (Section 17 - Log Format Specification) - JSON format, log levels, contextual logging, rotation, retention
+- **Test Files**: `tests/unit/test_logging.py`, `tests/integration/test_logging_integration.py`
 
 #### 8.2. Metrics
 
@@ -2000,15 +2052,23 @@ GOOGLE_API_KEY=...
 - Prometheus format (optional)
 - CloudWatch/DataDog integration (optional)
 
-**Test Coverage**: Metrics Collection (Section 17 - Metrics Format Specification)
-- Agent metrics collection (execution time, success/failure rates, timeout counts, fallback usage)
-- Game metrics collection (total games, win/loss/draw counts, average duration, moves per game)
-- System metrics collection (API request rate, response times, error rates, LLM token usage)
-- Metrics export formats (JSON API endpoint validation)
-- Metrics aggregation (min, max, avg, p95, p99)
-- Metrics format compliance
+**Subsection Tests**:
+- Agent metrics collected: execution time (min, max, avg, p95, p99)
+- Agent metrics collected: success/failure rates per agent
+- Agent metrics collected: timeout counts per agent
+- Agent metrics collected: fallback usage counts per agent
+- Game metrics collected: total games, win/loss/draw counts
+- Game metrics collected: average game duration, moves per game
+- System metrics collected: API request rate, response times, error rates
+- System metrics collected: LLM token usage (total, per provider, per model)
+- Metrics export via JSON API endpoint `/api/metrics` returns valid JSON
+- Metrics aggregation calculates min, max, avg, p95, p99 correctly
+- Metrics format complies with Section 17 specification
 
-**Test Files**: `tests/unit/metrics/test_collector.py`, `tests/unit/metrics/test_exporter.py`, `tests/integration/test_metrics_api.py`
+**Test Coverage**:
+- **Subsection Tests**: ~11 tests for Phase 8.2 incremental development
+- **Acceptance Criteria**: Metrics Collection (Section 17 - Metrics Format Specification) - agent metrics, game metrics, system metrics, export formats
+- **Test Files**: `tests/unit/metrics/test_collector.py`, `tests/unit/metrics/test_exporter.py`, `tests/integration/test_metrics_api.py`
 
 #### 8.3. Health Checks
 
@@ -2017,14 +2077,20 @@ GOOGLE_API_KEY=...
 - Readiness probe: `/ready` (already implemented in Phase 4)
 - Deep health check: `/health/deep` (check all dependencies)
 
-**Test Coverage**: Health Checks (Section 10 - Deployment Considerations)
-- Liveness probe (`/health`) response format and status codes
-- Readiness probe (`/ready`) dependency checking
-- Deep health check (`/health/deep`) all dependencies validation
-- Health check error scenarios
-- Health check response time requirements
+**Subsection Tests**:
+- Liveness probe `/health` returns 200 with correct response format when healthy
+- Liveness probe `/health` returns 503 when unhealthy
+- Readiness probe `/ready` checks game engine initialization
+- Readiness probe `/ready` checks agent system readiness
+- Readiness probe `/ready` checks LLM configuration (optional in Phase 4)
+- Deep health check `/health/deep` validates all dependencies (game engine, agents, LLM config, metrics collector)
+- Health check error scenarios handled (dependency failures return appropriate status codes)
+- Health check response time < 100ms for `/health`, < 500ms for `/ready`, < 1000ms for `/health/deep`
 
-**Test Files**: `tests/integration/test_health_checks.py`
+**Test Coverage**:
+- **Subsection Tests**: ~8 tests for Phase 8.3 incremental development
+- **Acceptance Criteria**: Health Checks (Section 10 - Deployment Considerations) - liveness, readiness, deep health checks, response times
+- **Test Files**: `tests/integration/test_health_checks.py`
 
 **Phase 8 Deliverables:**
 - ✅ Configuration system supporting multiple environments
