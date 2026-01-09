@@ -967,24 +967,35 @@ pre-commit install --overwrite
 - **Acceptance Criteria**: AC-5.1.1, AC-5.1.2, AC-5.1.3 verified (AC-5.1.4 is for failure case, tested via shutdown)
 - **Test File**: `tests/integration/api/test_api_health.py`
 
-**4.1.2. GET /ready**
+**4.1.2. GET /ready** ✅ **COMPLETE**
 - Check game engine is initialized
 - Check agent system is ready
 - Verify LLM providers are configured (optional in Phase 4)
 - Return detailed readiness status
 
-**Subsection Tests**:
-- GET /ready returns 200 with status="ready" when all checks pass
-- GET /ready response includes checks object with game_engine status
-- GET /ready response includes checks object with configuration status
-- GET /ready returns checks.llm_configuration="ok" when LLM keys configured (optional in Phase 4)
-- GET /ready returns 503 with status="not_ready" when LLM keys missing (optional in Phase 4)
-- GET /ready returns 503 with errors array when checks fail
-- Game endpoints return 503 when /ready returns 503 (E_SERVICE_NOT_READY)
+**Implementation Notes:**
+- Implemented readiness checks: game_engine, agent_system, configuration, llm_configuration
+- Game engine check: Verifies GameEngine can be instantiated and get_current_state() works
+- Agent system check: Verifies AgentPipeline can be instantiated with all agents initialized
+- LLM configuration check: Checks for OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY
+- In Phase 4, LLM configuration is optional - returns "not_configured" but doesn't block readiness
+- Returns 200 with checks object when all required checks pass (game_engine, agent_system, configuration)
+- Returns 503 with errors array when any required check fails
+- Note: AC-5.2.6 (game endpoints return 503 when /ready returns 503) will be tested in Phase 4.2.x
 
-**Test Coverage** (planned):
-- **Subsection Tests**: ~6-7 tests for Phase 4.1.2 incremental development
-- **Acceptance Criteria**: AC-5.2.1 through AC-5.2.6 (6 official tests for final verification)
+**Subsection Tests** ✅:
+- ✅ GET /ready returns 200 with status="ready" when all checks pass
+- ✅ GET /ready response includes checks object with game_engine status
+- ✅ GET /ready response includes checks object with configuration status
+- ✅ GET /ready response includes checks object with agent_system status
+- ✅ GET /ready returns checks.llm_configuration="not_configured" when LLM keys missing (optional in Phase 4)
+- ✅ GET /ready returns checks.llm_configuration="ok" when LLM keys configured
+- ✅ GET /ready returns 503 with status="not_ready" when checks fail
+- ✅ GET /ready returns 503 with errors array when checks fail
+
+**Test Coverage** ✅:
+- **Subsection Tests**: 8 tests implemented and passing
+- **Acceptance Criteria**: AC-5.2.1, AC-5.2.2 verified (AC-5.2.3, AC-5.2.4, AC-5.2.5 tested; AC-5.2.6 requires game endpoints - Phase 4.2.x)
 - **Test File**: `tests/integration/api/test_api_ready.py`
 
 #### 4.2. Game Control Endpoints

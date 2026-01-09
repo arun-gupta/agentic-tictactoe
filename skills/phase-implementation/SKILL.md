@@ -55,6 +55,7 @@ Before marking complete:
 - Run linters: `ruff` and `black`
 - Run type checker: `mypy --strict --explicit-package-bases src/`
 - Run tests: `pytest tests/ -v`
+- **Ensure all tests pass** before proceeding
 - Fix any issues
 
 ### 6. Update Documentation
@@ -68,6 +69,8 @@ Update project documentation:
 - Update any API or user documentation
 
 ### 7. Commit and Push
+
+**Only commit after all tests pass and quality checks succeed.**
 
 Follow commit format conventions:
 
@@ -83,6 +86,13 @@ Tests:
 Files:
 - [List of files changed with descriptions]
 ```
+
+**Important**: Only commit after:
+- ✅ All tests pass (`pytest tests/ -v`)
+- ✅ Linters pass (`ruff` and `black`)
+- ✅ Type checker passes (`mypy`)
+- ✅ Documentation updated
+- ✅ Feature verified to work correctly
 
 Then push to GitHub.
 
