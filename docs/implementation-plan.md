@@ -1411,10 +1411,24 @@ GOOGLE_API_KEY=...
 - Define spacing scale (8px base unit)
 - Create CSS variables for design tokens
 
+**Subsection Tests**:
+- CSS variables defined for color palette (primary, secondary, background, text colors)
+- CSS variables defined for spacing scale (8px base unit: 8px, 16px, 24px, 32px)
+- Typography uses SF Pro Display font family
+- All design tokens accessible via CSS variables
+
 **6.0.2. API Client**
 - Create JavaScript wrapper for REST API
 - Methods: `makeMove()`, `getGameStatus()`, `resetGame()`
 - Handle errors and display to user
+
+**Subsection Tests**:
+- API client makeMove() method calls POST /api/game/move with correct parameters
+- API client getGameStatus() method calls GET /api/game/status
+- API client resetGame() method calls POST /api/game/reset
+- API client handles 400 errors (invalid move) and displays error message
+- API client handles 500 errors (server error) and displays error message
+- API client handles network errors and displays user-friendly message
 
 #### 6.1. Game Board UI
 
@@ -1426,7 +1440,16 @@ GOOGLE_API_KEY=...
 - Gap: 12px between cells
 - Display X, O, or empty
 
-**Test Coverage**: AC-US001.1 through AC-US001.3 (3 acceptance criteria)
+**Subsection Tests**:
+- Game board renders 3x3 grid (9 cells total)
+- Each cell has dimensions 100px × 100px
+- Gap between cells is 12px
+- Cells display X, O, or empty state correctly
+- Board layout matches ui-spec.md design
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.1.1 incremental development
+- **Acceptance Criteria**: AC-US001.1 through AC-US001.3 (3 official tests for final verification)
 
 **6.1.2. Make Player Move (US-002)**
 - Click handler on empty cells
@@ -1434,28 +1457,67 @@ GOOGLE_API_KEY=...
 - Show hover effects on valid cells
 - Display error messages for invalid moves
 
-**Test Coverage**: AC-US002.1 through AC-US002.12 (12 acceptance criteria)
+**Subsection Tests**:
+- Click handler attached to empty cells only
+- Clicking empty cell triggers makeMove() API call
+- Board disabled (pointer-events: none) during AI turn
+- Hover effect visible on valid (empty) cells
+- Hover effect hidden on occupied cells
+- Invalid move displays error message with shake animation
+- Cell occupied error highlights occupied cell in red
+- Out of bounds error displays appropriate message
+- Error messages auto-dismiss after 5 seconds
+
+**Test Coverage**:
+- **Subsection Tests**: ~9 E2E/UI tests for Phase 6.1.2 incremental development
+- **Acceptance Criteria**: AC-US002.1 through AC-US002.12 (12 official tests for final verification)
 
 **6.1.3. View Last Move (US-003)**
 - Highlight last played cell
 - Border color: highlight pink (#f72585)
 - Glow effect per ui-spec.md
 
-**Test Coverage**: AC-US003.1 through AC-US003.2 (2 acceptance criteria)
+**Subsection Tests**:
+- Last played cell highlighted with border color #f72585
+- Glow effect applied to last played cell per ui-spec.md
+- Highlight moves to new cell when next move is made
+- Highlight persists until game ends or reset
+
+**Test Coverage**:
+- **Subsection Tests**: ~4 E2E/UI tests for Phase 6.1.3 incremental development
+- **Acceptance Criteria**: AC-US003.1 through AC-US003.2 (2 official tests for final verification)
 
 **6.1.4. View Current Turn (US-004)**
 - Display whose turn (Player or AI)
 - Color-code by player symbol
 - Show move count
 
-**Test Coverage**: AC-US004.1 through AC-US004.8 (8 acceptance criteria)
+**Subsection Tests**:
+- Turn indicator displays "Player" or "AI" correctly
+- Turn indicator color-coded by current player symbol (X/O)
+- Move count displayed and updates after each move
+- Turn indicator updates when turn changes
+- Turn indicator reflects correct player at game start
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.1.4 incremental development
+- **Acceptance Criteria**: AC-US004.1 through AC-US004.8 (8 official tests for final verification)
 
 **6.1.5. View Game Status (US-005)**
 - Display game over message
 - Show winner (X, O, or DRAW)
 - Fade board when game ends
 
-**Test Coverage**: AC-US005.1 through AC-US005.3 (3 acceptance criteria)
+**Subsection Tests**:
+- Game over message displayed when game ends
+- Winner displayed correctly (X wins, O wins, or DRAW)
+- Board fades (opacity reduced) when game ends
+- Game over message persists until reset
+- Board interactions disabled when game over
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.1.5 incremental development
+- **Acceptance Criteria**: AC-US005.1 through AC-US005.3 (3 official tests for final verification)
 
 #### 6.2. Move History Panel
 
@@ -1466,14 +1528,34 @@ GOOGLE_API_KEY=...
 - Show player/AI indicator, move number, position, timestamp
 - Scrollable panel (max-height: 400px)
 
-**Test Coverage**: AC-US006.1 through AC-US006.2 (2 acceptance criteria)
+**Subsection Tests**:
+- Move history displays all moves in chronological order
+- Each move entry shows player/AI indicator
+- Each move entry shows move number, position (row, col), timestamp
+- Move history panel scrollable when content exceeds max-height 400px
+- Move history updates after each move
+- Move history cleared on game reset
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.2.1 incremental development
+- **Acceptance Criteria**: AC-US006.1 through AC-US006.2 (2 official tests for final verification)
 
 **6.2.2. View Move Details (US-007)**
 - Expandable move entries
 - Show agent reasoning (Scout analysis, Strategist strategy, Executor details)
 - Collapse/expand animation
 
-**Test Coverage**: AC-US007.1 through AC-US007.2 (2 acceptance criteria)
+**Subsection Tests**:
+- Move entries expandable via click/tap
+- Expanded entry shows Scout analysis (threats, opportunities)
+- Expanded entry shows Strategist strategy (primary move, alternatives, reasoning)
+- Expanded entry shows Executor details (execution time, validation status)
+- Collapse/expand animation smooth and visible
+- Multiple entries can be expanded simultaneously
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.2.2 incremental development
+- **Acceptance Criteria**: AC-US007.1 through AC-US007.2 (2 official tests for final verification)
 
 #### 6.3. Agent Insights Panel
 
@@ -1484,7 +1566,18 @@ GOOGLE_API_KEY=...
 - Show threats, opportunities, recommended moves
 - Three sections: Scout, Strategist, Executor
 
-**Test Coverage**: AC-US008.1 through AC-US008.11 (11 acceptance criteria)
+**Subsection Tests**:
+- Agent insights panel displays Scout, Strategist, Executor sections
+- Scout section shows threats detected (immediate wins/blocks)
+- Scout section shows opportunities identified (strategic positions)
+- Strategist section shows recommended moves with priority
+- Executor section shows move execution status and timing
+- Agent analysis updates in real-time during AI turn
+- Agent analysis cleared on game reset
+
+**Test Coverage**:
+- **Subsection Tests**: ~7 E2E/UI tests for Phase 6.3.1 incremental development
+- **Acceptance Criteria**: AC-US008.1 through AC-US008.11 (11 official tests for final verification)
 
 **6.3.2. Processing Status (US-009, US-010)**
 - Loading indicators while agents think
@@ -1495,14 +1588,35 @@ GOOGLE_API_KEY=...
   - 10-15s: Warning with fallback notice
   - 15s+: Automatic fallback
 
-**Test Coverage**: AC-US009.1 through AC-US010.1e (9 acceptance criteria)
+**Subsection Tests**:
+- Simple spinner displayed during 0-2s of agent processing
+- Processing message displayed during 2-5s
+- Progress bar with elapsed time displayed during 5-10s
+- Warning with fallback notice displayed during 10-15s
+- Automatic fallback triggered after 15s
+- Processing status updates every 100ms
+- Processing status cleared when agent completes
+
+**Test Coverage**:
+- **Subsection Tests**: ~7 E2E/UI tests for Phase 6.3.2 incremental development
+- **Acceptance Criteria**: AC-US009.1 through AC-US010.1e (9 official tests for final verification)
 
 **6.3.3. Force Fallback and Retry (US-011, US-012)**
 - "Force Fallback" button after 10s
 - "Retry" button on agent failure
 - Clear explanations of fallback strategy
 
-**Test Coverage**: AC-US011.1 through AC-US012.2 (5 acceptance criteria)
+**Subsection Tests**:
+- "Force Fallback" button appears after 10s of processing
+- Clicking "Force Fallback" triggers immediate fallback move
+- "Retry" button appears when agent fails
+- Clicking "Retry" attempts agent processing again
+- Fallback strategy explanation displayed when fallback used
+- Buttons disabled during fallback/retry execution
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.3.3 incremental development
+- **Acceptance Criteria**: AC-US011.1 through AC-US012.2 (5 official tests for final verification)
 
 #### 6.4. Post-Game Metrics
 
@@ -1512,40 +1626,97 @@ GOOGLE_API_KEY=...
 - Only visible after game ends
 - Tabbed interface: Summary | Performance | LLM | Communication
 
-**Test Coverage**: AC-US013.1 through AC-US013.2 (2 acceptance criteria)
+**Subsection Tests**:
+- Metrics tab only visible after game ends (hidden during active game)
+- Tabbed interface displays: Summary, Performance, LLM, Communication tabs
+- Each tab displays correct content when selected
+- Tab switching works correctly
+- Metrics tab hidden on game reset until next game ends
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.4.1 incremental development
+- **Acceptance Criteria**: AC-US013.1 through AC-US013.2 (2 official tests for final verification)
 
 **6.4.2. Agent Communication (US-014)**
 - Show request/response data for each agent call
 - Display JSON with syntax highlighting
 
-**Test Coverage**: AC-US014.1 through AC-US014.3 (3 acceptance criteria)
+**Subsection Tests**:
+- Agent Communication tab shows request/response for each agent call
+- JSON data displayed with syntax highlighting
+- Request shows input parameters (game state, board analysis, etc.)
+- Response shows agent output (BoardAnalysis, Strategy, MoveExecution)
+- Each agent (Scout, Strategist, Executor) has separate communication logs
+- Communication logs in chronological order
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.4.2 incremental development
+- **Acceptance Criteria**: AC-US014.1 through AC-US014.3 (3 official tests for final verification)
 
 **6.4.3. LLM Interactions (US-015)**
 - Show prompts sent to LLM
 - Show LLM responses
 - Display token usage, latency, model/provider
 
-**Test Coverage**: AC-US015.1 through AC-US015.6 (6 acceptance criteria)
+**Subsection Tests**:
+- LLM Interactions tab shows prompts sent to LLM (Scout, Strategist)
+- LLM Interactions tab shows LLM responses with structured output
+- Token usage displayed for each LLM call (input tokens, output tokens, total)
+- Latency displayed for each LLM call (in milliseconds)
+- Model and provider name displayed for each LLM call
+- LLM interactions only shown if LLM was used (rule-based mode shows empty)
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.4.3 incremental development
+- **Acceptance Criteria**: AC-US015.1 through AC-US015.6 (6 official tests for final verification)
 
 **6.4.4. Agent Configuration (US-016)**
 - Display agent mode (local vs MCP)
 - Show LLM framework used
 - Show initialization details
 
-**Test Coverage**: AC-US016.1 through AC-US016.4 (4 acceptance criteria)
+**Subsection Tests**:
+- Agent Configuration tab displays agent mode (local vs MCP/distributed)
+- Agent Configuration tab shows LLM framework used (Pydantic AI, etc.)
+- Agent Configuration tab shows initialization details (provider, model, timeouts)
+- Configuration reflects current game session settings
+- Configuration updates when settings changed during game
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.4.4 incremental development
+- **Acceptance Criteria**: AC-US016.1 through AC-US016.4 (4 official tests for final verification)
 
 **6.4.5. Performance Summary (US-017)**
 - Per-agent execution times (min, max, avg)
 - Total LLM calls and tokens
 - Success/failure rates
 
-**Test Coverage**: AC-US017.1 through AC-US017.5 (5 acceptance criteria)
+**Subsection Tests**:
+- Performance Summary tab shows per-agent execution times (Scout, Strategist, Executor)
+- Execution times include min, max, average for each agent
+- Total LLM calls count displayed
+- Total token usage displayed (input + output tokens)
+- Success/failure rates displayed for each agent
+- Performance data calculated correctly from game session
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.4.5 incremental development
+- **Acceptance Criteria**: AC-US017.1 through AC-US017.5 (5 official tests for final verification)
 
 **6.4.6. Game Summary (US-018)**
 - Total moves, duration, outcome
 - Average move time
 
-**Test Coverage**: AC-US018.1 through AC-US018.4 (4 acceptance criteria)
+**Subsection Tests**:
+- Game Summary tab shows total moves count
+- Game duration displayed (start time to end time)
+- Game outcome displayed (X wins, O wins, DRAW)
+- Average move time calculated and displayed correctly
+- Summary data matches actual game play
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.4.6 incremental development
+- **Acceptance Criteria**: AC-US018.1 through AC-US018.4 (4 official tests for final verification)
 
 #### 6.5. Configuration Panel
 
@@ -1556,20 +1727,49 @@ GOOGLE_API_KEY=...
 - Model name input
 - Save preferences to localStorage
 
-**Test Coverage**: AC-US019.1 through AC-US019.3 (3 acceptance criteria)
+**Subsection Tests**:
+- Provider dropdown includes OpenAI, Anthropic, Google options
+- Model name input accepts valid model names per provider
+- Preferences saved to localStorage on change
+- Preferences loaded from localStorage on page load
+- Provider/model selection persists across sessions
+- Invalid model names rejected with error message
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.5.1 incremental development
+- **Acceptance Criteria**: AC-US019.1 through AC-US019.3 (3 official tests for final verification)
 
 **6.5.2. Agent Mode Selection (US-020)**
 - Toggle: Local vs Distributed MCP
 - LLM framework dropdown
 
-**Test Coverage**: AC-US020.1 through AC-US020.2 (2 acceptance criteria)
+**Subsection Tests**:
+- Toggle switches between Local and Distributed MCP modes
+- LLM framework dropdown displays available frameworks (Pydantic AI, etc.)
+- Mode selection saved to localStorage
+- Mode selection persists across sessions
+- Mode change requires game reset to take effect (with confirmation)
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.5.2 incremental development
+- **Acceptance Criteria**: AC-US020.1 through AC-US020.2 (2 official tests for final verification)
 
 **6.5.3. Game Settings (US-021)**
 - Reset game button
 - Player symbol selection (X or O)
 - Difficulty slider (optional)
 
-**Test Coverage**: AC-US021.1 through AC-US021.3 (3 acceptance criteria)
+**Subsection Tests**:
+- Reset game button clears current game and starts new game
+- Player symbol selection allows choosing X or O
+- Player symbol selection applies to next game
+- Difficulty slider (if implemented) adjusts agent behavior
+- Settings saved to localStorage
+- Settings persist across sessions
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.5.3 incremental development
+- **Acceptance Criteria**: AC-US021.1 through AC-US021.3 (3 official tests for final verification)
 
 #### 6.6. Error Handling UI
 
@@ -1581,14 +1781,33 @@ GOOGLE_API_KEY=...
 - Info: Blue toasts (bottom-right)
 - Cell-level errors: Shake animation + red highlight
 
-**Test Coverage**: AC-US024.1 through AC-US024.4 (4 acceptance criteria)
+**Subsection Tests**:
+- Critical errors display in red modal dialog (requires user acknowledgment)
+- Warnings display as orange/yellow badges in UI
+- Info messages display as blue toast notifications (bottom-right)
+- Cell-level errors trigger shake animation + red highlight on affected cell
+- Error messages match error codes from Failure Matrix (Section 12)
+- Error messages auto-dismiss after appropriate timeout (modals require click)
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.6.1 incremental development
+- **Acceptance Criteria**: AC-US024.1 through AC-US024.4 (4 official tests for final verification)
 
 **6.6.2. Fallback Indication (US-025)**
 - Notify user when fallback is triggered
 - Explain why fallback was needed
 - Show which fallback strategy was used
 
-**Test Coverage**: AC-US025.1 through AC-US025.3 (3 acceptance criteria)
+**Subsection Tests**:
+- User notified when fallback is triggered (orange badge or toast)
+- Fallback notification explains why fallback was needed (timeout, parse error, auth error, etc.)
+- Fallback notification shows which strategy was used (rule-based analysis, priority-based selection, random valid move)
+- Fallback indication persists until next move or game reset
+- Fallback indication appears in agent insights panel
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.6.2 incremental development
+- **Acceptance Criteria**: AC-US025.1 through AC-US025.3 (3 official tests for final verification)
 
 **Phase 6 Deliverables:**
 - ✅ Complete web UI with all 25 user stories implemented
