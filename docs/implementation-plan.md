@@ -944,21 +944,27 @@ pre-commit install --overwrite
 
 **Spec Reference**: Section 5.2 - REST API Endpoints
 
-**4.1.1. GET /health**
+**4.1.1. GET /health** ✅ **COMPLETE**
 - Return basic health status
 - Check if API is running
 - No dependencies checked
 
-**Subsection Tests**:
-- GET /health returns 200 with status="healthy" when server is running
-- GET /health response includes timestamp in ISO 8601 format
-- GET /health response includes uptime_seconds as float with 2 decimal precision
-- GET /health response completes within 100ms
-- GET /health returns 503 with status="unhealthy" when shutting down (if shutdown state tracked)
+**Implementation Notes:**
+- Implemented server state tracking with `_server_start_time` and `_server_shutting_down` globals
+- Uptime calculated from server start time, rounded to 2 decimal places
+- Shutdown state tracked in lifespan context manager
+- Timestamp in ISO 8601 format with 'Z' suffix for UTC
 
-**Test Coverage** (planned):
-- **Subsection Tests**: ~4-5 tests for Phase 4.1.1 incremental development
-- **Acceptance Criteria**: AC-5.1.1 through AC-5.1.4 (4 official tests for final verification)
+**Subsection Tests** ✅:
+- ✅ GET /health returns 200 with status="healthy" when server is running
+- ✅ GET /health response includes timestamp in ISO 8601 format
+- ✅ GET /health response includes uptime_seconds as float with 2 decimal precision
+- ✅ GET /health response completes within 100ms
+- ✅ GET /health returns 503 with status="unhealthy" when shutting down
+
+**Test Coverage** ✅:
+- **Subsection Tests**: 5 tests implemented and passing
+- **Acceptance Criteria**: AC-5.1.1, AC-5.1.2, AC-5.1.3 verified (AC-5.1.4 is for failure case, tested via shutdown)
 - **Test File**: `tests/integration/api/test_api_health.py`
 
 **4.1.2. GET /ready**

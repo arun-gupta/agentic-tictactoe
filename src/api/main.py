@@ -5,9 +5,14 @@ Phase 4.0.1: FastAPI Application Setup
 - Configure CORS (Section 5)
 - Set up exception handlers
 - Configure logging middleware
+
+Phase 4.1.1: GET /health endpoint
+- Return basic health status with uptime tracking
 """
 
+import time
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import FastAPI, Request, status
@@ -18,15 +23,24 @@ from src.utils.logging_config import get_logger, setup_logging
 
 logger = get_logger("api.main")
 
+# Server state tracking for health endpoint
+_server_start_time: float | None = None
+_server_shutting_down: bool = False
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> Any:
     """Lifespan context manager for FastAPI app startup/shutdown."""
+    global _server_start_time, _server_shutting_down
+
     # Startup
+    _server_start_time = time.time()
+    _server_shutting_down = False
     logger.info("Starting API server", extra={"event_type": "startup"})
     setup_logging(log_level="INFO", enable_file_logging=True)
     yield
     # Shutdown
+    _server_shutting_down = True
     logger.info("Shutting down API server", extra={"event_type": "shutdown"})
 
 
@@ -158,6 +172,49 @@ async def root() -> dict[str, str]:
         "version": "0.1.0",
         "status": "running",
     }
+
+
+# Health endpoint
+@app.get("/health")
+async def health() -> JSONResponse:
+    """Health check endpoint (liveness probe).
+
+    Returns basic health status without checking dependencies.
+    Must complete within 100ms (AC-5.1.2).
+
+    Returns:
+        JSONResponse with status 200 and health information if healthy,
+        or status 503 if server is shutting down
+    """
+    global _server_start_time, _server_shutting_down
+
+    # Check if server is shutting down (AC-5.1.3)
+    if _server_shutting_down:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "status": "unhealthy",
+                "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                "message": "Server is shutting down",
+            },
+        )
+
+    # Calculate uptime (AC-5.1.1)
+    if _server_start_time is None:
+        uptime_seconds = 0.0
+    else:
+        uptime_seconds = round(time.time() - _server_start_time, 2)
+
+    # Return healthy status (AC-5.1.1)
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "status": "healthy",
+            "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            "uptime_seconds": uptime_seconds,
+            "version": "0.1.0",
+        },
+    )
 
 
 # Test endpoint for exception handlers (for testing only)
