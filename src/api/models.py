@@ -188,6 +188,38 @@ class MoveHistory(BaseModel):
     )
 
 
+class AgentStatus(BaseModel):
+    """Agent status response model.
+
+    Represents the current status of an agent (scout, strategist, executor).
+
+    Attributes:
+        status: Current agent status ('idle', 'processing', 'success', 'failed')
+        elapsed_time_ms: Elapsed time in milliseconds for current operation (if processing)
+        execution_time_ms: Execution time in milliseconds for last completed operation (if completed)
+        success: Whether the last operation was successful (if completed)
+        error_message: Error message if the last operation failed (if failed)
+    """
+
+    status: str = Field(
+        ..., description="Current agent status ('idle', 'processing', 'success', 'failed')"
+    )
+    elapsed_time_ms: float | None = Field(
+        default=None,
+        description="Elapsed time in milliseconds for current operation (if processing)",
+    )
+    execution_time_ms: float | None = Field(
+        default=None,
+        description="Execution time in milliseconds for last completed operation (if completed)",
+    )
+    success: bool | None = Field(
+        default=None, description="Whether the last operation was successful (if completed)"
+    )
+    error_message: str | None = Field(
+        default=None, description="Error message if the last operation failed (if failed)"
+    )
+
+
 class ErrorResponse(BaseModel):
     """Standard error response model for all API errors.
 

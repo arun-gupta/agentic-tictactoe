@@ -1154,21 +1154,35 @@ pre-commit install --overwrite
 
 **Spec Reference**: Section 5.2 - Agent Status Endpoints
 
-**4.3.1. GET /api/agents/status**
-- Return status of each agent (idle/running/success/failed)
+**4.3.1. GET /api/agents/{agent_name}/status** ✅
+- Return status of each agent (idle/processing/success/failed)
 - Include current processing agent
 - Show elapsed time for current operation
 
-**Subsection Tests**:
-- GET /api/agents/scout/status returns 200 with status="idle" when agent idle
-- GET /api/agents/scout/status returns status="processing" with elapsed_time_ms when running
-- GET /api/agents/strategist/status returns execution_time_ms and success=true when completed
-- GET /api/agents/executor/status returns error_message and success=false when failed/timed out
-- GET /api/agents/{invalid}/status returns 404 for invalid agent name
+**Implementation Notes** ✅:
+- Created `AgentStatus` model in `src/api/models.py` with fields: `status`, `elapsed_time_ms`, `execution_time_ms`, `success`, `error_message`
+- Added `_agent_status` dictionary to track agent status per agent (scout, strategist, executor) in-memory
+- Modified `POST /api/game/move` to update agent status when pipeline executes:
+  - Marks all agents as "processing" when pipeline starts
+  - Updates all agents to "success" or "failed" after pipeline completes
+  - Tracks execution times and error messages
+- Implemented `GET /api/agents/{agent_name}/status` endpoint:
+  - Returns 200 with `AgentStatus` for valid agent names (scout, strategist, executor)
+  - Returns 404 for invalid agent names
+  - Calculates `elapsed_time_ms` when status is "processing"
+  - Returns last known status (idle/processing/success/failed) with execution details
 
-**Test Coverage** (planned):
-- **Subsection Tests**: ~5 tests for Phase 4.3.1 incremental development
-- **Acceptance Criteria**: AC-5.8.1 through AC-5.8.5 (5 official tests for final verification)
+**Subsection Tests** ✅:
+- ✅ GET /api/agents/scout/status returns 200 with status="idle" when agent idle (AC-5.8.1)
+- ✅ GET /api/agents/scout/status returns status="processing" with elapsed_time_ms when running (AC-5.8.2)
+- ✅ GET /api/agents/strategist/status returns execution_time_ms and success=true when completed (AC-5.8.3)
+- ✅ GET /api/agents/executor/status returns error_message and success=false when failed/timed out (AC-5.8.4)
+- ✅ GET /api/agents/{invalid}/status returns 404 for invalid agent name (AC-5.8.5)
+- ✅ Agent status is updated after pipeline execution
+
+**Test Coverage** ✅:
+- **Subsection Tests**: 6 tests implemented and passing
+- **Acceptance Criteria**: AC-5.8.1 through AC-5.8.5 verified (5 official tests for final verification)
 - **Test File**: `tests/integration/api/test_api_agents.py`
 
 #### 4.4. Error Handling

@@ -35,6 +35,7 @@ from fastapi.responses import JSONResponse
 
 from src.agents.pipeline import AgentPipeline
 from src.api.models import (
+    AgentStatus,
     ErrorResponse,
     GameStatusResponse,
     MoveHistory,
@@ -100,6 +101,38 @@ _game_sessions: dict[str, GameEngine] = {}
 # Move history storage (in-memory for Phase 4)
 # Maps game_id (UUID string) to list of MoveHistory entries
 _move_history: dict[str, list[dict[str, Any]]] = {}
+
+# Agent status storage (in-memory for Phase 4)
+# Maps agent name ('scout', 'strategist', 'executor') to status dictionary
+# Status dictionary contains:
+#   - status: 'idle' | 'processing' | 'success' | 'failed'
+#   - start_time: timestamp when processing started (if processing)
+#   - execution_time_ms: execution time for last completed operation (if completed)
+#   - success: whether last operation was successful (if completed)
+#   - error_message: error message if last operation failed (if failed)
+_agent_status: dict[str, dict[str, Any]] = {
+    "scout": {
+        "status": "idle",
+        "start_time": None,
+        "execution_time_ms": None,
+        "success": None,
+        "error_message": None,
+    },
+    "strategist": {
+        "status": "idle",
+        "start_time": None,
+        "execution_time_ms": None,
+        "success": None,
+        "error_message": None,
+    },
+    "executor": {
+        "status": "idle",
+        "start_time": None,
+        "execution_time_ms": None,
+        "success": None,
+        "error_message": None,
+    },
+}
 
 
 @asynccontextmanager
@@ -734,9 +767,38 @@ async def make_move(request: MoveRequest) -> MoveResponse | JSONResponse:
     total_execution_time_ms: float | None = None
 
     if not engine.is_game_over():
+        # Mark all agents as processing before pipeline starts
+        for agent_name in ["scout", "strategist", "executor"]:
+            _agent_status[agent_name]["status"] = "processing"
+            _agent_status[agent_name]["start_time"] = time.time()
+
         # Trigger AI agent pipeline
         pipeline = AgentPipeline(ai_symbol=game_state.ai_symbol)
         pipeline_result = pipeline.execute_pipeline(updated_state)
+
+        # Update agent status based on pipeline result
+        # For Phase 4, we mark all agents based on pipeline success/failure
+        # In later phases, we can track individual agent statuses from pipeline metadata
+        if pipeline_result.success:
+            # Pipeline succeeded - mark all agents as success
+            for agent_name in ["scout", "strategist", "executor"]:
+                if _agent_status[agent_name]["start_time"] is not None:
+                    elapsed = time.time() - _agent_status[agent_name]["start_time"]
+                    _agent_status[agent_name]["execution_time_ms"] = round(elapsed * 1000, 2)
+                _agent_status[agent_name]["status"] = "success"
+                _agent_status[agent_name]["success"] = True
+                _agent_status[agent_name]["error_message"] = None
+                _agent_status[agent_name]["start_time"] = None
+        else:
+            # Pipeline failed - mark all agents as failed
+            for agent_name in ["scout", "strategist", "executor"]:
+                if _agent_status[agent_name]["start_time"] is not None:
+                    elapsed = time.time() - _agent_status[agent_name]["start_time"]
+                    _agent_status[agent_name]["execution_time_ms"] = round(elapsed * 1000, 2)
+                _agent_status[agent_name]["status"] = "failed"
+                _agent_status[agent_name]["success"] = False
+                _agent_status[agent_name]["error_message"] = pipeline_result.error_message
+                _agent_status[agent_name]["start_time"] = None
 
         if pipeline_result.success and pipeline_result.data:
             # AI move was successful
@@ -1115,3 +1177,73 @@ async def get_game_history(game_id: str) -> JSONResponse:
         status_code=status.HTTP_200_OK,
         content=[move.model_dump() for move in move_history_objects],
     )
+
+
+@app.get(
+    "/api/agents/{agent_name}/status", response_model=AgentStatus, status_code=status.HTTP_200_OK
+)
+async def get_agent_status(agent_name: str) -> AgentStatus | JSONResponse:
+    """Get status of a specific agent.
+
+    Returns the current status of the specified agent (scout, strategist, or executor),
+    including whether it's idle, processing, or completed (success/failed), along with
+    execution times and error messages.
+
+    Args:
+        agent_name: Agent name ('scout', 'strategist', or 'executor').
+
+    Returns:
+        AgentStatus with current agent status, or JSONResponse with 404 if agent not found.
+    """
+    global _agent_status
+
+    # Validate agent name (AC-5.8.5)
+    valid_agents = ["scout", "strategist", "executor"]
+    if agent_name.lower() not in valid_agents:
+        logger.warning(
+            "Invalid agent name requested",
+            extra={
+                "event_type": "error",
+                "agent_name": agent_name,
+                "endpoint": "/api/agents/{agent_name}/status",
+            },
+        )
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=ErrorResponse(
+                status="failure",
+                error_code="E_AGENT_NOT_FOUND",
+                message=f"Agent '{agent_name}' not found. Valid agents: {', '.join(valid_agents)}.",
+                timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                details={"agent_name": agent_name, "valid_agents": valid_agents},
+            ).model_dump(),
+        )
+
+    agent_name_lower = agent_name.lower()
+    status_data = _agent_status.get(agent_name_lower, {"status": "idle"})
+
+    # Calculate elapsed time if processing (AC-5.8.2)
+    elapsed_time_ms: float | None = None
+    if status_data.get("status") == "processing" and status_data.get("start_time") is not None:
+        elapsed = time.time() - status_data["start_time"]
+        elapsed_time_ms = round(elapsed * 1000, 2)
+
+    # Build response based on status
+    agent_status = AgentStatus(
+        status=status_data.get("status", "idle"),
+        elapsed_time_ms=elapsed_time_ms,
+        execution_time_ms=status_data.get("execution_time_ms"),
+        success=status_data.get("success"),
+        error_message=status_data.get("error_message"),
+    )
+
+    logger.info(
+        "Agent status retrieved",
+        extra={
+            "event_type": "agent_status_requested",
+            "agent_name": agent_name_lower,
+            "status": agent_status.status,
+        },
+    )
+
+    return agent_status
