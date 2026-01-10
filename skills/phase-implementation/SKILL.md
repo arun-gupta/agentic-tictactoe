@@ -152,7 +152,7 @@ After committing, push to GitHub automatically.
 1. **Read implementation plan**: Always read `docs/implementation-plan.md` first to understand requirements, acceptance criteria, and test specifications
 2. **Track internally**: Use TODO list for internal progress tracking (this is your internal mechanism, not part of the spec)
 3. **Test-driven**: Write tests as specified in the implementation plan - tests are called out in the plan with specific acceptance criteria
-4. **Incremental**: Implement one sub-phase at a time as defined in the plan
+4. **One at a time**: Only implement one section/sub-phase at a time. Wait for explicit user command before proceeding to the next section/sub-phase.
 5. **Verify AC**: Ensure all acceptance criteria from the plan are met
 6. **Update plan**: Mark features complete in `docs/implementation-plan.md` immediately after implementation
 7. **Commit frequently**: Commit after each completed sub-phase, then push to GitHub
