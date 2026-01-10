@@ -163,9 +163,7 @@ class ResetGameResponse(BaseModel):
     """
 
     game_id: str = Field(..., description="Game identifier (UUID v4)")
-    game_state: GameState = Field(
-        ..., description="Reset game state with MoveCount=0, empty board"
-    )
+    game_state: GameState = Field(..., description="Reset game state with MoveCount=0, empty board")
 
 
 class ErrorResponse(BaseModel):

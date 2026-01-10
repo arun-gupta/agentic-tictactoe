@@ -460,9 +460,7 @@ class TestStatusEndpoint:
 class TestResetEndpoint:
     """Test Phase 4.2.4: POST /api/game/reset endpoint."""
 
-    def test_subsection_4_2_4_returns_200_with_new_game_state(
-        self, client: TestClient
-    ) -> None:
+    def test_subsection_4_2_4_returns_200_with_new_game_state(self, client: TestClient) -> None:
         """Test POST /api/game/reset returns 200 with new GameState (AC-5.6.1)."""
         # Create a new game
         new_game_response = client.post("/api/game/new")
@@ -533,9 +531,7 @@ class TestResetEndpoint:
         # Verify get_current_player returns X (player_symbol)
         assert game_state.get("current_player", game_state["player_symbol"]) == "X"
 
-    def test_subsection_4_2_4_clears_move_history(
-        self, client: TestClient
-    ) -> None:
+    def test_subsection_4_2_4_clears_move_history(self, client: TestClient) -> None:
         """Test POST /api/game/reset clears move_history (AC-5.6.2)."""
         # Create a new game
         new_game_response = client.post("/api/game/new")
@@ -563,9 +559,7 @@ class TestResetEndpoint:
             for cell in row:
                 assert cell == "EMPTY"
 
-    def test_subsection_4_2_4_returns_game_id_for_new_game(
-        self, client: TestClient
-    ) -> None:
+    def test_subsection_4_2_4_returns_game_id_for_new_game(self, client: TestClient) -> None:
         """Test POST /api/game/reset returns game_id (AC-5.6.3)."""
         # Create a new game
         new_game_response = client.post("/api/game/new")
@@ -583,9 +577,7 @@ class TestResetEndpoint:
         # Same game_id is returned (game is reset in-place)
         assert data["game_id"] == game_id
 
-    def test_subsection_4_2_4_returns_404_when_game_not_found(
-        self, client: TestClient
-    ) -> None:
+    def test_subsection_4_2_4_returns_404_when_game_not_found(self, client: TestClient) -> None:
         """Test POST /api/game/reset returns 404 when game not found."""
         # Use a non-existent game_id
         response = client.post(
