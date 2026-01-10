@@ -24,40 +24,36 @@ class TestMoveRequest:
 
     def test_move_request_validation_row_col_bounds_0_2(self) -> None:
         """Test that MoveRequest validates row/col bounds (0-2)."""
-        # Valid requests
-        request1 = MoveRequest(row=0, col=0)
+        # Valid requests (bounds validation is now done in endpoint, not model)
+        request1 = MoveRequest(game_id="test-game-1", row=0, col=0)
         assert request1.row == 0
         assert request1.col == 0
 
-        request2 = MoveRequest(row=2, col=2)
+        request2 = MoveRequest(game_id="test-game-2", row=2, col=2)
         assert request2.row == 2
         assert request2.col == 2
 
-        request3 = MoveRequest(row=1, col=1)
+        request3 = MoveRequest(game_id="test-game-3", row=1, col=1)
         assert request3.row == 1
         assert request3.col == 1
 
     def test_move_request_rejects_invalid_values_row_col_less_than_0(self) -> None:
-        """Test that MoveRequest rejects invalid values (row/col < 0)."""
-        with pytest.raises(ValidationError) as exc_info:
-            MoveRequest(row=-1, col=0)
-        # Pydantic Field validation catches this before custom validator
-        assert "greater than or equal to 0" in str(exc_info.value).lower()
+        """Test that MoveRequest accepts any integer (bounds validation done in endpoint)."""
+        # Bounds validation is now done in the endpoint, not at the model level
+        request1 = MoveRequest(game_id="test-game", row=-1, col=0)
+        assert request1.row == -1  # Model accepts it, endpoint will validate
 
-        with pytest.raises(ValidationError) as exc_info:
-            MoveRequest(row=0, col=-1)
-        assert "greater than or equal to 0" in str(exc_info.value).lower()
+        request2 = MoveRequest(game_id="test-game", row=0, col=-1)
+        assert request2.col == -1  # Model accepts it, endpoint will validate
 
     def test_move_request_rejects_invalid_values_row_col_greater_than_2(self) -> None:
-        """Test that MoveRequest rejects invalid values (row/col > 2)."""
-        with pytest.raises(ValidationError) as exc_info:
-            MoveRequest(row=3, col=0)
-        # Pydantic Field validation catches this before custom validator
-        assert "less than or equal to 2" in str(exc_info.value).lower()
+        """Test that MoveRequest accepts any integer (bounds validation done in endpoint)."""
+        # Bounds validation is now done in the endpoint, not at the model level
+        request1 = MoveRequest(game_id="test-game", row=3, col=0)
+        assert request1.row == 3  # Model accepts it, endpoint will validate
 
-        with pytest.raises(ValidationError) as exc_info:
-            MoveRequest(row=0, col=3)
-        assert "less than or equal to 2" in str(exc_info.value).lower()
+        request2 = MoveRequest(game_id="test-game", row=0, col=3)
+        assert request2.col == 3  # Model accepts it, endpoint will validate
 
 
 class TestMoveResponse:
@@ -276,10 +272,10 @@ class TestModelSerialization:
     def test_all_models_serialize_to_json_correctly(self) -> None:
         """Test all models serialize to JSON correctly."""
         # MoveRequest
-        move_request = MoveRequest(row=1, col=1)
+        move_request = MoveRequest(game_id="test-game-1", row=1, col=1)
         json_str = move_request.model_dump_json()
         data = json.loads(json_str)
-        assert data == {"row": 1, "col": 1}
+        assert data == {"game_id": "test-game-1", "row": 1, "col": 1}
 
         # MoveResponse
         game_state = GameState(board=Board(), player_symbol="X", ai_symbol="O", move_count=1)
@@ -315,10 +311,11 @@ class TestModelSerialization:
     def test_all_models_deserialize_from_json_correctly(self) -> None:
         """Test all models deserialize from JSON correctly."""
         # MoveRequest
-        json_data = {"row": 1, "col": 1}
+        json_data = {"game_id": "test-game-1", "row": 1, "col": 1}
         move_request = MoveRequest.model_validate(json_data)
         assert move_request.row == 1
         assert move_request.col == 1
+        assert move_request.game_id == "test-game-1"
 
         # MoveResponse
         game_state_dict = GameState(

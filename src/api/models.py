@@ -23,9 +23,10 @@ from src.domain.models import GameState, PlayerSymbol, Position
 class MoveRequest(BaseModel):
     """Player move request model.
 
-    Contains row and column integers (0-2) for the move position.
+    Contains game_id to identify the game session, and row and column integers (0-2) for the move position.
 
     Attributes:
+        game_id: Unique game identifier (UUID v4) - required to identify which game session
         row: Row index (0-2)
         col: Column index (0-2)
 
@@ -33,8 +34,9 @@ class MoveRequest(BaseModel):
         ValueError: If row or col is not in range 0-2 (error code: E_MOVE_OUT_OF_BOUNDS)
     """
 
-    row: int = Field(..., ge=0, le=2, description="Row index (0-2)")
-    col: int = Field(..., ge=0, le=2, description="Column index (0-2)")
+    game_id: str = Field(..., description="Unique game identifier (UUID v4)")
+    row: int = Field(..., description="Row index (0-2) - validated in endpoint")
+    col: int = Field(..., description="Column index (0-2) - validated in endpoint")
 
 
 class MoveResponse(BaseModel):

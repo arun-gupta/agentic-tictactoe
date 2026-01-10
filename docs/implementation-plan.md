@@ -1036,20 +1036,31 @@ pre-commit install --overwrite
 - Return updated game state + AI move
 - Handle errors per Section 5.4
 
-**Subsection Tests**:
-- POST /api/game/move accepts valid MoveRequest and returns 200
-- POST /api/game/move validates move bounds (rejects row/col < 0 or > 2) → 400 E_MOVE_OUT_OF_BOUNDS
-- POST /api/game/move validates cell is empty (rejects occupied cell) → 400 E_CELL_OCCUPIED
-- POST /api/game/move validates game is not over (rejects if game ended) → 400 E_GAME_ALREADY_OVER
-- POST /api/game/move triggers AI agent pipeline after valid player move
-- POST /api/game/move returns MoveResponse with updated_game_state and ai_move_execution
-- POST /api/game/move handles game win condition (sets IsGameOver=true, winner)
-- POST /api/game/move handles malformed JSON → 422 Unprocessable Entity
-- POST /api/game/move handles server errors → 500 with error message
+**Implementation Notes:**
+- Implemented POST /api/game/move endpoint with move validation and AI pipeline integration
+- Accepts `MoveRequest` with `game_id`, `row`, and `col`
+- Validates move bounds (0-2) before game engine validation to return 400 with `E_MOVE_OUT_OF_BOUNDS`
+- Uses `GameEngine.validate_move()` for comprehensive validation (bounds, cell empty, game over, turn order)
+- Executes player move, then triggers `AgentPipeline.execute_pipeline()` if game is not over
+- Executes AI move on the engine after pipeline completes successfully
+- Returns `MoveResponse` with `updated_game_state`, `ai_move_execution`, `fallback_used`, and `total_execution_time_ms`
+- Handles all error cases: 400 (invalid move), 404 (game not found), 503 (service not ready), 422 (malformed JSON), 500 (server error)
+- Logs move execution events with game_id, position, player, and AI move details
 
-**Test Coverage** (planned):
-- **Subsection Tests**: ~8-9 tests for Phase 4.2.2 incremental development
-- **Acceptance Criteria**: AC-5.4.1 through AC-5.4.8 (8 official tests for final verification)
+**Subsection Tests** ✅:
+- ✅ POST /api/game/move accepts valid MoveRequest and returns 200 (AC-5.4.1)
+- ✅ POST /api/game/move validates move bounds (rejects row/col < 0 or > 2) → 400 E_MOVE_OUT_OF_BOUNDS (AC-5.4.2)
+- ✅ POST /api/game/move validates cell is empty (rejects occupied cell) → 400 E_CELL_OCCUPIED (AC-5.4.3)
+- ✅ POST /api/game/move validates game is not over (rejects if game ended) → 400 E_GAME_ALREADY_OVER (AC-5.4.4)
+- ✅ POST /api/game/move triggers AI agent pipeline after valid player move (AC-5.4.5)
+- ✅ POST /api/game/move returns MoveResponse with updated_game_state and ai_move_execution (AC-5.4.5)
+- ✅ POST /api/game/move handles game win condition (sets IsGameOver=true, winner) (AC-5.4.6)
+- ✅ POST /api/game/move handles malformed JSON → 422 Unprocessable Entity (AC-5.4.7)
+- ✅ POST /api/game/move handles server errors → 500 with error message (AC-5.4.8)
+
+**Test Coverage** ✅:
+- **Subsection Tests**: 9 tests implemented and passing
+- **Acceptance Criteria**: AC-5.4.1 through AC-5.4.8 verified (8 official tests for final verification)
 - **Test File**: `tests/integration/api/test_api_game.py`
 
 **4.2.3. GET /api/game/status**

@@ -33,13 +33,48 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.api.models import ErrorResponse, NewGameRequest, NewGameResponse
-from src.domain.errors import E_SERVICE_NOT_READY
-from src.domain.models import PlayerSymbol
+from src.agents.pipeline import AgentPipeline
+from src.api.models import ErrorResponse, MoveRequest, MoveResponse, NewGameRequest, NewGameResponse
+from src.domain.errors import (
+    E_CELL_OCCUPIED,
+    E_GAME_ALREADY_OVER,
+    E_INTERNAL_ERROR,
+    E_INVALID_PLAYER,
+    E_INVALID_REQUEST,
+    E_INVALID_TURN,
+    E_MOVE_OUT_OF_BOUNDS,
+    E_SERVICE_NOT_READY,
+)
+from src.domain.models import PlayerSymbol, Position
 from src.game.engine import GameEngine
 from src.utils.logging_config import get_logger, setup_logging
 
 logger = get_logger("api.main")
+
+
+def _get_error_message(error_code: str | None) -> str:
+    """Get human-readable error message from error code.
+
+    Args:
+        error_code: Error code string or None.
+
+    Returns:
+        Human-readable error message.
+    """
+    error_messages = {
+        E_MOVE_OUT_OF_BOUNDS: "Position out of bounds (0-2 only)",
+        E_CELL_OCCUPIED: "Cell already occupied",
+        E_GAME_ALREADY_OVER: "Game is already over",
+        E_INVALID_PLAYER: "Invalid player symbol",
+        E_INVALID_TURN: "Not your turn",
+        E_SERVICE_NOT_READY: "Service not ready. Check /ready endpoint.",
+        E_INVALID_REQUEST: "Invalid request",
+        E_INTERNAL_ERROR: "Internal server error",
+    }
+    if error_code:
+        return error_messages.get(error_code, f"Error: {error_code}")
+    return "Unknown error"
+
 
 # Server state tracking for health endpoint
 _server_start_time: float | None = None
@@ -535,3 +570,223 @@ async def create_new_game(request: NewGameRequest | None = None) -> NewGameRespo
 
     # Return response
     return NewGameResponse(game_id=game_id, game_state=initial_state)
+
+
+@app.post("/api/game/move", response_model=MoveResponse, status_code=status.HTTP_200_OK)
+async def make_move(request: MoveRequest) -> MoveResponse | JSONResponse:
+    """Make a player move and trigger AI response.
+
+    Accepts a player move (row, col), validates it via the game engine,
+    executes it, triggers the AI agent pipeline if the game is not over,
+    and returns the updated game state along with the AI move execution details.
+
+    Args:
+        request: MoveRequest containing game_id, row, and col for the player's move.
+
+    Returns:
+        MoveResponse with updated_game_state and ai_move_execution (if AI moved),
+        or JSONResponse with 400/404/503 error response.
+
+    Raises:
+        HTTPException: 400 for invalid moves, 404 for game not found,
+            503 if service is not ready.
+    """
+    global _service_ready, _game_sessions
+
+    # Check service readiness (AC-5.3.1)
+    if not _service_ready:
+        logger.warning(
+            "Game endpoint called when service not ready",
+            extra={
+                "event_type": "error",
+                "error_code": E_SERVICE_NOT_READY,
+                "endpoint": "/api/game/move",
+            },
+        )
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=ErrorResponse(
+                status="failure",
+                error_code=E_SERVICE_NOT_READY,
+                message="Service not ready. Check /ready endpoint.",
+                timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                details=None,
+            ).model_dump(),
+        )
+
+    # Look up game session
+    game_id = request.game_id
+    if game_id not in _game_sessions:
+        logger.warning(
+            "Game not found",
+            extra={
+                "event_type": "error",
+                "error_code": "E_GAME_NOT_FOUND",
+                "game_id": game_id,
+                "endpoint": "/api/game/move",
+            },
+        )
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=ErrorResponse(
+                status="failure",
+                error_code="E_GAME_NOT_FOUND",
+                message=f"Game session {game_id} not found.",
+                timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                details={"game_id": game_id},
+            ).model_dump(),
+        )
+
+    engine = _game_sessions[game_id]
+    game_state = engine.get_current_state()
+
+    # Validate move via game engine
+    player_symbol = game_state.player_symbol
+    is_valid, error_code = engine.validate_move(request.row, request.col, player_symbol)
+
+    if not is_valid:
+        logger.warning(
+            "Invalid move attempted",
+            extra={
+                "event_type": "error",
+                "error_code": error_code,
+                "game_id": game_id,
+                "row": request.row,
+                "col": request.col,
+                "player": player_symbol,
+            },
+        )
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=ErrorResponse(
+                status="failure",
+                error_code=error_code or E_INVALID_REQUEST,
+                message=_get_error_message(error_code),
+                timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                details={
+                    "game_id": game_id,
+                    "row": request.row,
+                    "col": request.col,
+                },
+            ).model_dump(),
+        )
+
+    # Execute player move
+    success, move_error = engine.make_move(request.row, request.col, player_symbol)
+    if not success:
+        # This shouldn't happen after validation, but handle it
+        logger.error(
+            "Move execution failed after validation",
+            extra={
+                "event_type": "error",
+                "error_code": move_error,
+                "game_id": game_id,
+                "row": request.row,
+                "col": request.col,
+            },
+        )
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=ErrorResponse(
+                status="failure",
+                error_code=move_error or E_INTERNAL_ERROR,
+                message="Move execution failed after validation.",
+                timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                details={"game_id": game_id},
+            ).model_dump(),
+        )
+
+    # Get updated game state after player move
+    updated_state = engine.get_current_state()
+    player_position = Position(row=request.row, col=request.col)
+
+    # Check if game is over after player move
+    ai_move_execution = None
+    fallback_used = False
+    total_execution_time_ms: float | None = None
+
+    if not engine.is_game_over():
+        # Trigger AI agent pipeline
+        pipeline = AgentPipeline(ai_symbol=game_state.ai_symbol)
+        pipeline_result = pipeline.execute_pipeline(updated_state)
+
+        if pipeline_result.success and pipeline_result.data:
+            # AI move was successful
+            ai_move_execution = pipeline_result.data
+
+            # Execute the AI move on the engine
+            # Position is required in MoveExecution, so it should never be None
+            # But we check to satisfy mypy's type checking
+            if ai_move_execution.position is not None:
+                ai_move_success, ai_move_error = engine.make_move(
+                    ai_move_execution.position.row,
+                    ai_move_execution.position.col,
+                    game_state.ai_symbol,
+                )
+            else:
+                # This should never happen, but handle it gracefully
+                ai_move_success = False
+                ai_move_error = "E_INVALID_MOVE"
+
+            if ai_move_success:
+                # Get final game state after AI move
+                updated_state = engine.get_current_state()
+            else:
+                ai_pos_str = "unknown"
+                if ai_move_execution.position is not None:
+                    ai_pos_str = (
+                        f"({ai_move_execution.position.row}, {ai_move_execution.position.col})"
+                    )
+                logger.error(
+                    "AI move execution failed",
+                    extra={
+                        "event_type": "error",
+                        "error_code": ai_move_error,
+                        "game_id": game_id,
+                        "ai_move_position": ai_pos_str,
+                    },
+                )
+
+            # Extract fallback metadata
+            if pipeline_result.metadata and "fallback_used" in pipeline_result.metadata:
+                fallback_used = bool(pipeline_result.metadata.get("fallback_used", False))
+
+            # Calculate total execution time
+            if pipeline_result.execution_time_ms is not None:
+                total_execution_time_ms = round(pipeline_result.execution_time_ms, 2)
+        else:
+            # AI pipeline failed - log but don't fail the request
+            logger.warning(
+                "AI pipeline failed",
+                extra={
+                    "event_type": "warning",
+                    "error_code": pipeline_result.error_code,
+                    "game_id": game_id,
+                    "error_message": pipeline_result.error_message,
+                },
+            )
+            # Continue with just the player move
+
+    # Log move
+    logger.info(
+        "Move executed",
+        extra={
+            "event_type": "move_made",
+            "game_id": game_id,
+            "position": f"({request.row}, {request.col})",
+            "player": player_symbol,
+            "ai_move_executed": ai_move_execution is not None,
+            "fallback_used": fallback_used,
+        },
+    )
+
+    # Return response
+    return MoveResponse(
+        success=True,
+        position=player_position,
+        updated_game_state=updated_state,
+        ai_move_execution=ai_move_execution,
+        error_message=None,
+        fallback_used=fallback_used if ai_move_execution else None,
+        total_execution_time_ms=total_execution_time_ms,
+    )
