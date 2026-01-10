@@ -34,7 +34,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.agents.pipeline import AgentPipeline
-from src.api.models import ErrorResponse, MoveRequest, MoveResponse, NewGameRequest, NewGameResponse
+from src.api.models import (
+    ErrorResponse,
+    GameStatusResponse,
+    MoveRequest,
+    MoveResponse,
+    NewGameRequest,
+    NewGameResponse,
+)
 from src.domain.errors import (
     E_CELL_OCCUPIED,
     E_GAME_ALREADY_OVER,
@@ -789,4 +796,104 @@ async def make_move(request: MoveRequest) -> MoveResponse | JSONResponse:
         error_message=None,
         fallback_used=fallback_used if ai_move_execution else None,
         total_execution_time_ms=total_execution_time_ms,
+    )
+
+
+@app.get("/api/game/status", response_model=GameStatusResponse, status_code=status.HTTP_200_OK)
+async def get_game_status(game_id: str) -> GameStatusResponse | JSONResponse:
+    """Get current game status.
+
+    Returns the current game state, agent status (if AI is processing), and
+    game metrics (if game is completed).
+
+    Args:
+        game_id: Query parameter - unique game identifier (UUID v4).
+
+    Returns:
+        GameStatusResponse with current GameState, optional agent_status,
+        and optional metrics, or JSONResponse with 404/503 error response.
+
+    Raises:
+        HTTPException: 404 for game not found, 503 if service is not ready.
+    """
+    global _service_ready, _game_sessions
+
+    # Check service readiness (AC-5.3.1)
+    if not _service_ready:
+        logger.warning(
+            "Game endpoint called when service not ready",
+            extra={
+                "event_type": "error",
+                "error_code": E_SERVICE_NOT_READY,
+                "endpoint": "/api/game/status",
+            },
+        )
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=ErrorResponse(
+                status="failure",
+                error_code=E_SERVICE_NOT_READY,
+                message="Service not ready. Check /ready endpoint.",
+                timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                details=None,
+            ).model_dump(),
+        )
+
+    # Look up game session
+    if game_id not in _game_sessions:
+        logger.warning(
+            "Game not found",
+            extra={
+                "event_type": "error",
+                "error_code": "E_GAME_NOT_FOUND",
+                "game_id": game_id,
+                "endpoint": "/api/game/status",
+            },
+        )
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=ErrorResponse(
+                status="failure",
+                error_code="E_GAME_NOT_FOUND",
+                message=f"Game session {game_id} not found.",
+                timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                details={"game_id": game_id},
+            ).model_dump(),
+        )
+
+    engine = _game_sessions[game_id]
+    game_state = engine.get_current_state()
+
+    # Build agent_status (AC-5.5.3)
+    # In Phase 4, we don't have async agent processing tracking yet.
+    # This will be implemented in Phase 5 with LLM integration.
+    # For now, agent_status is None (no active AI processing).
+    agent_status: dict[str, Any] | None = None
+
+    # Build metrics if game is completed (AC-5.5.4)
+    metrics: dict[str, Any] | None = None
+    if engine.is_game_over():
+        winner = game_state.get_winner()
+        metrics = {
+            "game_outcome": winner if winner else "DRAW",
+            "move_count": game_state.move_count,
+            "is_game_over": True,
+            "winner": winner,
+        }
+
+    logger.info(
+        "Game status retrieved",
+        extra={
+            "event_type": "game_status_requested",
+            "game_id": game_id,
+            "move_count": game_state.move_count,
+            "is_game_over": engine.is_game_over(),
+        },
+    )
+
+    # Return response
+    return GameStatusResponse(
+        game_state=game_state,
+        agent_status=agent_status,
+        metrics=metrics,
     )

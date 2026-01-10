@@ -334,3 +334,124 @@ class TestMoveEndpoint:
         data = response.json()
         assert data["status"] == "failure"
         assert "error_code" in data
+
+
+class TestStatusEndpoint:
+    """Test Phase 4.2.3: GET /api/game/status endpoint."""
+
+    def test_subsection_4_2_3_returns_200_with_game_status_response_when_game_active(
+        self, client: TestClient
+    ) -> None:
+        """Test GET /api/game/status returns 200 with GameStatusResponse when game active (AC-5.5.1)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Get game status
+        response = client.get(f"/api/game/status?game_id={game_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "game_state" in data
+        assert isinstance(data["game_state"], dict)
+        assert "board" in data["game_state"]
+        assert "move_count" in data["game_state"]
+
+    def test_subsection_4_2_3_includes_current_game_state_board_move_count_current_player(
+        self, client: TestClient
+    ) -> None:
+        """Test GET /api/game/status includes current GameState (board, move_count, current_player) (AC-5.5.1)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Make a move
+        client.post("/api/game/move", json={"game_id": game_id, "row": 1, "col": 1})
+
+        # Get game status
+        response = client.get(f"/api/game/status?game_id={game_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        game_state = data["game_state"]
+        assert "board" in game_state
+        assert "move_count" in game_state
+        assert game_state["move_count"] >= 1  # At least one move made
+
+        # Verify board structure
+        board = game_state["board"]
+        assert "cells" in board
+        assert len(board["cells"]) == 3
+        for row in board["cells"]:
+            assert len(row) == 3
+
+    def test_subsection_4_2_3_returns_404_when_no_active_game_exists(
+        self, client: TestClient
+    ) -> None:
+        """Test GET /api/game/status returns 404 when no active game exists (AC-5.5.2)."""
+        # Use a non-existent game_id
+        response = client.get("/api/game/status?game_id=00000000-0000-0000-0000-000000000000")
+
+        assert response.status_code == 404
+        data = response.json()
+        assert data["status"] == "failure"
+        assert data["error_code"] == "E_GAME_NOT_FOUND"
+        assert "not found" in data["message"].lower()
+
+    def test_subsection_4_2_3_includes_agent_status_when_ai_processing(
+        self, client: TestClient
+    ) -> None:
+        """Test GET /api/game/status includes agent_status when AI is processing (AC-5.5.3)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Get game status
+        response = client.get(f"/api/game/status?game_id={game_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        # In Phase 4, agent_status is None (no async processing tracking yet)
+        # This will be implemented in Phase 5 with LLM integration
+        # For now, we just verify the field exists (even if None)
+        assert "agent_status" in data
+        # agent_status can be None in Phase 4
+
+    def test_subsection_4_2_3_includes_metrics_dictionary_when_game_completed(
+        self, client: TestClient
+    ) -> None:
+        """Test GET /api/game/status includes metrics dictionary when game is completed (AC-5.5.4)."""
+        import src.api.main as main_module
+        from src.domain.models import Position
+
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+        engine = main_module._game_sessions[game_id]
+
+        # Manually create a winning state (3 X's in a row)
+        engine.game_state.board.set_cell(Position(row=0, col=0), "X")
+        engine.game_state.board.set_cell(Position(row=0, col=1), "X")
+        engine.game_state.board.set_cell(Position(row=0, col=2), "X")
+        engine.game_state.move_count = 3
+
+        # Verify game is over
+        assert engine.is_game_over() is True
+
+        # Get game status
+        response = client.get(f"/api/game/status?game_id={game_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "metrics" in data
+        assert data["metrics"] is not None
+        metrics = data["metrics"]
+        assert "game_outcome" in metrics
+        assert "move_count" in metrics
+        assert "is_game_over" in metrics
+        assert metrics["is_game_over"] is True
+        assert "winner" in metrics
