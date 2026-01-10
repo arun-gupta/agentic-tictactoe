@@ -1,6 +1,6 @@
 ---
 name: phase-implementation
-description: Guides implementation of features following an established workflow pattern. Use when implementing any feature to ensure consistent process: read requirements, create todos, implement code, write tests, update documentation, commit (push only when explicitly requested).
+description: Guides implementation of features following an established workflow pattern. Use when implementing any feature to ensure consistent process: read requirements, create todos, implement code, write tests, update documentation, commit and push.
 license: MIT
 metadata:
   version: "1.0.0"
@@ -68,7 +68,7 @@ Update project documentation:
 - Update acceptance criteria status
 - Update any API or user documentation
 
-### 7. Commit
+### 7. Commit and Push
 
 **Only commit after all tests pass and quality checks succeed.**
 
@@ -94,7 +94,7 @@ Files:
 - ✅ Documentation updated
 - ✅ Feature verified to work correctly
 
-**Push Policy**: Do NOT push to GitHub automatically. Only push when explicitly requested by the user. Commits should remain local until the user requests to push.
+After committing, push to GitHub automatically.
 
 ## Feature Types
 
@@ -155,7 +155,7 @@ Files:
 4. **Incremental**: Implement one sub-phase at a time
 5. **Verify AC**: Ensure acceptance criteria are met
 6. **Update plan**: Mark complete immediately after implementation
-7. **Commit frequently**: Commit after each completed sub-phase (do not push unless explicitly requested)
+7. **Commit frequently**: Commit after each completed sub-phase, then push to GitHub
 
 ## Edge Cases
 
