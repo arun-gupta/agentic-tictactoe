@@ -14,10 +14,17 @@ Phase 4.1.2: GET /ready endpoint
 - Check agent system is ready
 - Verify LLM providers are configured (optional in Phase 4)
 - Return detailed readiness status
+
+Phase 4.2.1: POST /api/game/new endpoint
+- Create new game session
+- Initialize game engine
+- Return game ID and initial state
+- Optionally accept player symbol preference
 """
 
 import os
 import time
+import uuid
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Any
@@ -26,6 +33,10 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from src.api.models import ErrorResponse, NewGameRequest, NewGameResponse
+from src.domain.errors import E_SERVICE_NOT_READY
+from src.domain.models import PlayerSymbol
+from src.game.engine import GameEngine
 from src.utils.logging_config import get_logger, setup_logging
 
 logger = get_logger("api.main")
@@ -36,6 +47,10 @@ _server_shutting_down: bool = False
 
 # Service readiness tracking
 _service_ready: bool = False
+
+# Game session storage (in-memory for Phase 4)
+# Maps game_id (UUID string) to GameEngine instance
+_game_sessions: dict[str, GameEngine] = {}
 
 
 @asynccontextmanager
@@ -444,3 +459,79 @@ async def ready() -> JSONResponse:
             "errors": errors,
         },
     )
+
+
+# Game endpoints
+@app.post("/api/game/new", response_model=NewGameResponse, status_code=status.HTTP_201_CREATED)
+async def create_new_game(request: NewGameRequest | None = None) -> NewGameResponse | JSONResponse:
+    """Create a new game session.
+
+    Creates a new game session with a unique game_id, initializes a GameEngine,
+    and returns the game_id and initial GameState.
+
+    Args:
+        request: Optional NewGameRequest with player_symbol preference. If None or
+            player_symbol not specified, defaults to 'X' for player.
+
+    Returns:
+        NewGameResponse with game_id and initial GameState (MoveCount=0, empty board),
+        or JSONResponse with 503 if service is not ready (AC-5.3.1).
+
+    Raises:
+        HTTPException: 503 if service is not ready (AC-5.3.1)
+    """
+    global _service_ready, _game_sessions
+
+    # Check service readiness (AC-5.3.1)
+    if not _service_ready:
+        logger.warning(
+            "Game endpoint called when service not ready",
+            extra={
+                "event_type": "error",
+                "error_code": E_SERVICE_NOT_READY,
+                "endpoint": "/api/game/new",
+            },
+        )
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=ErrorResponse(
+                status="failure",
+                error_code=E_SERVICE_NOT_READY,
+                message="Service not ready. Check /ready endpoint.",
+                timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                details=None,
+            ).model_dump(),
+        )
+
+    # Determine player symbol (default to 'X' if not specified)
+    player_symbol: PlayerSymbol = "X"
+    if request is not None and request.player_symbol is not None:
+        player_symbol = request.player_symbol
+
+    # Determine AI symbol (opposite of player)
+    ai_symbol: PlayerSymbol = "O" if player_symbol == "X" else "X"
+
+    # Generate unique game ID (UUID v4)
+    game_id = str(uuid.uuid4())
+
+    # Initialize game engine
+    engine = GameEngine(player_symbol=player_symbol, ai_symbol=ai_symbol)
+
+    # Store game session
+    _game_sessions[game_id] = engine
+
+    # Get initial game state
+    initial_state = engine.get_current_state()
+
+    logger.info(
+        "New game created",
+        extra={
+            "event_type": "game_created",
+            "game_id": game_id,
+            "player_symbol": player_symbol,
+            "ai_symbol": ai_symbol,
+        },
+    )
+
+    # Return response
+    return NewGameResponse(game_id=game_id, game_state=initial_state)

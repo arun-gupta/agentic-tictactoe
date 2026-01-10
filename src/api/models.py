@@ -5,6 +5,10 @@ Phase 4.0.2: Request/Response Models
 - MoveResponse: Move response with updated state and AI move
 - GameStatusResponse: Complete game status including agents and metrics
 - ErrorResponse: Standard error response for all API errors
+
+Phase 4.2.1: New Game Models
+- NewGameRequest: Request to create a new game (optional player_symbol)
+- NewGameResponse: Response with game_id and initial GameState
 """
 
 from datetime import datetime
@@ -13,7 +17,7 @@ from typing import Any
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 from src.domain.agent_models import MoveExecution
-from src.domain.models import GameState, Position
+from src.domain.models import GameState, PlayerSymbol, Position
 
 
 class MoveRequest(BaseModel):
@@ -108,6 +112,33 @@ class GameStatusResponse(BaseModel):
     )
     metrics: dict[str, Any] | None = Field(
         default=None, description="Dictionary with game metrics (optional)"
+    )
+
+
+class NewGameRequest(BaseModel):
+    """Request model for creating a new game.
+
+    Attributes:
+        player_symbol: Optional player symbol preference ('X' or 'O'). Defaults to 'X' if not specified.
+    """
+
+    player_symbol: PlayerSymbol | None = Field(
+        default=None,
+        description="Player symbol preference ('X' or 'O'). Defaults to 'X' if not specified.",
+    )
+
+
+class NewGameResponse(BaseModel):
+    """Response model for new game creation.
+
+    Attributes:
+        game_id: Unique game identifier (UUID v4)
+        game_state: Initial game state with MoveCount=0, empty board
+    """
+
+    game_id: str = Field(..., description="Unique game identifier (UUID v4)")
+    game_state: GameState = Field(
+        ..., description="Initial game state with MoveCount=0, empty board"
     )
 
 

@@ -1000,22 +1000,33 @@ pre-commit install --overwrite
 
 #### 4.2. Game Control Endpoints
 
-**4.2.1. POST /api/game/new**
+**4.2.1. POST /api/game/new** ✅ **COMPLETE**
 - Create new game session
 - Initialize game engine
 - Return game ID and initial state
 - Optionally accept player symbol preference
 
-**Subsection Tests**:
-- POST /api/game/new creates new game session and returns 200
-- POST /api/game/new returns game_id in response
-- POST /api/game/new returns initial GameState with MoveCount=0, empty board
-- POST /api/game/new accepts optional player_symbol preference
-- POST /api/game/new defaults to X for player if not specified
+**Implementation Notes:**
+- Implemented POST /api/game/new endpoint with game session management
+- Uses in-memory dictionary (`_game_sessions`) to store GameEngine instances mapped by game_id (UUID v4)
+- Generates unique game_id using `uuid.uuid4()`
+- Accepts optional `NewGameRequest` with `player_symbol` preference (defaults to "X")
+- Determines AI symbol as opposite of player symbol
+- Checks service readiness (AC-5.3.1) - returns 503 with `E_SERVICE_NOT_READY` if service not ready
+- Returns `NewGameResponse` with `game_id` and initial `GameState` (MoveCount=0, empty board)
+- Logs game creation event with game_id, player_symbol, and ai_symbol
 
-**Test Coverage** (planned):
-- **Subsection Tests**: ~5 tests for Phase 4.2.1 incremental development
-- **Acceptance Criteria**: AC-5.3.1 through AC-5.3.3 (3 official tests for final verification)
+**Subsection Tests** ✅:
+- ✅ POST /api/game/new creates new game session and returns 200
+- ✅ POST /api/game/new returns game_id in response
+- ✅ POST /api/game/new returns initial GameState with MoveCount=0, empty board
+- ✅ POST /api/game/new accepts optional player_symbol preference
+- ✅ POST /api/game/new defaults to X for player if not specified
+- ✅ POST /api/game/new returns 503 when service not ready (AC-5.3.1)
+
+**Test Coverage** ✅:
+- **Subsection Tests**: 6 tests implemented and passing
+- **Acceptance Criteria**: AC-5.3.1 verified (service readiness check)
 - **Test File**: `tests/integration/api/test_api_game.py`
 
 **4.2.2. POST /api/game/move**
