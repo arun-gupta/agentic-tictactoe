@@ -144,6 +144,30 @@ class NewGameResponse(BaseModel):
     )
 
 
+class ResetGameRequest(BaseModel):
+    """Request model for resetting a game.
+
+    Attributes:
+        game_id: Unique game identifier (UUID v4) for the game to reset
+    """
+
+    game_id: str = Field(..., description="Unique game identifier (UUID v4)")
+
+
+class ResetGameResponse(BaseModel):
+    """Response model for game reset.
+
+    Attributes:
+        game_id: Game identifier (UUID v4) - same as request if reset, or new if new game created
+        game_state: Reset game state with MoveCount=0, empty board, CurrentPlayer=X
+    """
+
+    game_id: str = Field(..., description="Game identifier (UUID v4)")
+    game_state: GameState = Field(
+        ..., description="Reset game state with MoveCount=0, empty board"
+    )
+
+
 class ErrorResponse(BaseModel):
     """Standard error response model for all API errors.
 

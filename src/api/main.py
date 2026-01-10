@@ -41,6 +41,8 @@ from src.api.models import (
     MoveResponse,
     NewGameRequest,
     NewGameResponse,
+    ResetGameRequest,
+    ResetGameResponse,
 )
 from src.domain.errors import (
     E_CELL_OCCUPIED,
@@ -897,3 +899,89 @@ async def get_game_status(game_id: str) -> GameStatusResponse | JSONResponse:
         agent_status=agent_status,
         metrics=metrics,
     )
+
+
+@app.post("/api/game/reset", response_model=ResetGameResponse, status_code=status.HTTP_200_OK)
+async def reset_game(request: ResetGameRequest) -> ResetGameResponse | JSONResponse:
+    """Reset a game to initial state.
+
+    Resets the game state to initial conditions (MoveCount=0, empty board,
+    CurrentPlayer=X), clears move history, and reinitializes agents.
+
+    Args:
+        request: ResetGameRequest containing game_id for the game to reset.
+
+    Returns:
+        ResetGameResponse with game_id and reset GameState (MoveCount=0, empty board),
+        or JSONResponse with 404/503 error response.
+
+    Raises:
+        HTTPException: 404 for game not found, 503 if service is not ready.
+    """
+    global _service_ready, _game_sessions
+
+    # Check service readiness (AC-5.3.1)
+    if not _service_ready:
+        logger.warning(
+            "Game endpoint called when service not ready",
+            extra={
+                "event_type": "error",
+                "error_code": E_SERVICE_NOT_READY,
+                "endpoint": "/api/game/reset",
+            },
+        )
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=ErrorResponse(
+                status="failure",
+                error_code=E_SERVICE_NOT_READY,
+                message="Service not ready. Check /ready endpoint.",
+                timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                details=None,
+            ).model_dump(),
+        )
+
+    # Look up game session
+    game_id = request.game_id
+    if game_id not in _game_sessions:
+        logger.warning(
+            "Game not found for reset",
+            extra={
+                "event_type": "error",
+                "error_code": "E_GAME_NOT_FOUND",
+                "game_id": game_id,
+                "endpoint": "/api/game/reset",
+            },
+        )
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=ErrorResponse(
+                status="failure",
+                error_code="E_GAME_NOT_FOUND",
+                message=f"Game session {game_id} not found.",
+                timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                details={"game_id": game_id},
+            ).model_dump(),
+        )
+
+    engine = _game_sessions[game_id]
+
+    # Reset the game (AC-5.6.1)
+    # This clears the board, resets move_count to 0, and sets current player to player_symbol (X)
+    engine.reset_game()
+
+    # Get the reset game state
+    reset_state = engine.get_current_state()
+
+    logger.info(
+        "Game reset",
+        extra={
+            "event_type": "game_reset",
+            "game_id": game_id,
+            "move_count": reset_state.move_count,
+        },
+    )
+
+    # Return response with game_id (AC-5.6.3)
+    # Note: We keep the same game_id for reset (game is reset in-place)
+    return ResetGameResponse(game_id=game_id, game_state=reset_state)

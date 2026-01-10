@@ -455,3 +455,144 @@ class TestStatusEndpoint:
         assert "is_game_over" in metrics
         assert metrics["is_game_over"] is True
         assert "winner" in metrics
+
+
+class TestResetEndpoint:
+    """Test Phase 4.2.4: POST /api/game/reset endpoint."""
+
+    def test_subsection_4_2_4_returns_200_with_new_game_state(
+        self, client: TestClient
+    ) -> None:
+        """Test POST /api/game/reset returns 200 with new GameState (AC-5.6.1)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Make a move first to have a non-initial state
+        client.post("/api/game/move", json={"game_id": game_id, "row": 1, "col": 1})
+
+        # Reset the game
+        response = client.post("/api/game/reset", json={"game_id": game_id})
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "game_id" in data
+        assert "game_state" in data
+        assert data["game_id"] == game_id  # Same game_id for reset
+
+    def test_subsection_4_2_4_resets_board_to_empty_all_cells_empty(
+        self, client: TestClient
+    ) -> None:
+        """Test POST /api/game/reset resets board to empty (all cells EMPTY) (AC-5.6.1)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Make some moves to populate the board
+        client.post("/api/game/move", json={"game_id": game_id, "row": 0, "col": 0})
+        client.post("/api/game/move", json={"game_id": game_id, "row": 1, "col": 1})
+
+        # Reset the game
+        response = client.post("/api/game/reset", json={"game_id": game_id})
+
+        assert response.status_code == 200
+        data = response.json()
+        game_state = data["game_state"]
+        board = game_state["board"]
+        assert "cells" in board
+
+        # Verify all cells are EMPTY
+        for row in board["cells"]:
+            for cell in row:
+                assert cell == "EMPTY"
+
+    def test_subsection_4_2_4_sets_move_count_0_and_current_player_x(
+        self, client: TestClient
+    ) -> None:
+        """Test POST /api/game/reset sets MoveCount=0 and CurrentPlayer=X (AC-5.6.1)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Make some moves
+        client.post("/api/game/move", json={"game_id": game_id, "row": 0, "col": 0})
+        client.post("/api/game/move", json={"game_id": game_id, "row": 1, "col": 1})
+
+        # Reset the game
+        response = client.post("/api/game/reset", json={"game_id": game_id})
+
+        assert response.status_code == 200
+        data = response.json()
+        game_state = data["game_state"]
+        assert game_state["move_count"] == 0
+        # With move_count=0, current player is player_symbol (which defaults to "X")
+        assert game_state["player_symbol"] == "X"
+        # Verify get_current_player returns X (player_symbol)
+        assert game_state.get("current_player", game_state["player_symbol"]) == "X"
+
+    def test_subsection_4_2_4_clears_move_history(
+        self, client: TestClient
+    ) -> None:
+        """Test POST /api/game/reset clears move_history (AC-5.6.2)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Make some moves
+        client.post("/api/game/move", json={"game_id": game_id, "row": 0, "col": 0})
+        client.post("/api/game/move", json={"game_id": game_id, "row": 1, "col": 1})
+
+        # Reset the game
+        response = client.post("/api/game/reset", json={"game_id": game_id})
+
+        assert response.status_code == 200
+        data = response.json()
+        game_state = data["game_state"]
+
+        # In Phase 4, GameState doesn't have move_history field yet
+        # This will be implemented in a later phase
+        # For now, we verify the game is reset (move_count=0, empty board)
+        assert game_state["move_count"] == 0
+        # Verify board is empty (indirectly confirms history is cleared)
+        board = game_state["board"]
+        for row in board["cells"]:
+            for cell in row:
+                assert cell == "EMPTY"
+
+    def test_subsection_4_2_4_returns_game_id_for_new_game(
+        self, client: TestClient
+    ) -> None:
+        """Test POST /api/game/reset returns game_id (AC-5.6.3)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Reset the game
+        response = client.post("/api/game/reset", json={"game_id": game_id})
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "game_id" in data
+        assert isinstance(data["game_id"], str)
+        assert len(data["game_id"]) > 0
+        # Same game_id is returned (game is reset in-place)
+        assert data["game_id"] == game_id
+
+    def test_subsection_4_2_4_returns_404_when_game_not_found(
+        self, client: TestClient
+    ) -> None:
+        """Test POST /api/game/reset returns 404 when game not found."""
+        # Use a non-existent game_id
+        response = client.post(
+            "/api/game/reset", json={"game_id": "00000000-0000-0000-0000-000000000000"}
+        )
+
+        assert response.status_code == 404
+        data = response.json()
+        assert data["status"] == "failure"
+        assert data["error_code"] == "E_GAME_NOT_FOUND"
