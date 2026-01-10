@@ -1119,21 +1119,35 @@ pre-commit install --overwrite
 - **Acceptance Criteria**: AC-5.6.1 through AC-5.6.3 verified (3 official tests for final verification)
 - **Test File**: `tests/integration/api/test_api_game.py`
 
-**4.2.5. GET /api/game/history**
+**4.2.5. GET /api/game/history** ✅
 - Return complete move history
 - Include both player and AI moves
 - Include timestamps and agent reasoning
 
-**Subsection Tests**:
-- GET /api/game/history returns 200 with array of MoveHistory objects
-- GET /api/game/history returns moves in chronological order (oldest first)
-- GET /api/game/history returns empty array when no moves made
-- GET /api/game/history includes player, position, timestamp, move_number for each move
-- GET /api/game/history includes AI moves with agent reasoning (if available)
+**Implementation Notes** ✅:
+- Created `MoveHistory` model in `src/api/models.py` with fields: `move_number`, `player`, `position`, `timestamp`, `agent_reasoning`
+- Added `_move_history` dictionary to track move history per game session (in-memory)
+- Modified `POST /api/game/new` to initialize empty move history for each new game
+- Modified `POST /api/game/move` to record player moves and AI moves (with agent reasoning) in history
+- Modified `POST /api/game/reset` to clear move history when game is reset
+- Implemented `GET /api/game/history` endpoint to return array of `MoveHistory` objects in chronological order
+- History is automatically in chronological order since moves are appended sequentially
+- Returns 200 with empty array when no moves made
+- Returns 404 when game not found
+- Returns 503 when service not ready
+- Handles all error cases with proper error responses
 
-**Test Coverage** (planned):
-- **Subsection Tests**: ~5 tests for Phase 4.2.5 incremental development
-- **Acceptance Criteria**: AC-5.7.1 through AC-5.7.3 (3 official tests for final verification)
+**Subsection Tests** ✅:
+- ✅ GET /api/game/history returns 200 with array of MoveHistory objects (AC-5.7.1)
+- ✅ GET /api/game/history returns moves in chronological order (oldest first) (AC-5.7.1)
+- ✅ GET /api/game/history returns empty array when no moves made (AC-5.7.2)
+- ✅ GET /api/game/history includes player, position, timestamp, move_number for each move (AC-5.7.3)
+- ✅ GET /api/game/history includes AI moves with agent reasoning (if available) (AC-5.7.3)
+- ✅ GET /api/game/history returns 404 when game not found
+
+**Test Coverage** ✅:
+- **Subsection Tests**: 6 tests implemented and passing
+- **Acceptance Criteria**: AC-5.7.1 through AC-5.7.3 verified (3 official tests for final verification)
 - **Test File**: `tests/integration/api/test_api_game.py`
 
 #### 4.3. Agent Status Endpoints

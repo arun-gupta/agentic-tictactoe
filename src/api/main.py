@@ -37,6 +37,7 @@ from src.agents.pipeline import AgentPipeline
 from src.api.models import (
     ErrorResponse,
     GameStatusResponse,
+    MoveHistory,
     MoveRequest,
     MoveResponse,
     NewGameRequest,
@@ -95,6 +96,10 @@ _service_ready: bool = False
 # Game session storage (in-memory for Phase 4)
 # Maps game_id (UUID string) to GameEngine instance
 _game_sessions: dict[str, GameEngine] = {}
+
+# Move history storage (in-memory for Phase 4)
+# Maps game_id (UUID string) to list of MoveHistory entries
+_move_history: dict[str, list[dict[str, Any]]] = {}
 
 
 @asynccontextmanager
@@ -564,6 +569,9 @@ async def create_new_game(request: NewGameRequest | None = None) -> NewGameRespo
     # Store game session
     _game_sessions[game_id] = engine
 
+    # Initialize move history for this game
+    _move_history[game_id] = []
+
     # Get initial game state
     initial_state = engine.get_current_state()
 
@@ -705,9 +713,20 @@ async def make_move(request: MoveRequest) -> MoveResponse | JSONResponse:
             ).model_dump(),
         )
 
-    # Get updated game state after player move
-    updated_state = engine.get_current_state()
+    # Record player move in history
     player_position = Position(row=request.row, col=request.col)
+    move_timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    updated_state = engine.get_current_state()
+    move_number = updated_state.move_count  # Current move_count after player move
+    _move_history[game_id].append(
+        {
+            "move_number": move_number,
+            "player": player_symbol,
+            "position": player_position,
+            "timestamp": move_timestamp,
+            "agent_reasoning": None,
+        }
+    )
 
     # Check if game is over after player move
     ai_move_execution = None
@@ -740,6 +759,21 @@ async def make_move(request: MoveRequest) -> MoveResponse | JSONResponse:
             if ai_move_success:
                 # Get final game state after AI move
                 updated_state = engine.get_current_state()
+
+                # Record AI move in history with agent reasoning
+                ai_move_timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+                ai_move_number = updated_state.move_count  # Current move_count after AI move
+                agent_reasoning = ai_move_execution.reasoning if ai_move_execution else None
+                if ai_move_execution.position is not None:
+                    _move_history[game_id].append(
+                        {
+                            "move_number": ai_move_number,
+                            "player": game_state.ai_symbol,
+                            "position": ai_move_execution.position,
+                            "timestamp": ai_move_timestamp,
+                            "agent_reasoning": agent_reasoning,
+                        }
+                    )
             else:
                 ai_pos_str = "unknown"
                 if ai_move_execution.position is not None:
@@ -970,6 +1004,10 @@ async def reset_game(request: ResetGameRequest) -> ResetGameResponse | JSONRespo
     # This clears the board, resets move_count to 0, and sets current player to player_symbol (X)
     engine.reset_game()
 
+    # Clear move history (AC-5.6.2)
+    if game_id in _move_history:
+        _move_history[game_id] = []
+
     # Get the reset game state
     reset_state = engine.get_current_state()
 
@@ -985,3 +1023,95 @@ async def reset_game(request: ResetGameRequest) -> ResetGameResponse | JSONRespo
     # Return response with game_id (AC-5.6.3)
     # Note: We keep the same game_id for reset (game is reset in-place)
     return ResetGameResponse(game_id=game_id, game_state=reset_state)
+
+
+@app.get("/api/game/history", status_code=status.HTTP_200_OK)
+async def get_game_history(game_id: str) -> JSONResponse:
+    """Get move history for a game.
+
+    Returns the complete move history for the specified game, including both
+    player and AI moves with timestamps and agent reasoning (if available).
+
+    Args:
+        game_id: Query parameter - unique game identifier (UUID v4).
+
+    Returns:
+        JSONResponse with array of MoveHistory objects in chronological order,
+        or JSONResponse with 404/503 error response.
+    """
+    global _service_ready, _move_history
+
+    # Check service readiness (AC-5.3.1)
+    if not _service_ready:
+        logger.warning(
+            "Game endpoint called when service not ready",
+            extra={
+                "event_type": "error",
+                "error_code": E_SERVICE_NOT_READY,
+                "endpoint": "/api/game/history",
+            },
+        )
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=ErrorResponse(
+                status="failure",
+                error_code=E_SERVICE_NOT_READY,
+                message="Service not ready. Check /ready endpoint.",
+                timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                details=None,
+            ).model_dump(),
+        )
+
+    # Check if game exists
+    if game_id not in _game_sessions:
+        logger.warning(
+            "Game not found for history",
+            extra={
+                "event_type": "error",
+                "error_code": "E_GAME_NOT_FOUND",
+                "game_id": game_id,
+                "endpoint": "/api/game/history",
+            },
+        )
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=ErrorResponse(
+                status="failure",
+                error_code="E_GAME_NOT_FOUND",
+                message=f"Game session {game_id} not found.",
+                timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                details={"game_id": game_id},
+            ).model_dump(),
+        )
+
+    # Get move history for this game (default to empty list if not initialized)
+    history_list = _move_history.get(game_id, [])
+
+    # Convert to MoveHistory objects for proper serialization
+    move_history_objects = []
+    for entry in history_list:
+        move_history_objects.append(
+            MoveHistory(
+                move_number=entry["move_number"],
+                player=entry["player"],
+                position=entry["position"],
+                timestamp=entry["timestamp"],
+                agent_reasoning=entry.get("agent_reasoning"),
+            )
+        )
+
+    logger.info(
+        "Game history retrieved",
+        extra={
+            "event_type": "game_history_requested",
+            "game_id": game_id,
+            "move_count": len(move_history_objects),
+        },
+    )
+
+    # Return response with array of MoveHistory objects (AC-5.7.1, AC-5.7.2)
+    # History is already in chronological order (oldest first) since we append sequentially
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=[move.model_dump() for move in move_history_objects],
+    )

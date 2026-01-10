@@ -588,3 +588,141 @@ class TestResetEndpoint:
         data = response.json()
         assert data["status"] == "failure"
         assert data["error_code"] == "E_GAME_NOT_FOUND"
+
+
+class TestHistoryEndpoint:
+    """Test Phase 4.2.5: GET /api/game/history endpoint."""
+
+    def test_subsection_4_2_5_returns_200_with_array_of_move_history_objects(
+        self, client: TestClient
+    ) -> None:
+        """Test GET /api/game/history returns 200 with array of MoveHistory objects (AC-5.7.1)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Make a move
+        client.post("/api/game/move", json={"game_id": game_id, "row": 1, "col": 1})
+
+        # Get history
+        response = client.get(f"/api/game/history?game_id={game_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1  # At least player move, possibly AI move
+
+    def test_subsection_4_2_5_returns_moves_in_chronological_order_oldest_first(
+        self, client: TestClient
+    ) -> None:
+        """Test GET /api/game/history returns moves in chronological order (oldest first) (AC-5.7.1)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Make a move
+        client.post("/api/game/move", json={"game_id": game_id, "row": 1, "col": 1})
+
+        # Get history
+        response = client.get(f"/api/game/history?game_id={game_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+
+        # Verify moves are in chronological order (move_number increasing)
+        if len(data) > 1:
+            for i in range(len(data) - 1):
+                assert data[i]["move_number"] < data[i + 1]["move_number"]
+
+    def test_subsection_4_2_5_returns_empty_array_when_no_moves_made(
+        self, client: TestClient
+    ) -> None:
+        """Test GET /api/game/history returns empty array when no moves made (AC-5.7.2)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Get history before any moves
+        response = client.get(f"/api/game/history?game_id={game_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) == 0
+
+    def test_subsection_4_2_5_includes_player_position_timestamp_move_number_for_each_move(
+        self, client: TestClient
+    ) -> None:
+        """Test GET /api/game/history includes player, position, timestamp, move_number for each move (AC-5.7.3)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Make a move
+        client.post("/api/game/move", json={"game_id": game_id, "row": 1, "col": 1})
+
+        # Get history
+        response = client.get(f"/api/game/history?game_id={game_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1
+
+        # Check first move (player move)
+        first_move = data[0]
+        assert "move_number" in first_move
+        assert "player" in first_move
+        assert "position" in first_move
+        assert "timestamp" in first_move
+        assert isinstance(first_move["move_number"], int)
+        assert first_move["move_number"] >= 1
+        assert first_move["player"] in ["X", "O"]
+        assert "row" in first_move["position"]
+        assert "col" in first_move["position"]
+        # Verify timestamp is ISO 8601 format
+        assert "T" in first_move["timestamp"] or "Z" in first_move["timestamp"]
+
+    def test_subsection_4_2_5_includes_ai_moves_with_agent_reasoning_if_available(
+        self, client: TestClient
+    ) -> None:
+        """Test GET /api/game/history includes AI moves with agent reasoning (if available) (AC-5.7.3)."""
+        # Create a new game
+        new_game_response = client.post("/api/game/new")
+        assert new_game_response.status_code == 201
+        game_id = new_game_response.json()["game_id"]
+
+        # Make a move (this will trigger AI move)
+        client.post("/api/game/move", json={"game_id": game_id, "row": 1, "col": 1})
+
+        # Get history
+        response = client.get(f"/api/game/history?game_id={game_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+
+        # Check that AI moves have agent_reasoning field
+        # If there are multiple moves, at least one should have reasoning (AI move)
+        if len(data) > 1:
+            ai_moves = [move for move in data if move.get("agent_reasoning") is not None]
+            # At least one AI move should have reasoning
+            assert len(ai_moves) > 0
+            for move in ai_moves:
+                assert isinstance(move["agent_reasoning"], str)
+                assert len(move["agent_reasoning"]) > 0
+
+    def test_subsection_4_2_5_returns_404_when_game_not_found(self, client: TestClient) -> None:
+        """Test GET /api/game/history returns 404 when game not found."""
+        # Use a non-existent game_id
+        response = client.get("/api/game/history?game_id=00000000-0000-0000-0000-000000000000")
+
+        assert response.status_code == 404
+        data = response.json()
+        assert data["status"] == "failure"
+        assert data["error_code"] == "E_GAME_NOT_FOUND"

@@ -166,6 +166,28 @@ class ResetGameResponse(BaseModel):
     game_state: GameState = Field(..., description="Reset game state with MoveCount=0, empty board")
 
 
+class MoveHistory(BaseModel):
+    """Move history entry model.
+
+    Represents a single move in the game history with all relevant details.
+
+    Attributes:
+        move_number: Move sequence number (1-based, increments with each move)
+        player: Player symbol who made the move ('X' or 'O')
+        position: Position where the move was made
+        timestamp: ISO 8601 timestamp when the move was made
+        agent_reasoning: Optional agent reasoning for AI moves (if available)
+    """
+
+    move_number: int = Field(..., ge=1, description="Move sequence number (1-based)")
+    player: PlayerSymbol = Field(..., description="Player symbol who made the move ('X' or 'O')")
+    position: Position = Field(..., description="Position where the move was made")
+    timestamp: str = Field(..., description="ISO 8601 timestamp when the move was made")
+    agent_reasoning: str | None = Field(
+        default=None, description="Optional agent reasoning for AI moves"
+    )
+
+
 class ErrorResponse(BaseModel):
     """Standard error response model for all API errors.
 
