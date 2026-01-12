@@ -14,6 +14,9 @@ Demonstration scripts showing implemented phase capabilities.
 # Human vs Human (Phase 2)
 ./run_demo.sh h2h
 
+# Play via REST API (Phase 4)
+./run_demo.sh api
+
 # Interactive menu
 ./run_demo.sh interactive
 ```
@@ -42,6 +45,21 @@ Demonstrates Phase 3 (Rule-based Agent System):
 - Two modes: Interactive (human input) or Simulation (auto)
 
 **Run:** `python scripts/play_human_vs_ai.py`
+
+### Play via REST API
+
+Demonstrates Phase 4 (REST API Layer):
+- Complete game via HTTP requests
+- All API endpoints (POST /api/game/new, POST /api/game/move, GET /api/game/status)
+- Error handling (invalid moves, out of bounds, occupied cells)
+- Game board display from API responses
+- AI move execution details (position, reasoning, execution time)
+- Interactive gameplay with human input
+
+**Note:** The FastAPI server must be running before using this demo.
+Start the server with: `uvicorn src.api.main:app --reload`
+
+**Run:** `python scripts/play_via_api.py` or `./run_demo.sh api`
 
 ### Coming Soon
 
