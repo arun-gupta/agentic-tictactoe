@@ -5,11 +5,22 @@ This guide covers setup and workflow for developing the Agentic Tic-Tac-Toe proj
 ## Development Setup
 
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd agentic-tictactoe
+
+# Create and activate virtual environment
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
 pip install -e ".[dev]"
+
+# Verify installation
 pytest tests/
 ```
+
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for collaboration guidelines and git workflow.
 
 ## Development Workflow
 
@@ -147,7 +158,51 @@ pre-commit autoupdate
 - **Pre-commit hooks not running**: Run `pre-commit install` to reinstall hooks
 - **Coverage not updating**: Make sure to run `pytest tests/ --cov=src` (not just `pytest tests/`)
 
+## Working with Git
+
+### Initial Setup
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd agentic-tictactoe
+
+# Set up remote tracking (if forked)
+git remote add upstream <original-repository-url>
+```
+
+### Daily Workflow
+
+```bash
+# Update your local main branch
+git checkout main
+git pull origin main
+
+# Create a feature branch
+git checkout -b feat/your-feature-name
+
+# Make changes, commit (follow commit conventions)
+git add .
+git commit -m "feat(scope): your commit message"
+
+# Push and create PR
+git push origin feat/your-feature-name
+```
+
+### Keeping Branches Updated
+
+```bash
+# Update your feature branch with latest main
+git checkout main
+git pull origin main
+git checkout your-feature-branch
+git rebase main  # or git merge main
+```
+
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for detailed branching strategy and PR process.
+
 ## See Also
 
+- [CONTRIBUTING.md](../CONTRIBUTING.md) - Collaboration guidelines and git workflow
 - [Implementation Plan](implementation-plan.md) - Detailed implementation guide with test coverage
 - [Full Specification](spec/spec.md) - Complete system architecture and design

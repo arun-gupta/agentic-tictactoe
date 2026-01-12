@@ -104,6 +104,13 @@ See [Documentation](#documentation) for specifications and implementation detail
 
 This project follows a specification-driven development approach. All changes should align with the documented specification and implementation plan.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Collaboration guidelines
+- Branching strategy
+- Pull request process
+- Code review workflow
+- Coordination with other developers
+
 ## License
 
 See [LICENSE](LICENSE) file for details.
