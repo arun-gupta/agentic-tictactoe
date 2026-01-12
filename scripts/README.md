@@ -56,10 +56,10 @@ Demonstrates Phase 4 (REST API Layer):
 - AI move execution details (position, reasoning, execution time)
 - Interactive gameplay with human input
 
-**Note:** The FastAPI server must be running before using this demo.
-Start the server with: `uvicorn src.api.main:app --reload`
+**Note:** The FastAPI server will be automatically started by `run_demo.sh` if it's not already running.
+If running the script directly, start the server manually with: `uvicorn src.api.main:app --reload`
 
-**Run:** `python scripts/play_via_api.py` or `./run_demo.sh api`
+**Run:** `./run_demo.sh api` (recommended - automatically starts server if needed) or `python scripts/play_via_api.py`
 
 ### Coming Soon
 

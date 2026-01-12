@@ -10,6 +10,19 @@
 
 set -e  # Exit on error
 
+# Cleanup function for API server
+cleanup_server() {
+    if [ -n "$SERVER_PID" ] && [ "$SERVER_STARTED_BY_SCRIPT" = true ]; then
+        echo -e "\n${BLUE}Cleaning up: Stopping API server (PID: ${SERVER_PID})...${NC}"
+        kill $SERVER_PID 2>/dev/null || true
+        wait $SERVER_PID 2>/dev/null || true
+        echo -e "${GREEN}✓ Server stopped${NC}"
+    fi
+}
+
+# Set trap to cleanup on exit
+trap cleanup_server EXIT INT TERM
+
 # Colors for output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -121,8 +134,38 @@ case $choice in
         ;;
     phase4)
         echo -e "\n${BLUE}Running: Play via REST API (Phase 4 - REST API Layer)${NC}\n"
-        echo -e "${YELLOW}Note: Make sure the API server is running!${NC}"
-        echo -e "${YELLOW}Start it with: uvicorn src.api.main:app --reload${NC}\n"
+        
+        # Check if server is already running
+        API_PORT=8000
+        if curl -s "http://localhost:${API_PORT}/health" > /dev/null 2>&1; then
+            echo -e "${GREEN}✓ API server is already running on port ${API_PORT}${NC}\n"
+            SERVER_STARTED_BY_SCRIPT=false
+            SERVER_PID=""
+        else
+            echo -e "${YELLOW}API server is not running. Starting it in the background...${NC}"
+            echo -e "${BLUE}Starting server: uvicorn src.api.main:app --host 127.0.0.1 --port ${API_PORT}${NC}"
+            
+            # Start server in background
+            uvicorn src.api.main:app --host 127.0.0.1 --port ${API_PORT} > /dev/null 2>&1 &
+            SERVER_PID=$!
+            SERVER_STARTED_BY_SCRIPT=true
+            
+            # Wait for server to be ready (max 10 seconds)
+            echo -e "${BLUE}Waiting for server to start...${NC}"
+            for i in {1..20}; do
+                if curl -s "http://localhost:${API_PORT}/health" > /dev/null 2>&1; then
+                    echo -e "${GREEN}✓ Server is ready!${NC}\n"
+                    break
+                fi
+                if [ $i -eq 20 ]; then
+                    echo -e "${YELLOW}⚠ Server did not start in time. Continuing anyway...${NC}\n"
+                else
+                    sleep 0.5
+                fi
+            done
+        fi
+        
+        # Run the demo script
         python -m scripts.play_via_api
         ;;
     *)
