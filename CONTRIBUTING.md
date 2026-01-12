@@ -128,7 +128,7 @@ git commit  # if merging
 ## Development Workflow
 
 Follow the [Development Workflow](docs/DEVELOPMENT.md#development-workflow) for:
-- Running tests locally
+- Running tests locally (tests run automatically with agents)
 - Code quality checks
 - Pre-commit hooks (run automatically on `git commit`)
 - Coverage checking
