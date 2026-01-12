@@ -6,10 +6,15 @@ This guide helps developers work independently and collaborate effectively on th
 
 1. **Fork and Clone**: Fork the repository and clone your fork
 2. **Set up environment**: Follow the [Development Setup](docs/DEVELOPMENT.md#development-setup) guide
-3. **Create a branch**: Create a feature branch from `main` (see [Branching Strategy](#branching-strategy))
-4. **Make changes**: Implement your feature following the [Development Workflow](docs/DEVELOPMENT.md#development-workflow)
-5. **Test locally**: Run all tests and quality checks before pushing
-6. **Submit PR**: Open a pull request following the [PR Process](#pull-request-process)
+3. **Configure environment variables** (optional for Phase 4, required for Phase 5+):
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your API keys if using LLM features
+   ```
+4. **Create a branch**: Create a feature branch from `main` (see [Branching Strategy](#branching-strategy))
+5. **Make changes**: Implement your feature following the [Development Workflow](docs/DEVELOPMENT.md#development-workflow)
+6. **Test locally**: Run all tests and quality checks before pushing
+7. **Submit PR**: Open a pull request following the [PR Process](#pull-request-process)
 
 ## Branching Strategy
 
