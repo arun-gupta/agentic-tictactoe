@@ -5,6 +5,7 @@
 #   ./run_demo.sh              # Default: Human vs Agent (Phase 3 - Rule-based Agent System)
 #   ./run_demo.sh h2agent      # Human vs Agent (Phase 3 - Rule-based Agent System)
 #   ./run_demo.sh h2h          # Human vs Human (Phase 2 - Game Engine)
+#   ./run_demo.sh api          # Play via REST API (Phase 4 - REST API Layer)
 #   ./run_demo.sh interactive  # Interactive menu
 
 set -e  # Exit on error
@@ -54,6 +55,9 @@ elif [ $# -eq 1 ]; then
         h2agent|humanvsagent|human-vs-agent)
             choice="phase3"
             ;;
+        api|playviaapi|play-via-api)
+            choice="phase4"
+            ;;
         interactive|menu|i)
             choice="interactive"
             ;;
@@ -63,12 +67,13 @@ elif [ $# -eq 1 ]; then
             echo "  ./run_demo.sh              # Default: Human vs Agent (Phase 3 - Rule-based Agent System)"
             echo "  ./run_demo.sh h2agent      # Human vs Agent (Phase 3 - Rule-based Agent System)"
             echo "  ./run_demo.sh h2h          # Human vs Human (Phase 2 - Game Engine)"
+            echo "  ./run_demo.sh api          # Play via REST API (Phase 4 - REST API Layer)"
             echo "  ./run_demo.sh interactive  # Interactive menu"
             exit 1
             ;;
     esac
 else
-    echo -e "${YELLOW}Too many arguments. Usage: ./run_demo.sh [h2h|h2agent|interactive]${NC}"
+    echo -e "${YELLOW}Too many arguments. Usage: ./run_demo.sh [h2h|h2agent|api|interactive]${NC}"
     exit 1
 fi
 
@@ -78,9 +83,10 @@ if [ "$choice" = "interactive" ]; then
     echo -e "${BLUE}Available demos:${NC}"
     echo "  1) Human vs Human (Phase 2 - Game Engine)"
     echo "  2) Human vs Agent (Phase 3 - Rule-based Agent System)"
-    echo "  3) Exit"
+    echo "  3) Play via REST API (Phase 4 - REST API Layer)"
+    echo "  4) Exit"
     echo ""
-    read -p "Select demo to run (1-3): " menu_choice
+    read -p "Select demo to run (1-4): " menu_choice
 
     case $menu_choice in
         1)
@@ -90,6 +96,9 @@ if [ "$choice" = "interactive" ]; then
             choice="phase3"
             ;;
         3)
+            choice="phase4"
+            ;;
+        4)
             echo -e "${GREEN}Goodbye!${NC}"
             exit 0
             ;;
@@ -109,6 +118,12 @@ case $choice in
     phase3)
         echo -e "\n${BLUE}Running: Human vs Agent (Phase 3 - Rule-based Agent System)${NC}\n"
         python -m scripts.play_human_vs_ai
+        ;;
+    phase4)
+        echo -e "\n${BLUE}Running: Play via REST API (Phase 4 - REST API Layer)${NC}\n"
+        echo -e "${YELLOW}Note: Make sure the API server is running!${NC}"
+        echo -e "${YELLOW}Start it with: uvicorn src.api.main:app --reload${NC}\n"
+        python -m scripts.play_via_api
         ;;
     *)
         echo -e "${YELLOW}Invalid choice: $choice${NC}"
