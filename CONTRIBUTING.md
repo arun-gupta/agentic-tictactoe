@@ -59,11 +59,10 @@ git checkout -b fix/your-bug-fix
 
 ### Before Creating a PR
 
-1. **Ensure tests pass**: Run `pytest tests/` locally
-2. **Run quality checks**: Verify `black`, `ruff`, and `mypy` all pass
-3. **Update documentation**: Update relevant docs (README, API docs, etc.)
-4. **Follow commit conventions**: Use [commit message conventions](docs/DEVELOPMENT.md#commit-message-conventions)
-5. **Rebase on main**: Ensure your branch is up-to-date with `main`
+1. **Run validation checks**: Follow the [pre-commit-validation skill](skills/pre-commit-validation/SKILL.md) to ensure all tests, formatting, linting, and type checking pass
+2. **Update documentation**: Update relevant docs (README, API docs, etc.)
+3. **Follow commit conventions**: Use [commit message conventions](docs/DEVELOPMENT.md#commit-message-conventions)
+4. **Rebase on main**: Ensure your branch is up-to-date with `main`
 
 ### Creating a PR
 
@@ -133,6 +132,8 @@ Follow the [Development Workflow](docs/DEVELOPMENT.md#development-workflow) for:
 - Code quality checks
 - Pre-commit hooks
 - Coverage checking
+
+**Before committing**: Always run [pre-commit validation](skills/pre-commit-validation/SKILL.md) to ensure all quality checks pass.
 
 ## Code Standards
 
