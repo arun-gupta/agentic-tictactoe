@@ -3,7 +3,7 @@
 This module contains the core game entities: Position, Board, and GameState.
 """
 
-from typing import Literal
+from typing import Any, Callable, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_serializer
 
@@ -285,7 +285,7 @@ class GameState(BaseModel):
         return None
 
     @model_serializer(mode="wrap")
-    def serialize(self, serializer, info):
+    def serialize(self, serializer: Callable[[Any], dict[str, Any]], info: Any) -> dict[str, Any]:
         """Serialize GameState to dict, including computed fields is_game_over and winner."""
         data = serializer(self)
         data["is_game_over"] = self.is_game_over()
