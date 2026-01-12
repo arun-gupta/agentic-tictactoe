@@ -136,7 +136,7 @@ Follow the [Development Workflow](docs/DEVELOPMENT.md#development-workflow) for:
 ## Code Standards
 
 - **Type hints**: All code must be type-annotated
-- **Tests**: All new features must include tests
+- **Tests**: All new features must include tests (see [test-writing skill](skills/test-writing/SKILL.md))
 - **Documentation**: Update docs for user-facing changes
 - **Style**: Follow black formatting and ruff linting rules
 - **Commits**: Follow [commit message conventions](skills/commit-format/SKILL.md)
