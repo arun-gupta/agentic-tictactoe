@@ -139,7 +139,7 @@ Follow the [Development Workflow](docs/DEVELOPMENT.md#development-workflow) for:
 - **Tests**: All new features must include tests
 - **Documentation**: Update docs for user-facing changes
 - **Style**: Follow black formatting and ruff linting rules
-- **Commits**: Follow [commit message conventions](docs/DEVELOPMENT.md#commit-message-conventions)
+- **Commits**: Follow [commit message conventions](skills/commit-format/SKILL.md)
 
 ## Questions?
 
