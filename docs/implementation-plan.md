@@ -1029,14 +1029,14 @@ pre-commit install --overwrite
 - **Acceptance Criteria**: AC-5.3.1 verified (service readiness check)
 - **Test File**: `tests/integration/api/test_api_game.py`
 
-**4.2.2. POST /api/game/move**
+**4.2.2. POST /api/game/move** ✅
 - Accept player move (row, col)
 - Validate move via game engine
 - Trigger AI agent pipeline
 - Return updated game state + AI move
 - Handle errors per Section 5.4
 
-**Implementation Notes:**
+**Implementation Notes** ✅:
 - Implemented POST /api/game/move endpoint with move validation and AI pipeline integration
 - Accepts `MoveRequest` with `game_id`, `row`, and `col`
 - Validates move bounds (0-2) before game engine validation to return 400 with `E_MOVE_OUT_OF_BOUNDS`
@@ -1063,12 +1063,12 @@ pre-commit install --overwrite
 - **Acceptance Criteria**: AC-5.4.1 through AC-5.4.8 verified (8 official tests for final verification)
 - **Test File**: `tests/integration/api/test_api_game.py`
 
-**4.2.3. GET /api/game/status**
+**4.2.3. GET /api/game/status** ✅
 - Return current game state
 - Include board, move history, game over status
 - Return agent insights (if available)
 
-**Implementation Notes:**
+**Implementation Notes** ✅:
 - Implemented GET /api/game/status endpoint with game status retrieval
 - Accepts `game_id` as query parameter
 - Looks up game session from `_game_sessions` dictionary
@@ -1090,12 +1090,12 @@ pre-commit install --overwrite
 - **Acceptance Criteria**: AC-5.5.1 through AC-5.5.4 verified (4 official tests for final verification)
 - **Test File**: `tests/integration/api/test_api_game.py`
 
-**4.2.4. POST /api/game/reset**
+**4.2.4. POST /api/game/reset** ✅
 - Reset current game to initial state
 - Clear move history
 - Reinitialize agents
 
-**Implementation Notes:**
+**Implementation Notes** ✅:
 - Implemented POST /api/game/reset endpoint with game reset functionality
 - Accepts `ResetGameRequest` with `game_id`
 - Calls `GameEngine.reset_game()` to reset the game state to initial conditions
