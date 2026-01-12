@@ -87,6 +87,57 @@ def _get_error_message(error_code: str | None) -> str:
     return "Unknown error"
 
 
+def _get_error_status_code(error_code: str | None) -> int:
+    """Get HTTP status code for error code per Section 5.5 (HTTP Status Code Mapping).
+
+    Maps error codes to HTTP status codes according to the specification:
+    - 400 Bad Request: Client errors (invalid moves, invalid request data)
+    - 404 Not Found: Resource not found
+    - 422 Unprocessable Entity: Semantic validation errors
+    - 500 Internal Server Error: Server-side errors (agent failures, LLM errors)
+    - 503 Service Unavailable: Service not ready
+
+    Args:
+        error_code: Error code string or None.
+
+    Returns:
+        HTTP status code as integer. Defaults to 500 for unknown error codes.
+    """
+    # 400 Bad Request: Client error - invalid request data or game rules violation
+    bad_request_codes = {
+        E_MOVE_OUT_OF_BOUNDS,
+        E_CELL_OCCUPIED,
+        E_GAME_ALREADY_OVER,
+        E_INVALID_TURN,
+        E_INVALID_PLAYER,
+        E_INVALID_REQUEST,
+    }
+    # 404 Not Found: Resource not found
+    not_found_codes = {
+        "E_GAME_NOT_FOUND",
+        "E_AGENT_NOT_FOUND",
+    }
+    # 503 Service Unavailable: Service not ready
+    service_unavailable_codes = {
+        E_SERVICE_NOT_READY,
+    }
+    # 500 Internal Server Error: Server-side error (default for unknown/unmapped codes)
+    # Includes: E_STATE_CORRUPTED, E_SCOUT_FAILED, E_STRATEGIST_FAILED, E_EXECUTOR_FAILED,
+    # E_LLM_TIMEOUT, E_LLM_PARSE_ERROR, E_LLM_RATE_LIMIT, E_LLM_AUTH_ERROR, etc.
+
+    if error_code:
+        if error_code in bad_request_codes:
+            return status.HTTP_400_BAD_REQUEST
+        if error_code in not_found_codes:
+            return status.HTTP_404_NOT_FOUND
+        if error_code in service_unavailable_codes:
+            return status.HTTP_503_SERVICE_UNAVAILABLE
+        # Default to 500 for all other error codes (server-side errors)
+        return status.HTTP_500_INTERNAL_SERVER_ERROR
+    # Default to 500 for None/unknown error codes
+    return status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
 # Server state tracking for health endpoint
 _server_start_time: float | None = None
 _server_shutting_down: bool = False
@@ -695,11 +746,12 @@ async def make_move(request: MoveRequest) -> MoveResponse | JSONResponse:
     is_valid, error_code = engine.validate_move(request.row, request.col, player_symbol)
 
     if not is_valid:
+        error_code_final = error_code or E_INVALID_REQUEST
         logger.warning(
             "Invalid move attempted",
             extra={
                 "event_type": "error",
-                "error_code": error_code,
+                "error_code": error_code_final,
                 "game_id": game_id,
                 "row": request.row,
                 "col": request.col,
@@ -707,10 +759,10 @@ async def make_move(request: MoveRequest) -> MoveResponse | JSONResponse:
             },
         )
         return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=_get_error_status_code(error_code_final),
             content=ErrorResponse(
                 status="failure",
-                error_code=error_code or E_INVALID_REQUEST,
+                error_code=error_code_final,
                 message=_get_error_message(error_code),
                 timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
                 details={

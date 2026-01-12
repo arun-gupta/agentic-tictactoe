@@ -1185,33 +1185,42 @@ pre-commit install --overwrite
 - **Acceptance Criteria**: AC-5.8.1 through AC-5.8.5 verified (5 official tests for final verification)
 - **Test File**: `tests/integration/api/test_api_agents.py`
 
-#### 4.4. Error Handling
+#### 4.4. Error Handling ✅
 
 **Spec Reference**: Section 5.4 - Error Response Schema, Section 5.5 - HTTP Status Code Mapping
 
 **Implementation:**
 - Implement error response format per Section 5.4
-- Map error codes to HTTP status codes per Section 5.6:
-  - E_POSITION_OUT_OF_BOUNDS → 400 Bad Request
-  - E_CELL_OCCUPIED → 409 Conflict
-  - E_GAME_ALREADY_OVER → 409 Conflict
-  - Agent timeout → 504 Gateway Timeout
+- Map error codes to HTTP status codes per Section 5.5:
+  - E_MOVE_OUT_OF_BOUNDS → 400 Bad Request
+  - E_CELL_OCCUPIED → 400 Bad Request
+  - E_GAME_ALREADY_OVER → 400 Bad Request
+  - E_SERVICE_NOT_READY → 503 Service Unavailable
+  - E_GAME_NOT_FOUND → 404 Not Found
+  - E_INTERNAL_ERROR → 500 Internal Server Error
 - Return consistent error structure with error code, message, details
 
-**Subsection Tests**:
-- Error responses follow ErrorResponse schema (status="failure", error_code, message, timestamp, details)
-- E_MOVE_OUT_OF_BOUNDS maps to 400 Bad Request
-- E_CELL_OCCUPIED maps to 409 Conflict
-- E_GAME_ALREADY_OVER maps to 409 Conflict
-- E_SERVICE_NOT_READY maps to 503 Service Unavailable
-- Agent timeout errors map to 504 Gateway Timeout
-- Error response timestamp is ISO 8601 format
-- Error response details include field/expected/actual when applicable
+**Subsection Tests** ✅:
+- ✅ Error responses follow ErrorResponse schema (status="failure", error_code, message, timestamp, details)
+- ✅ E_MOVE_OUT_OF_BOUNDS maps to 400 Bad Request
+- ✅ E_CELL_OCCUPIED maps to 400 Bad Request
+- ✅ E_GAME_ALREADY_OVER maps to 400 Bad Request
+- ✅ E_SERVICE_NOT_READY maps to 503 Service Unavailable
+- ✅ E_GAME_NOT_FOUND maps to 404 Not Found
+- ✅ E_INTERNAL_ERROR maps to 500 Internal Server Error
+- ✅ Error response timestamp is ISO 8601 format
+- ✅ Error response details include field/expected/actual when applicable
 
-**Test Coverage** (planned):
-- **Subsection Tests**: ~7-8 tests for Phase 4.4 incremental development
-- **Test File**: `tests/integration/api/test_api_errors.py` (or integrated into endpoint tests)
-- **Note**: Error handling is tested as part of endpoint tests, but dedicated tests verify error code → HTTP status mapping
+**Implementation Notes** ✅:
+- Implemented `_get_error_status_code()` helper function to map error codes to HTTP status codes per Section 5.5
+- Updated `POST /api/game/move` endpoint to use `_get_error_status_code()` for consistent error code mapping
+- Error responses follow ErrorResponse schema with status="failure", error_code, message, timestamp, and optional details
+- Error code mappings match the spec: E_CELL_OCCUPIED and E_GAME_ALREADY_OVER map to 400 Bad Request (not 409 Conflict)
+
+**Test Coverage** ✅:
+- **Subsection Tests**: 8 tests implemented and passing
+- **Test File**: `tests/integration/api/test_api_errors.py`
+- **Note**: Error handling is tested as part of endpoint tests, and dedicated tests verify error code → HTTP status mapping
 
 #### 4.5. API Demo Script
 
