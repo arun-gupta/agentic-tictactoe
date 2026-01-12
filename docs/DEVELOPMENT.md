@@ -44,6 +44,65 @@ When implementing new features:
 - **Update documentation**: Make sure `README.md` and `scripts/README.md` are updated as relevant.
 - **Monitor code coverage**: Check for code coverage trends. If coverage drops, investigate and add tests to maintain or improve coverage.
 
+## Commit Message Conventions
+
+Follow conventional commit format for clear, consistent commit messages:
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Type** (required): One of the following:
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, missing semicolons, etc.)
+- `refactor`: Code refactoring (no functional changes)
+- `test`: Adding or updating tests
+- `chore`: Maintenance tasks (dependencies, build config, etc.)
+- `perf`: Performance improvements
+- `ci`: CI/CD changes
+
+**Scope** (optional): The area of the codebase affected (e.g., `api`, `domain`, `agents`, `tests`)
+
+**Subject** (required): Brief description (50 chars or less, imperative mood, no period)
+
+**Body** (optional): Detailed explanation (wrap at 72 chars)
+
+**Footer** (optional): Reference issues, breaking changes, etc.
+
+**Examples:**
+
+```
+feat(api): add POST /api/game/new endpoint
+
+Implement endpoint to create new game sessions with optional player symbol preference.
+Returns game_id and initial game_state.
+
+fix(domain): correct win detection logic for diagonal wins
+
+The diagonal win check was missing the bottom-left to top-right case.
+Added test coverage for all diagonal win scenarios.
+
+docs: update DEVELOPMENT.md with commit conventions
+
+Add commit message format guidelines to help maintain consistent commit history.
+
+test(api): add integration tests for game status endpoint
+
+Cover all acceptance criteria from Phase 4.2.3 including game state, agent status, and metrics.
+```
+
+**Best Practices:**
+- Use imperative mood ("add" not "added" or "adds")
+- First line should be clear and concise
+- Reference issues in footer: `Closes #123` or `Fixes #456`
+- For breaking changes, start footer with `BREAKING CHANGE:`
+
 ## Running the API Server Locally
 
 For testing API endpoints or running the API demo:
