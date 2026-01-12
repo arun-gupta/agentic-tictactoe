@@ -72,7 +72,7 @@ The system is designed to follow a layered architecture:
 - ✅ **Phase 4**: REST API Layer - All endpoints, error handling, and API demo script
 
 ### Current Metrics
-- **308 tests passing**
+- **412 tests passing**
 - **Complete REST API** with all endpoints (game control, agent status, error handling)
 - **Test coverage**: See badge above for current Codecov coverage
   - Codecov excludes unimplemented placeholder files for agents, API, and UI layers
