@@ -5,7 +5,7 @@ This module contains the core game entities: Position, Board, and GameState.
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 from src.domain.errors import E_INVALID_BOARD_SIZE, E_POSITION_OUT_OF_BOUNDS
 
@@ -283,3 +283,11 @@ class GameState(BaseModel):
         if self._check_draw():
             return "DRAW"
         return None
+
+    @model_serializer
+    def serialize(self) -> dict:
+        """Serialize GameState to dict, including computed fields is_game_over and winner."""
+        data = self.model_dump()
+        data["is_game_over"] = self.is_game_over()
+        data["winner"] = self.get_winner()
+        return data
