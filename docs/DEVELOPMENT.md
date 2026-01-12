@@ -128,6 +128,20 @@ uvicorn src.api.main:app --reload
 
 The `run_demo.sh api` command will automatically start the server if it's not already running.
 
+## Pre-commit Validation
+
+Before committing, always run validation checks locally to catch issues early:
+
+```bash
+# Run all validation checks
+pytest tests/ --cov=src --cov-report=term && \
+black --check src/ tests/ && \
+ruff check src/ tests/ && \
+mypy src/ --strict --explicit-package-bases
+```
+
+See the [pre-commit-validation skill](../skills/pre-commit-validation/SKILL.md) for detailed validation guidelines.
+
 ## Pre-commit Hooks Setup
 
 Pre-commit hooks run automatically on `git commit` to ensure code quality. To set them up:
