@@ -284,6 +284,14 @@ class GameState(BaseModel):
             return "DRAW"
         return None
 
+    @model_serializer(mode='wrap')
+    def serialize(self, serializer, info):
+        """Serialize GameState to dict, including computed fields is_game_over and winner."""
+        data = serializer(self)
+        data['is_game_over'] = self.is_game_over()
+        data['winner'] = self.get_winner()
+        return data
+
     @computed_field
     @property
     def is_game_over(self) -> bool:
