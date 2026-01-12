@@ -279,31 +279,6 @@ def reset_game(client: httpx.Client, game_id: str) -> dict[str, Any] | None:
         return None
 
 
-def demonstrate_error_handling(client: httpx.Client, game_id: str) -> None:
-    """Demonstrate error handling with invalid moves.
-
-    Args:
-        client: HTTP client instance
-        game_id: Game ID
-    """
-    print("\n" + "=" * 60)
-    print("DEMONSTRATING ERROR HANDLING")
-    print("=" * 60)
-
-    # Test 1: Out of bounds move
-    print("\n1. Testing out-of-bounds move (row=3, col=1):")
-    make_move(client, game_id, 3, 1)
-
-    # Test 2: Occupied cell (make a valid move first, then try the same cell)
-    print("\n2. Testing occupied cell (making valid move first):")
-    result = make_move(client, game_id, 1, 1)
-    if result:
-        print("   Now trying to play the same cell again:")
-        make_move(client, game_id, 1, 1)
-
-    print("\n" + "=" * 60)
-
-
 def get_human_move() -> tuple[int, int] | None:
     """Get move from human player via input.
 
@@ -340,13 +315,13 @@ def get_human_move() -> tuple[int, int] | None:
 def main() -> None:
     """Run the API demo."""
     print("=" * 60)
-    print("TIC-TAC-TOE: Play via REST API")
+    print("TIC-TAC-TOE: Human vs AI via REST API")
     print("=" * 60)
     print("\nDemonstrating Phase 4: REST API Layer")
     print("- Complete game via HTTP requests")
     print("- All API endpoints")
-    print("- Error handling")
-    print("- Game state management\n")
+    print("- Game state management")
+    print("- Human vs AI gameplay\n")
 
     # Create HTTP client
     with httpx.Client() as client:
@@ -362,9 +337,6 @@ def main() -> None:
         if not game_id:
             print("❌ Failed to create game. Exiting.")
             sys.exit(1)
-
-        # Demonstrate error handling
-        demonstrate_error_handling(client, game_id)
 
         # Play game interactively
         print("\n" + "=" * 60)
