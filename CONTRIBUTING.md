@@ -2,6 +2,8 @@
 
 This guide helps developers work independently and collaborate effectively on the Agentic Tic-Tac-Toe project.
 
+> **Note**: This repository is optimized for working with coding agents (AI assistants). It relies on structured **SKILLS** (found in the `skills/` directory) that define patterns and workflows for implementation, testing, commit formatting, error handling, and more. These skills enable consistent, high-quality development whether working with agents or manually.
+
 ## Getting Started
 
 1. **Fork and Clone**: Fork the repository and clone your fork
