@@ -60,7 +60,3 @@ Demonstrates Phase 4 (REST API Layer):
 If running the script directly, start the server manually with: `uvicorn src.api.main:app --reload`
 
 **Run:** `./run_demo.sh api` (recommended - automatically starts server if needed) or `python scripts/play_via_api.py`
-
-### Coming Soon
-
-- AI vs AI - Phase 3 (Agent System)
