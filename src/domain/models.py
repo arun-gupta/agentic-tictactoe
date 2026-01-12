@@ -3,7 +3,8 @@
 This module contains the core game entities: Position, Board, and GameState.
 """
 
-from typing import Any, Callable, Literal
+from collections.abc import Callable
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_serializer
 
