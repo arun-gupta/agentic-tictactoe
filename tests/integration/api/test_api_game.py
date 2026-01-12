@@ -308,8 +308,9 @@ class TestMoveEndpoint:
         data = response.json()
         assert data["success"] is True
         # Game should be over with player as winner
-        # Note: is_game_over and winner are computed on-the-fly, not stored as fields
-        # But we can check move_count increased
+        updated_state = data.get("updated_game_state", {})
+        assert updated_state.get("is_game_over") is True
+        assert updated_state.get("winner") == "X"
 
     def test_subsection_4_2_2_handles_malformed_json_returns_422(self, client: TestClient) -> None:
         """Test POST /api/game/move handles malformed JSON → 422 Unprocessable Entity (AC-5.4.7)."""
