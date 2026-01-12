@@ -284,27 +284,10 @@ class GameState(BaseModel):
             return "DRAW"
         return None
 
-    @model_serializer(mode='wrap')
+    @model_serializer(mode="wrap")
     def serialize(self, serializer, info):
         """Serialize GameState to dict, including computed fields is_game_over and winner."""
         data = serializer(self)
-        data['is_game_over'] = self.is_game_over()
-        data['winner'] = self.get_winner()
+        data["is_game_over"] = self.is_game_over()
+        data["winner"] = self.get_winner()
         return data
-
-    @computed_field
-    @property
-    def is_game_over(self) -> bool:
-        """Computed field: Check if the game is over (included in JSON serialization)."""
-        return self._check_win() is not None or self._check_draw()
-
-    @computed_field
-    @property
-    def winner(self) -> WinnerSymbol | None:
-        """Computed field: Get the winner of the game (included in JSON serialization)."""
-        winner = self._check_win()
-        if winner is not None:
-            return winner
-        if self._check_draw():
-            return "DRAW"
-        return None
