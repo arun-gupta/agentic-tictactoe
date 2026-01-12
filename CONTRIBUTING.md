@@ -130,10 +130,8 @@ git commit  # if merging
 Follow the [Development Workflow](docs/DEVELOPMENT.md#development-workflow) for:
 - Running tests locally
 - Code quality checks
-- Pre-commit hooks
+- Pre-commit hooks (run automatically on `git commit`)
 - Coverage checking
-
-**Before committing**: Always run [pre-commit validation](skills/pre-commit-validation/SKILL.md) to ensure all quality checks pass.
 
 ## Code Standards
 
