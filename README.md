@@ -7,7 +7,7 @@ A multi-agent AI system for playing Tic-Tac-Toe, featuring specialized agents (S
 
 ## Planned Features
 
-> **Note**: Implementation is in progress. Phase 0, Phase 1, and Phase 2 are complete. Features below include both implemented and planned components.
+> **Note**: Implementation is in progress. Phases 0-4 are complete (Domain Models, Game Engine, Agent System, REST API). Features below include both implemented and planned components.
 
 - **Multi-Agent Architecture**: Three specialized agents (Scout, Strategist, Executor) working in coordination
 - **LLM Integration**: Support for OpenAI, Anthropic, and Google Gemini models with provider abstraction
@@ -62,26 +62,26 @@ The system is designed to follow a layered architecture:
 
 ## Project Status
 
-**Current Phase**: Implementation - Phase 3 (Agent System) 🚧
+**Current Phase**: Implementation - Phase 5 (LLM Integration) 🚧
 
 ### Completed
 - ✅ **Phase 0**: Project Setup and Foundation
 - ✅ **Phase 1**: Domain Models (Foundation Layer)
 - ✅ **Phase 2**: Game Engine (Business Logic Layer)
-- ✅ **Phase 3.0**: Scout Agent (Board Analysis)
+- ✅ **Phase 3**: Agent System (AI Layer) - Scout, Strategist, Executor, and Pipeline
+- ✅ **Phase 4**: REST API Layer - All endpoints, error handling, and API demo script
 
 ### Current Metrics
-- **276 tests passing**
-- **24 Scout Agent tests** covering threat detection, opportunity detection, strategic positions, game phase, and board evaluation
+- **300+ tests passing**
+- **Complete REST API** with all endpoints (game control, agent status, error handling)
 - **Test coverage**: See badge above for current Codecov coverage
   - Codecov excludes unimplemented placeholder files for agents, API, and UI layers
-  - 100% coverage on all implemented code (domain models, game engine, Scout agent)
+  - 100% coverage on all implemented code (domain models, game engine, agents, API)
 - **100% type checking** (mypy strict mode)
 
 ### Next Steps
-- Phase 3.1: Strategist Agent (Move Selection)
-- Phase 3.2: Executor Agent (Move Execution)
-- Phase 3.3: Agent Pipeline Orchestration
+- Phase 5: LLM Integration (LLM provider abstraction and agent enhancement)
+- Phase 6: Web UI Layer
 
 See the [Implementation Plan](docs/implementation-plan.md) for full details on all phases and estimated timeline.
 
