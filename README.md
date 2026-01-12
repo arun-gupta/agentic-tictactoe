@@ -31,6 +31,7 @@ The system is designed to follow a layered architecture:
 
 ### Core Documentation
 
+- [Development Guide](docs/DEVELOPMENT.md) - Development setup and workflow
 - [Full Specification](docs/spec/spec.md) - Complete system architecture and design (4000+ lines)
 - [JSON Schemas](docs/spec/schemas.md) - Formal schema definitions for all domain models
 - [UI Specification](docs/spec/ui-spec.md) - User interface requirements and design with Figma integration
