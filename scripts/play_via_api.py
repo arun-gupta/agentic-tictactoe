@@ -2,7 +2,8 @@
 """Play Tic-Tac-Toe via REST API demo.
 
 This script demonstrates Phase 4 REST API by playing a complete game via HTTP requests.
-It shows all API endpoints, error handling, and displays the game board from API responses.
+It shows all API endpoints and displays the game board from API responses.
+Human vs AI gameplay through the REST API.
 """
 
 import json
