@@ -39,11 +39,17 @@ Branch protection ensures that:
 #### Require a pull request before merging
 - ✅ **Check** "Require a pull request before merging"
 - **Required approvals:** Set to `1` (or more, depending on your team size)
+  - For small teams (2-3 developers), 1 approval is usually sufficient
+  - For larger teams, consider requiring 2 approvals
 - ✅ **Check** "Dismiss stale pull request approvals when new commits are pushed"
-- ✅ **Check** "Require review from Code Owners" (if you have a CODEOWNERS file)
+- ✅ **Check** "Require review from Code Owners" (only if you have a `.github/CODEOWNERS` file)
+  - For small teams without a CODEOWNERS file, you can skip this
 - ✅ **Check** "Require conversation resolution before merging"
 
 **Allowed merge methods:** Select `Merge, Squash, Rebase` (or your preferred combination)
+  - **Merge**: Preserves full commit history (recommended for detailed history)
+  - **Squash**: Combines all commits into one (cleaner history)
+  - **Rebase**: Creates linear history (cleaner but rewrites commits)
 
 ### Step 4: Configure Status Checks
 
@@ -78,6 +84,26 @@ The following are typically left unchecked unless needed:
 ### Step 6: Create the Ruleset
 
 Click the **Create** button at the bottom of the page to save your branch protection ruleset.
+
+## Recommended Settings Summary
+
+For most projects, especially small teams (2-5 developers), the following is a good starting point:
+
+✅ **Essential Settings:**
+- Require a pull request before merging (1 approval)
+- Require status checks to pass (all CI checks)
+- Block force pushes
+- Restrict deletions
+- Dismiss stale approvals
+- Require conversation resolution
+
+❌ **Optional Settings (can skip for small teams):**
+- Require review from Code Owners (only if CODEOWNERS file exists)
+- Restrict creations/updates
+- Require linear history
+- Require signed commits
+
+You can always adjust these settings later based on your team's needs. Start with the essentials and add more restrictions as your team grows or if you encounter issues.
 
 ## Verification
 
