@@ -12,57 +12,72 @@ Branch protection ensures that:
 
 ## Setup Instructions
 
-### Step 1: Navigate to Branch Protection Settings
+### Step 1: Navigate to Rulesets Settings
 
 1. Go to your repository on GitHub
 2. Click **Settings** (top navigation bar)
-3. Click **Branches** (left sidebar)
-4. Under "Branch protection rules", click **Add rule** (or **Add branch protection rule**)
+3. Click **Rules** (left sidebar, under "Code and automation")
+4. Click **New ruleset** button (or **Add ruleset**)
 
-### Step 2: Configure Branch Protection Rule
+### Step 2: Configure Ruleset Name and Target
 
-**Branch name pattern:** `main`
+**Ruleset Name:** `main` (or any descriptive name like "Main Branch Protection")
 
-**Recommended Settings:**
+**Enforcement status:** `Active` (enabled)
 
-#### ✅ Protect matching branches
+**Target branches:**
+- Click **Add target** → Select **Default** (this targets the `main` branch)
+- Or use **Branch name pattern** to specify `main` explicitly
 
-#### ✅ Require a pull request before merging
-- **Required number of approvals:** 1 (or more, depending on your team size)
-- ✅ **Dismiss stale pull request approvals when new commits are pushed**
-- ✅ **Require review from Code Owners** (optional, if you have a CODEOWNERS file)
+**Bypass list:** Leave empty (or add specific roles/teams if needed for emergencies)
 
-#### ✅ Require status checks to pass before merging
-- ✅ **Require branches to be up to date before merging**
-- Select the following status checks (from your CI workflow):
+### Step 3: Configure Branch Rules
+
+#### Restrict deletions
+- ✅ **Check** "Restrict deletions" - Only allow users with bypass permission to delete matching refs
+
+#### Require a pull request before merging
+- ✅ **Check** "Require a pull request before merging"
+- **Required approvals:** Set to `1` (or more, depending on your team size)
+- ✅ **Check** "Dismiss stale pull request approvals when new commits are pushed"
+- ✅ **Check** "Require review from Code Owners" (if you have a CODEOWNERS file)
+- ✅ **Check** "Require conversation resolution before merging"
+
+**Allowed merge methods:** Select `Merge, Squash, Rebase` (or your preferred combination)
+
+### Step 4: Configure Status Checks
+
+#### Require status checks to pass
+- ✅ **Check** "Require status checks to pass before the ref is updated"
+- ✅ **Check** "Require branches to be up to date before merging"
+- ❌ **Uncheck** "Do not require status checks on creation" (unless you want to allow branch creation without checks)
+
+**Add required checks:**
+- Click **+ Add checks** button
+- Select the following status checks (they will appear after CI runs at least once):
   - `test / Run formatting check (black)`
   - `test / Run linting (ruff)`
   - `test / Run type checking (mypy)`
   - `test / Run tests with coverage`
 
-#### ✅ Require conversation resolution before merging
-- Ensures all PR comments are addressed
+#### Block force pushes
+- ✅ **Check** "Block force pushes" - Prevent users with push access from force pushing to refs
 
-#### ✅ Do not allow bypassing the above settings
-- Prevents even administrators from bypassing rules (recommended for strict protection)
+### Step 5: Additional Settings (Optional)
 
-#### ✅ Restrict who can push to matching branches
-- Leave empty (allows PRs to merge) OR
-- Add specific users/teams who should never push directly (optional)
+The following are typically left unchecked unless needed:
 
-#### ✅ Allow force pushes
-- ❌ **Uncheck this** (prevents force pushes, which can rewrite history)
+- ❌ **Restrict creations** - Only allow users with bypass permission to create matching refs
+- ❌ **Restrict updates** - Only allow users with bypass permission to update matching refs
+- ❌ **Require linear history** - Prevent merge commits from being pushed
+- ❌ **Require deployments to succeed** - Require successful deployments before merging
+- ❌ **Require signed commits** - Require verified commit signatures
+- ❌ **Require code scanning results** - Require code scanning before merging
+- ❌ **Require code quality results** - Require code quality analysis before merging
 
-#### ✅ Allow deletions
-- ❌ **Uncheck this** (prevents accidental branch deletion)
+### Step 6: Create the Ruleset
 
-### Step 3: Additional Recommended Settings
-
-#### Lock Branch
-- ❌ Uncheck (not necessary for normal development)
-
-#### Allow specified actors to bypass required pull requests
-- Optional: Add maintainers if needed (not recommended for strict protection)
+Click the **Create** button at the bottom of the page to save your branch protection ruleset.
 
 ## Verification
 
@@ -99,20 +114,22 @@ All of these must pass before a PR can be merged (when branch protection is enab
 
 ## Notes
 
-- Branch protection rules are repository settings, not code files
+- Branch protection rulesets are repository settings, not code files
 - Settings apply immediately after configuration
 - Existing commits on `main` are not affected
-- Branch protection only applies to the specified branch pattern (`main`)
-- You can have different rules for different branches (e.g., `main` vs `develop`)
+- Rulesets can target specific branches or use patterns
+- You can create multiple rulesets for different branches (e.g., `main` vs `develop`)
+- Rulesets can be edited or deleted from the **Settings → Rules** page
 
 ## Troubleshooting
 
-### "Status checks not found"
+### "Status checks not found" or "No checks have been added"
 
 If status checks don't appear in the list:
-1. Ensure CI workflow has run at least once on a PR
-2. Wait a few minutes and refresh the branch protection settings page
-3. Status checks appear after the workflow runs and reports status
+1. Ensure CI workflow has run at least once on a PR or push
+2. Wait a few minutes and refresh the ruleset settings page
+3. Status checks appear after the workflow runs and reports status to GitHub
+4. If you see "No checks have been added", click **+ Add checks** and wait for checks to appear, or create a test PR to trigger CI
 
 ### "Can't merge: required status checks not found"
 
@@ -124,8 +141,8 @@ This means the CI workflow hasn't run yet or hasn't reported status. The status 
 ### Need to merge urgently?
 
 If you need to bypass protection in an emergency:
-1. Temporarily disable branch protection (not recommended)
-2. Or use the "Allow specified actors to bypass" setting for trusted maintainers
+1. Temporarily disable the ruleset (Settings → Rules → Edit ruleset → Set enforcement to "Disabled")
+2. Or add yourself/team to the "Bypass list" in the ruleset settings
 3. Re-enable protection immediately after
 
 ## See Also
