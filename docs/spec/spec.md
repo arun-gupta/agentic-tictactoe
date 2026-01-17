@@ -2875,7 +2875,15 @@ Each acceptance criterion maps directly to one or more test cases. Criteria MUST
 
 **Game Flow**: Test complete game from start to finish, test win/loss/draw scenarios, test player and AI moves. **REQUIRED**: End-to-end game flow tests MUST cover all winning conditions and draw scenarios.
 
-**Contract Tests**: API contract tests between UI and backend to ensure interface compatibility and prevent breaking changes. **REQUIRED**: Contract tests MUST be maintained for all API endpoints consumed by UI.
+**Contract Tests**: API contract tests to ensure the API implementation matches its OpenAPI specification and prevents breaking changes. **REQUIRED**: Contract tests MUST be maintained for all API endpoints.
+
+**Contract Testing Requirements**:
+- **Schema Validation**: Tests MUST verify OpenAPI schema completeness (all endpoints documented, response schemas defined, HTTP status codes specified)
+- **Response Validation**: Tests MUST verify API responses match their Pydantic model contracts
+- **Auto-Generated Tests**: Use schema-based testing tools (e.g., Schemathesis) to auto-generate test cases from OpenAPI spec
+- **CI Integration**: Contract tests MUST run as part of CI pipeline after unit and integration tests
+
+See [CONTRACT_TESTING.md](guides/CONTRACT_TESTING.md) for detailed implementation guide.
 
 **MCP Protocol Tests**: Test MCP client/server communication, protocol compliance, and mode switching between local and distributed modes. **REQUIRED**: If MCP mode is implemented, corresponding integration tests MUST exist.
 

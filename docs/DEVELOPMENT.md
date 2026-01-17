@@ -220,3 +220,4 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for detailed branching strategy and PR
 - [CONTRIBUTING.md](../CONTRIBUTING.md) - Collaboration guidelines and git workflow
 - [Implementation Plan](implementation-plan.md) - Detailed implementation guide with test coverage
 - [Full Specification](spec/spec.md) - Complete system architecture and design
+- [Contract Testing Guide](guides/CONTRACT_TESTING.md) - API contract testing implementation plan

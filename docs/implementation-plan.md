@@ -1264,9 +1264,54 @@ pre-commit install --overwrite
 - Demo script demonstrates all implemented endpoints ✅
 - Demo script shows proper API request/response format ✅
 
+#### 4.6. Contract Testing
+
+**After Phase 4.5 completion**, validate API implementation matches OpenAPI specification before building LLM integration and Web UI layers.
+
+**Spec Reference**: Section 11 - Contract Tests
+
+**Files to Create:**
+- `tests/contract/__init__.py` - Contract test module
+- `tests/contract/conftest.py` - Test fixtures (client, openapi_schema)
+- `tests/contract/test_openapi_schema.py` - Schema structure validation
+- `tests/contract/test_schemathesis_api.py` - Auto-generated API tests
+- `tests/contract/test_response_contracts.py` - Response Pydantic validation
+
+**Dependencies to Add** (in `pyproject.toml`):
+- `schemathesis>=3.25.0` - Schema-based contract testing (used by Spotify, JetBrains)
+- `hypothesis>=6.92.0` - Property-based testing (required by Schemathesis)
+
+**Implementation:**
+- Add pytest marker `contract` to `pyproject.toml` for selective test execution
+- Validate OpenAPI schema has all endpoints documented
+- Validate all response schemas are defined (ErrorResponse, GameState, etc.)
+- Validate HTTP status codes are specified (201, 200, 404, 503)
+- Use Schemathesis `@schema.parametrize()` to auto-generate tests from OpenAPI spec
+- Validate responses deserialize to Pydantic models correctly
+- Add contract test step to CI pipeline: `pytest tests/contract -v --tb=short`
+
+**Subsection Tests**:
+- OpenAPI schema has required info section (title="Agentic Tic-Tac-Toe API", version)
+- OpenAPI schema documents all endpoints (/api/game/new, /health, /ready, etc.)
+- Response schemas defined (ErrorResponse, GameState, MoveResponse, etc.)
+- HTTP status codes specified for all endpoints (201, 200, 404, 503)
+- Schemathesis validates /health endpoint responses match schema
+- Schemathesis validates /ready endpoint responses match schema
+- Schemathesis validates /api/game/new responses match schema
+- Schemathesis validates /api/agents/{name}/status responses match schema
+- NewGameResponse deserializes correctly from POST /api/game/new
+- ErrorResponse deserializes correctly from 404 responses
+- AgentStatus deserializes correctly from GET /api/agents/{name}/status
+
+**Test Coverage**:
+- **Subsection Tests**: 11 tests for contract validation
+- **Test Files**: `tests/contract/test_openapi_schema.py`, `tests/contract/test_schemathesis_api.py`, `tests/contract/test_response_contracts.py`
+- **Note**: See [docs/guides/CONTRACT_TESTING.md](guides/CONTRACT_TESTING.md) for detailed implementation guide
+
 **Phase 4 Deliverables:**
 - Complete REST API with all endpoints
-- 36 API integration tests passing
+- 36+ API integration tests passing
+- Contract tests validating API matches OpenAPI specification
 - Error handling with proper HTTP status codes
 - API can be tested with curl/Postman
 - Game playable via API calls
@@ -1276,6 +1321,7 @@ pre-commit install --overwrite
 - Section 5.2: REST API Endpoints
 - Section 5.4: Error Response Schema
 - Section 5.6: HTTP Status Code Mapping
+- Section 11: Contract Tests
 
 ---
 
