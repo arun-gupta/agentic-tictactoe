@@ -66,6 +66,8 @@ Branch protection ensures that:
   - `test / Run type checking (mypy)`
   - `test / Run tests with coverage`
 
+**Note:** Status checks in GitHub Actions are named as `workflow_name / job_name`. The workflow is named `test` and each job has a descriptive name, producing the check names above.
+
 #### Block force pushes
 - ✅ **Check** "Block force pushes" - Prevent users with push access from force pushing to refs
 
@@ -129,14 +131,16 @@ After setting up branch protection:
 
 ## Current CI Status Checks
 
-Based on `.github/workflows/ci.yml`, the following status checks will run:
+Based on `.github/workflows/ci.yml`, the following status checks will run (each as a separate job):
 
-1. **Run formatting check (black)** - Verifies code formatting
-2. **Run linting (ruff)** - Checks code style and linting
-3. **Run type checking (mypy)** - Validates type annotations
-4. **Run tests with coverage** - Runs test suite and coverage checks
+| Job ID | Status Check Name | Description |
+|--------|-------------------|-------------|
+| `formatting` | test / Run formatting check (black) | Verifies code formatting |
+| `linting` | test / Run linting (ruff) | Checks code style and linting |
+| `type-check` | test / Run type checking (mypy) | Validates type annotations |
+| `tests` | test / Run tests with coverage | Runs test suite and coverage checks |
 
-All of these must pass before a PR can be merged (when branch protection is enabled).
+All four jobs run in parallel and must pass before a PR can be merged (when branch protection is enabled).
 
 ## Notes
 
