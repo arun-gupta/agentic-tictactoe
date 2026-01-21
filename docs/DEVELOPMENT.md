@@ -49,6 +49,12 @@ When implementing new features:
   pytest tests/ --cov=src --cov-report=html --cov-report=term
   # Open htmlcov/index.html in browser to view coverage report
   ```
+- **Run contract tests**: Validate API implementation matches OpenAPI specification:
+  ```bash
+  pytest tests/contract -v -m contract        # Run only contract tests
+  pytest tests/ -m "not contract"            # Run all tests except contract tests
+  pytest tests/contract/ -v --tb=short       # Run contract tests with short traceback
+  ```
 - **Wait for CI**: Wait for GitHub Actions to go green after the push before making any new changes to the repo.
 - **Monitor build time**: Check if the build time slows down (GitHub Actions will show this). If it does, investigate and debug the cause.
 - **Update demo scripts**: Check if `run_demo.sh` can be updated to incorporate new use cases.
@@ -214,6 +220,32 @@ git rebase main  # or git merge main
 ```
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for detailed branching strategy and PR process.
+
+## Contract Testing
+
+Contract tests validate that the API implementation matches its OpenAPI specification. They ensure:
+- API responses match their Pydantic model contracts
+- OpenAPI schema is complete and accurate
+- Breaking changes are detected early
+
+**Running Contract Tests:**
+```bash
+# Run all contract tests
+pytest tests/contract -v -m contract
+
+# Run specific contract test file
+pytest tests/contract/test_openapi_schema.py -v
+
+# Run contract tests with detailed output
+pytest tests/contract -v --tb=short
+```
+
+**Contract Test Types:**
+- **Schema Validation**: Verifies OpenAPI schema structure and completeness
+- **Auto-Generated Tests**: Uses Schemathesis to generate tests from OpenAPI spec
+- **Response Validation**: Ensures API responses deserialize to Pydantic models
+
+See [Contract Testing Guide](guides/CONTRACT_TESTING.md) for detailed implementation and usage.
 
 ## See Also
 
