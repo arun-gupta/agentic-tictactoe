@@ -408,7 +408,7 @@ jobs:
 - ✅ Coverage threshold enforced (80%)
 - ✅ Coverage reporting to Codecov
 - ✅ All checks now blocking (must pass)
-- ⏸️ Docker build deferred to Phase 9 (when containerization is needed)
+- ⏸️ Docker build deferred to Phase 6 (Cloud Native Deployment)
 
 **Enhance Pre-commit Hooks** ✅
 
@@ -1573,766 +1573,31 @@ GOOGLE_API_KEY=...
 
 ---
 
-### Phase 6: Web UI (User Interface Layer)
-
-**Duration**: 4-6 days
-
-**Goal**: Build interactive web UI for playing the game
-
-**Why Sixth**: UI is the final layer. All backend systems are working, now add user-facing interface.
-
-#### 6.0. UI Foundation
-
-**Spec Reference**: Section 6 - Web UI Functional Requirements, docs/spec/ui-spec.md
-
-**Files to Create:**
-- `src/ui/index.html`
-- `src/ui/styles.css`
-- `src/ui/app.js`
-- `src/ui/api-client.js`
-
-**Tech Stack:**
-- Vanilla JavaScript (or React/Vue if preferred)
-- CSS with design tokens from ui-spec.md
-- Fetch API for REST calls
-
-**6.0.1. Design System Setup**
-- Implement color palette (ui-spec.md Section: Color Palette)
-- Set up typography (SF Pro Display font)
-- Define spacing scale (8px base unit)
-- Create CSS variables for design tokens
-
-**Subsection Tests**:
-- CSS variables defined for color palette (primary, secondary, background, text colors)
-- CSS variables defined for spacing scale (8px base unit: 8px, 16px, 24px, 32px)
-- Typography uses SF Pro Display font family
-- All design tokens accessible via CSS variables
-
-**6.0.2. API Client**
-- Create JavaScript wrapper for REST API
-- Methods: `makeMove()`, `getGameStatus()`, `resetGame()`
-- Handle errors and display to user
-
-**Subsection Tests**:
-- API client makeMove() method calls POST /api/game/move with correct parameters
-- API client getGameStatus() method calls GET /api/game/status
-- API client resetGame() method calls POST /api/game/reset
-- API client handles 400 errors (invalid move) and displays error message
-- API client handles 500 errors (server error) and displays error message
-- API client handles network errors and displays user-friendly message
-
-#### 6.1. Game Board UI
-
-**Spec Reference**: US-001, US-002, US-003, US-004, US-005 (Section 6)
-
-**6.1.1. Display Game Board (US-001)**
-- Render 3x3 grid with cells
-- Cell dimensions: 100px × 100px
-- Gap: 12px between cells
-- Display X, O, or empty
-
-**Subsection Tests**:
-- Game board renders 3x3 grid (9 cells total)
-- Each cell has dimensions 100px × 100px
-- Gap between cells is 12px
-- Cells display X, O, or empty state correctly
-- Board layout matches ui-spec.md design
-
-**Test Coverage**:
-- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.1.1 incremental development
-- **Acceptance Criteria**: AC-US001.1 through AC-US001.3 (3 official tests for final verification)
-
-**6.1.2. Make Player Move (US-002)**
-- Click handler on empty cells
-- Disable board during AI turn
-- Show hover effects on valid cells
-- Display error messages for invalid moves
-
-**Subsection Tests**:
-- Click handler attached to empty cells only
-- Clicking empty cell triggers makeMove() API call
-- Board disabled (pointer-events: none) during AI turn
-- Hover effect visible on valid (empty) cells
-- Hover effect hidden on occupied cells
-- Invalid move displays error message with shake animation
-- Cell occupied error highlights occupied cell in red
-- Out of bounds error displays appropriate message
-- Error messages auto-dismiss after 5 seconds
-
-**Test Coverage**:
-- **Subsection Tests**: ~9 E2E/UI tests for Phase 6.1.2 incremental development
-- **Acceptance Criteria**: AC-US002.1 through AC-US002.12 (12 official tests for final verification)
-
-**6.1.3. View Last Move (US-003)**
-- Highlight last played cell
-- Border color: highlight pink (#f72585)
-- Glow effect per ui-spec.md
-
-**Subsection Tests**:
-- Last played cell highlighted with border color #f72585
-- Glow effect applied to last played cell per ui-spec.md
-- Highlight moves to new cell when next move is made
-- Highlight persists until game ends or reset
-
-**Test Coverage**:
-- **Subsection Tests**: ~4 E2E/UI tests for Phase 6.1.3 incremental development
-- **Acceptance Criteria**: AC-US003.1 through AC-US003.2 (2 official tests for final verification)
-
-**6.1.4. View Current Turn (US-004)**
-- Display whose turn (Player or AI)
-- Color-code by player symbol
-- Show move count
-
-**Subsection Tests**:
-- Turn indicator displays "Player" or "AI" correctly
-- Turn indicator color-coded by current player symbol (X/O)
-- Move count displayed and updates after each move
-- Turn indicator updates when turn changes
-- Turn indicator reflects correct player at game start
-
-**Test Coverage**:
-- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.1.4 incremental development
-- **Acceptance Criteria**: AC-US004.1 through AC-US004.8 (8 official tests for final verification)
-
-**6.1.5. View Game Status (US-005)**
-- Display game over message
-- Show winner (X, O, or DRAW)
-- Fade board when game ends
-
-**Subsection Tests**:
-- Game over message displayed when game ends
-- Winner displayed correctly (X wins, O wins, or DRAW)
-- Board fades (opacity reduced) when game ends
-- Game over message persists until reset
-- Board interactions disabled when game over
-
-**Test Coverage**:
-- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.1.5 incremental development
-- **Acceptance Criteria**: AC-US005.1 through AC-US005.3 (3 official tests for final verification)
-
-#### 6.2. Move History Panel
-
-**Spec Reference**: US-006, US-007
-
-**6.2.1. View Move History (US-006)**
-- Chronological list of all moves
-- Show player/AI indicator, move number, position, timestamp
-- Scrollable panel (max-height: 400px)
-
-**Subsection Tests**:
-- Move history displays all moves in chronological order
-- Each move entry shows player/AI indicator
-- Each move entry shows move number, position (row, col), timestamp
-- Move history panel scrollable when content exceeds max-height 400px
-- Move history updates after each move
-- Move history cleared on game reset
-
-**Test Coverage**:
-- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.2.1 incremental development
-- **Acceptance Criteria**: AC-US006.1 through AC-US006.2 (2 official tests for final verification)
-
-**6.2.2. View Move Details (US-007)**
-- Expandable move entries
-- Show agent reasoning (Scout analysis, Strategist strategy, Executor details)
-- Collapse/expand animation
-
-**Subsection Tests**:
-- Move entries expandable via click/tap
-- Expanded entry shows Scout analysis (threats, opportunities)
-- Expanded entry shows Strategist strategy (primary move, alternatives, reasoning)
-- Expanded entry shows Executor details (execution time, validation status)
-- Collapse/expand animation smooth and visible
-- Multiple entries can be expanded simultaneously
-
-**Test Coverage**:
-- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.2.2 incremental development
-- **Acceptance Criteria**: AC-US007.1 through AC-US007.2 (2 official tests for final verification)
-
-#### 6.3. Agent Insights Panel
-
-**Spec Reference**: US-008, US-009, US-010, US-011, US-012
-
-**6.3.1. View Agent Analysis (US-008)**
-- Real-time agent status display
-- Show threats, opportunities, recommended moves
-- Three sections: Scout, Strategist, Executor
-
-**Subsection Tests**:
-- Agent insights panel displays Scout, Strategist, Executor sections
-- Scout section shows threats detected (immediate wins/blocks)
-- Scout section shows opportunities identified (strategic positions)
-- Strategist section shows recommended moves with priority
-- Executor section shows move execution status and timing
-- Agent analysis updates in real-time during AI turn
-- Agent analysis cleared on game reset
-
-**Test Coverage**:
-- **Subsection Tests**: ~7 E2E/UI tests for Phase 6.3.1 incremental development
-- **Acceptance Criteria**: AC-US008.1 through AC-US008.11 (11 official tests for final verification)
-
-**6.3.2. Processing Status (US-009, US-010)**
-- Loading indicators while agents think
-- Progressive status updates:
-  - 0-2s: Simple spinner
-  - 2-5s: Processing message
-  - 5-10s: Progress bar with elapsed time
-  - 10-15s: Warning with fallback notice
-  - 15s+: Automatic fallback
-
-**Subsection Tests**:
-- Simple spinner displayed during 0-2s of agent processing
-- Processing message displayed during 2-5s
-- Progress bar with elapsed time displayed during 5-10s
-- Warning with fallback notice displayed during 10-15s
-- Automatic fallback triggered after 15s
-- Processing status updates every 100ms
-- Processing status cleared when agent completes
-
-**Test Coverage**:
-- **Subsection Tests**: ~7 E2E/UI tests for Phase 6.3.2 incremental development
-- **Acceptance Criteria**: AC-US009.1 through AC-US010.1e (9 official tests for final verification)
-
-**6.3.3. Force Fallback and Retry (US-011, US-012)**
-- "Force Fallback" button after 10s
-- "Retry" button on agent failure
-- Clear explanations of fallback strategy
-
-**Subsection Tests**:
-- "Force Fallback" button appears after 10s of processing
-- Clicking "Force Fallback" triggers immediate fallback move
-- "Retry" button appears when agent fails
-- Clicking "Retry" attempts agent processing again
-- Fallback strategy explanation displayed when fallback used
-- Buttons disabled during fallback/retry execution
-
-**Test Coverage**:
-- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.3.3 incremental development
-- **Acceptance Criteria**: AC-US011.1 through AC-US012.2 (5 official tests for final verification)
-
-#### 6.4. Post-Game Metrics
-
-**Spec Reference**: US-013, US-014, US-015, US-016, US-017, US-018
-
-**6.4.1. Metrics Tab (US-013)**
-- Only visible after game ends
-- Tabbed interface: Summary | Performance | LLM | Communication
-
-**Subsection Tests**:
-- Metrics tab only visible after game ends (hidden during active game)
-- Tabbed interface displays: Summary, Performance, LLM, Communication tabs
-- Each tab displays correct content when selected
-- Tab switching works correctly
-- Metrics tab hidden on game reset until next game ends
-
-**Test Coverage**:
-- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.4.1 incremental development
-- **Acceptance Criteria**: AC-US013.1 through AC-US013.2 (2 official tests for final verification)
-
-**6.4.2. Agent Communication (US-014)**
-- Show request/response data for each agent call
-- Display JSON with syntax highlighting
-
-**Subsection Tests**:
-- Agent Communication tab shows request/response for each agent call
-- JSON data displayed with syntax highlighting
-- Request shows input parameters (game state, board analysis, etc.)
-- Response shows agent output (BoardAnalysis, Strategy, MoveExecution)
-- Each agent (Scout, Strategist, Executor) has separate communication logs
-- Communication logs in chronological order
-
-**Test Coverage**:
-- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.4.2 incremental development
-- **Acceptance Criteria**: AC-US014.1 through AC-US014.3 (3 official tests for final verification)
-
-**6.4.3. LLM Interactions (US-015)**
-- Show prompts sent to LLM
-- Show LLM responses
-- Display token usage, latency, model/provider
-
-**Subsection Tests**:
-- LLM Interactions tab shows prompts sent to LLM (Scout, Strategist)
-- LLM Interactions tab shows LLM responses with structured output
-- Token usage displayed for each LLM call (input tokens, output tokens, total)
-- Latency displayed for each LLM call (in milliseconds)
-- Model and provider name displayed for each LLM call
-- LLM interactions only shown if LLM was used (rule-based mode shows empty)
-
-**Test Coverage**:
-- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.4.3 incremental development
-- **Acceptance Criteria**: AC-US015.1 through AC-US015.6 (6 official tests for final verification)
-
-**6.4.4. Agent Configuration (US-016)**
-- Display agent mode (local vs MCP)
-- Show LLM framework used
-- Show initialization details
-
-**Subsection Tests**:
-- Agent Configuration tab displays agent mode (local vs MCP/distributed)
-- Agent Configuration tab shows LLM framework used (Pydantic AI, etc.)
-- Agent Configuration tab shows initialization details (provider, model, timeouts)
-- Configuration reflects current game session settings
-- Configuration updates when settings changed during game
-
-**Test Coverage**:
-- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.4.4 incremental development
-- **Acceptance Criteria**: AC-US016.1 through AC-US016.4 (4 official tests for final verification)
-
-**6.4.5. Performance Summary (US-017)**
-- Per-agent execution times (min, max, avg)
-- Total LLM calls and tokens
-- Success/failure rates
-
-**Subsection Tests**:
-- Performance Summary tab shows per-agent execution times (Scout, Strategist, Executor)
-- Execution times include min, max, average for each agent
-- Total LLM calls count displayed
-- Total token usage displayed (input + output tokens)
-- Success/failure rates displayed for each agent
-- Performance data calculated correctly from game session
-
-**Test Coverage**:
-- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.4.5 incremental development
-- **Acceptance Criteria**: AC-US017.1 through AC-US017.5 (5 official tests for final verification)
-
-**6.4.6. Game Summary (US-018)**
-- Total moves, duration, outcome
-- Average move time
-
-**Subsection Tests**:
-- Game Summary tab shows total moves count
-- Game duration displayed (start time to end time)
-- Game outcome displayed (X wins, O wins, DRAW)
-- Average move time calculated and displayed correctly
-- Summary data matches actual game play
-
-**Test Coverage**:
-- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.4.6 incremental development
-- **Acceptance Criteria**: AC-US018.1 through AC-US018.4 (4 official tests for final verification)
-
-#### 6.5. Configuration Panel
-
-**Spec Reference**: US-019, US-020, US-021
-
-**6.5.1. LLM Provider Selection (US-019)**
-- Dropdown for provider (OpenAI, Anthropic, Google)
-- Model name input
-- Save preferences to localStorage
-
-**Subsection Tests**:
-- Provider dropdown includes OpenAI, Anthropic, Google options
-- Model name input accepts valid model names per provider
-- Preferences saved to localStorage on change
-- Preferences loaded from localStorage on page load
-- Provider/model selection persists across sessions
-- Invalid model names rejected with error message
-
-**Test Coverage**:
-- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.5.1 incremental development
-- **Acceptance Criteria**: AC-US019.1 through AC-US019.3 (3 official tests for final verification)
-
-**6.5.2. Agent Mode Selection (US-020)**
-- Toggle: Local vs Distributed MCP
-- LLM framework dropdown
-
-**Subsection Tests**:
-- Toggle switches between Local and Distributed MCP modes
-- LLM framework dropdown displays available frameworks (Pydantic AI, etc.)
-- Mode selection saved to localStorage
-- Mode selection persists across sessions
-- Mode change requires game reset to take effect (with confirmation)
-
-**Test Coverage**:
-- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.5.2 incremental development
-- **Acceptance Criteria**: AC-US020.1 through AC-US020.2 (2 official tests for final verification)
-
-**6.5.3. Game Settings (US-021)**
-- Reset game button
-- Player symbol selection (X or O)
-- Difficulty slider (optional)
-
-**Subsection Tests**:
-- Reset game button clears current game and starts new game
-- Player symbol selection allows choosing X or O
-- Player symbol selection applies to next game
-- Difficulty slider (if implemented) adjusts agent behavior
-- Settings saved to localStorage
-- Settings persist across sessions
-
-**Test Coverage**:
-- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.5.3 incremental development
-- **Acceptance Criteria**: AC-US021.1 through AC-US021.3 (3 official tests for final verification)
-
-#### 6.6. Error Handling UI
-
-**Spec Reference**: US-024, US-025, Section 12 - Failure Matrix
-
-**6.6.1. Display Error Messages (US-024)**
-- Critical errors: Red modal
-- Warnings: Orange/yellow badges
-- Info: Blue toasts (bottom-right)
-- Cell-level errors: Shake animation + red highlight
-
-**Subsection Tests**:
-- Critical errors display in red modal dialog (requires user acknowledgment)
-- Warnings display as orange/yellow badges in UI
-- Info messages display as blue toast notifications (bottom-right)
-- Cell-level errors trigger shake animation + red highlight on affected cell
-- Error messages match error codes from Failure Matrix (Section 12)
-- Error messages auto-dismiss after appropriate timeout (modals require click)
-
-**Test Coverage**:
-- **Subsection Tests**: ~6 E2E/UI tests for Phase 6.6.1 incremental development
-- **Acceptance Criteria**: AC-US024.1 through AC-US024.4 (4 official tests for final verification)
-
-**6.6.2. Fallback Indication (US-025)**
-- Notify user when fallback is triggered
-- Explain why fallback was needed
-- Show which fallback strategy was used
-
-**Subsection Tests**:
-- User notified when fallback is triggered (orange badge or toast)
-- Fallback notification explains why fallback was needed (timeout, parse error, auth error, etc.)
-- Fallback notification shows which strategy was used (rule-based analysis, priority-based selection, random valid move)
-- Fallback indication persists until next move or game reset
-- Fallback indication appears in agent insights panel
-
-**Test Coverage**:
-- **Subsection Tests**: ~5 E2E/UI tests for Phase 6.6.2 incremental development
-- **Acceptance Criteria**: AC-US025.1 through AC-US025.3 (3 official tests for final verification)
-
-**Phase 6 Deliverables:**
-- Complete web UI with all 25 user stories implemented
-- Responsive design (desktop-first per spec)
-- All UI acceptance criteria met (104 total)
-- Visual design matches ui-spec.md
-- Full game playable in browser
-
-**Spec References:**
-- Section 6: Web UI Functional Requirements (all 25 user stories)
-- docs/spec/ui-spec.md: Visual Design Specification
-
----
-
-### Phase 7: Testing and Quality Assurance
+### Phase 6: Cloud Native Deployment
 
 **Duration**: 3-4 days
 
-**Goal**: Comprehensive testing across all layers
+**Goal**: Containerize application and deploy to Kubernetes to enable hot-swappable LLM providers and scalable agent architecture
 
-**Spec Reference**: Section 11 - Testing Strategy
+**Why Sixth**: After LLM integration (Phase 5), cloud native deployment enables:
+- **Hot-swappable LLM providers**: Switch between OpenAI, Anthropic, and Google Gemini at runtime via configuration
+- **Scalable agent architecture**: Deploy agents as separate services that can scale independently
+- **Dynamic provider switching**: Change LLM providers without code redeployment
+- **Foundation for MCP**: Sets up infrastructure needed for distributed MCP mode (Phase 7)
 
-#### 7.0. Unit Test Coverage
+**Prerequisites**: Phase 5 (LLM Integration) must be complete
 
-**Target**: 100% coverage for domain models and game engine, 80%+ overall
-
-**Tasks:**
-- Review all unit tests from Phases 1-6
-- Fill coverage gaps
-- Ensure all acceptance criteria have corresponding tests
-- Generate coverage report: `pytest --cov=src --cov-report=html`
-
-**Deliverable**: Coverage report showing ≥80% overall, 100% for critical paths
-
-**Subsection Tests**:
-- Coverage report generated with pytest --cov=src --cov-report=html
-- Domain models have 100% test coverage (Position, Board, GameState, AgentResult, etc.)
-- Game engine has 100% test coverage (GameEngine, win conditions, draw conditions, move validation)
-- Overall code coverage ≥80%
-- All acceptance criteria have corresponding unit tests
-- Coverage gaps identified and filled
-- Coverage report accessible in htmlcov/index.html
-
-#### 7.1. Integration Tests
-
-**Files to Create:**
-- `tests/integration/test_full_pipeline.py`
-- `tests/integration/test_api_integration.py`
-
-**Test Scenarios:**
-- Complete game flow: Player move → AI move → repeat until win/draw
-- Agent pipeline with all three agents
-- API endpoints with real game engine and agents
-- Error handling across layers
-
-**Subsection Tests**:
-- test_full_pipeline.py tests complete game flow (player move → AI move → repeat until win/draw)
-- test_full_pipeline.py tests agent pipeline with all three agents (Scout → Strategist → Executor)
-- test_api_integration.py tests API endpoints with real game engine and agents
-- test_api_integration.py tests error handling across layers (validation → agent → execution)
-- Integration tests verify state transitions across components
-- Integration tests verify data flow between API, game engine, and agents
-
-#### 7.2. End-to-End Tests
-
-**Files to Create:**
-- `tests/e2e/test_game_scenarios.py`
-
-**Test Scenarios:**
-- Player wins scenario
-- AI wins scenario
-- Draw scenario
-- Player makes invalid move
-- Agent timeout triggers fallback
-- LLM provider failure
-
-**Subsection Tests**:
-- E2E test: Player wins scenario (player makes winning moves, AI responds, game ends with player win)
-- E2E test: AI wins scenario (AI makes winning moves, player responds, game ends with AI win)
-- E2E test: Draw scenario (9 moves made, no winner, game ends in draw)
-- E2E test: Player makes invalid move (out of bounds, occupied cell, game over) → error displayed
-- E2E test: Agent timeout triggers fallback (simulate slow agent, verify fallback move executed)
-- E2E test: LLM provider failure (simulate LLM error, verify fallback to rule-based logic)
-
-#### 7.3. Performance Tests
-
-**Spec Reference**: Section 15 - Performance Optimization
-
-**Files to Create:**
-- `tests/performance/test_agent_timeout.py`
-
-**Requirements:**
-- Agent pipeline completes within 15s (Section 3.6)
-- UI updates within 100ms of state change (AC-US023.3)
-- Agent status updates within 500ms (AC-US023.4)
-
-**Subsection Tests**:
-- Performance test: Agent pipeline completes within 15s (measure end-to-end pipeline execution time)
-- Performance test: UI updates within 100ms of state change (measure DOM update latency)
-- Performance test: Agent status updates within 500ms (measure status update propagation)
-- Performance test: Move validation completes within 10ms (measure validation latency)
-- Performance test: API response time < 200ms for game status endpoint (measure API latency)
-
-#### 7.4. Resilience Tests
-
-**Spec Reference**: Section 12 - Error Handling and Resilience
-
-**Test Scenarios:**
-- Network timeout
-- LLM API failure
-- Invalid API responses
-- Concurrent API requests
-- Agent crash and recovery
-
-**Subsection Tests**:
-- Resilience test: Network timeout (simulate network delay, verify timeout handling and fallback)
-- Resilience test: LLM API failure (simulate 500 error, verify fallback to rule-based logic)
-- Resilience test: Invalid API responses (simulate malformed JSON, verify error handling)
-- Resilience test: Concurrent API requests (multiple simultaneous game requests, verify no state leakage)
-- Resilience test: Agent crash and recovery (simulate agent failure, verify system continues with fallback)
-- Resilience test: Rate limiting (simulate 429 error, verify retry with backoff)
-- Resilience test: Invalid API key (simulate 401/403, verify fallback and error messaging)
-
-**Phase 7 Deliverables:**
-- 399 tests passing (one per acceptance criterion)
-- ≥80% code coverage overall
-- 100% coverage on domain models and game engine
-- All performance requirements met
-- Resilience scenarios validated
-
-**Spec References:**
-- Section 11: Testing Strategy
-- Section 15: Performance Optimization
-- Section 12: Error Handling and Resilience
-
----
-
-### Phase 8: Configuration and Observability
-
-**Duration**: 2-3 days
-
-**Goal**: Production-ready configuration, logging, and metrics
-
-#### 8.0. Configuration Management
-
-**Spec Reference**: Section 9 - Configuration Management
-
-**Files to Create:**
-- `src/config/settings.py`
-- `.env.example`
-- `config.yaml` (optional)
-
-**Implementation:**
-- Environment-based configuration (dev, staging, prod)
-- Configuration validation on startup
-- Support for environment variables and config files
-- Hot-reload for non-critical settings
-
-**Configuration Sections:**
-- LLM provider settings
-- Agent timeout values
-- API server settings (host, port, CORS)
-- Logging levels
-- Feature flags (e.g., enable LLM, enable metrics)
-
-**Subsection Tests**:
-- Configuration loads from environment variables (LLM_PROVIDER, LLM_MODEL, etc.)
-- Configuration loads from config file (YAML/JSON) if provided
-- Configuration hierarchy respected (env vars > config file > defaults)
-- Configuration validation on startup (invalid values rejected with clear errors)
-- Environment-based configuration (dev, staging, prod) loads correct settings
-- Hot-reload works for non-critical settings (logging level, feature flags)
-- Configuration error handling (missing required values, invalid types)
-- LLM provider settings validated (provider name, model name per provider)
-
-**Test Coverage**:
-- **Subsection Tests**: ~8 tests for Phase 8.0 incremental development
-- **Acceptance Criteria**: Configuration Management (Section 9) - environment support, validation, hierarchy, error handling
-- **Test Files**: `tests/unit/config/test_settings.py`, `tests/integration/test_config_loading.py`
-
-#### 8.1. Logging
-
-**Spec Reference**: Section 17 - Metrics and Observability - Log Format Specification
-
-**Implementation:**
-- Structured logging (JSON format)
-- Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
-- Contextual logging (request ID, game ID, agent ID)
-- Log rotation and retention
-
-**Log Events:**
-- API requests/responses
-- Agent execution (start, end, duration)
-- LLM calls (prompt, response, tokens)
-- Errors and exceptions
-- State transitions
-
-**Subsection Tests**:
-- Structured logging outputs JSON format (valid JSON per log entry)
-- Log levels work correctly (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-- Contextual logging includes request ID, game ID, agent ID when available
-- Log rotation works (log files rotated when size/age limits reached)
-- Log retention policy enforced (old logs deleted after retention period)
-- API request/response events logged with correct format
-- Agent execution events logged (start, end, duration)
-- LLM call events logged (prompt, response, tokens, latency)
-- Error and exception events logged with stack traces
-- State transition events logged (game state changes)
-
-**Test Coverage**:
-- **Subsection Tests**: ~10 tests for Phase 8.1 incremental development
-- **Acceptance Criteria**: Logging (Section 17 - Log Format Specification) - JSON format, log levels, contextual logging, rotation, retention
-- **Test Files**: `tests/unit/test_logging.py`, `tests/integration/test_logging_integration.py`
-
-#### 8.2. Metrics
-
-**Spec Reference**: Section 17 - Metrics Format Specification
-
-**Files to Create:**
-- `src/metrics/collector.py`
-- `src/metrics/exporter.py`
-
-**Metrics to Track:**
-- **Agent Metrics** (per Section 17.1):
-  - Execution time (min, max, avg, p95, p99)
-  - Success/failure rates
-  - Timeout counts
-  - Fallback usage
-- **Game Metrics** (per Section 17.2):
-  - Total games played
-  - Win/loss/draw counts
-  - Average game duration
-  - Moves per game
-- **System Metrics** (per Section 17.3):
-  - API request rate
-  - Response times
-  - Error rates
-  - LLM token usage
-
-**Export Formats:**
-- JSON API endpoint: `/api/metrics`
-- Prometheus format (optional)
-- CloudWatch/DataDog integration (optional)
-
-**Subsection Tests**:
-- Agent metrics collected: execution time (min, max, avg, p95, p99)
-- Agent metrics collected: success/failure rates per agent
-- Agent metrics collected: timeout counts per agent
-- Agent metrics collected: fallback usage counts per agent
-- Game metrics collected: total games, win/loss/draw counts
-- Game metrics collected: average game duration, moves per game
-- System metrics collected: API request rate, response times, error rates
-- System metrics collected: LLM token usage (total, per provider, per model)
-- Metrics export via JSON API endpoint `/api/metrics` returns valid JSON
-- Metrics aggregation calculates min, max, avg, p95, p99 correctly
-- Metrics format complies with Section 17 specification
-
-**Test Coverage**:
-- **Subsection Tests**: ~11 tests for Phase 8.2 incremental development
-- **Acceptance Criteria**: Metrics Collection (Section 17 - Metrics Format Specification) - agent metrics, game metrics, system metrics, export formats
-- **Test Files**: `tests/unit/metrics/test_collector.py`, `tests/unit/metrics/test_exporter.py`, `tests/integration/test_metrics_api.py`
-
-#### 8.3. Health Checks
-
-**Implementation:**
-- Liveness probe: `/health` (already implemented in Phase 4)
-- Readiness probe: `/ready` (already implemented in Phase 4)
-- Deep health check: `/health/deep` (check all dependencies)
-
-**Subsection Tests**:
-- Liveness probe `/health` returns 200 with correct response format when healthy
-- Liveness probe `/health` returns 503 when unhealthy
-- Readiness probe `/ready` checks game engine initialization
-- Readiness probe `/ready` checks agent system readiness
-- Readiness probe `/ready` checks LLM configuration (optional in Phase 4)
-- Deep health check `/health/deep` validates all dependencies (game engine, agents, LLM config, metrics collector)
-- Health check error scenarios handled (dependency failures return appropriate status codes)
-- Health check response time < 100ms for `/health`, < 500ms for `/ready`, < 1000ms for `/health/deep`
-
-**Test Coverage**:
-- **Subsection Tests**: ~8 tests for Phase 8.3 incremental development
-- **Acceptance Criteria**: Health Checks (Section 10 - Deployment Considerations) - liveness, readiness, deep health checks, response times
-- **Test Files**: `tests/integration/test_health_checks.py`
-
-**Phase 8 Deliverables:**
-- Configuration system supporting multiple environments
-- Structured logging with JSON format
-- Comprehensive metrics collection
-- Health check endpoints ready for orchestration
-- Comprehensive test coverage for configuration, logging, metrics, and health checks
-
-**Spec References:**
-- Section 9: Configuration Management
-- Section 17: Metrics and Observability
-
----
-
-### Phase 9: Documentation and Deployment
-
-**Duration**: 2-3 days
-
-**Goal**: Production deployment and user documentation
-
-#### 9.0. Documentation
-
-**Files to Create:**
-- `README.md` (update with complete usage)
-- `docs/API.md` (API documentation with examples)
-- `docs/DEPLOYMENT.md` (deployment guide)
-- `docs/DEVELOPMENT.md` (developer setup guide)
-- `docs/ARCHITECTURE.md` (system architecture overview)
-
-**README Contents:**
-- Project overview
-- Quick start guide
-- Installation instructions
-- Running locally
-- Running tests
-- Configuration options
-- API usage examples
-- License and contributing
-
-**Subsection Tests**:
-- README.md exists and contains all required sections (overview, quick start, installation, usage, configuration, API examples)
-- docs/API.md exists with complete API endpoint documentation and request/response examples
-- docs/DEPLOYMENT.md exists with deployment instructions for Docker, Kubernetes, and cloud platforms
-- docs/DEVELOPMENT.md exists with developer setup guide (environment setup, running tests, contributing)
-- docs/ARCHITECTURE.md exists with system architecture overview (component diagrams, data flow)
-- All documentation files use consistent formatting and are up-to-date
-- Code examples in documentation are tested and working
-
-#### 9.1. Docker Containerization
+#### 6.0. Docker Containerization
 
 **Spec Reference**: Section 10 - Deployment Considerations
+
+**Files to Create:**
+- `Dockerfile` (multi-stage build)
+- `.dockerignore`
+- `docker-compose.yml` (local development)
+- `docker-compose.prod.yml` (production)
+
+**8.0.1. Dockerfile Implementation**
 
 **Subsection Tests**:
 - Dockerfile exists and follows multi-stage build pattern
@@ -2411,14 +1676,17 @@ tests/
 .env.local
 ```
 
-**Subsection Tests** (continued):
+**8.0.2. Docker Compose Configuration**
+
+**Subsection Tests**:
 - docker-compose.yml for local development exists and works
-- docker-compose.yml for production exists with correct configuration
+- docker-compose.prod.yml for production exists with correct configuration
 - docker-compose up starts all services successfully
 - docker-compose volumes mount correctly (src/ for hot reload, logs/)
-- docker-compose environment variables are configured correctly
+- docker-compose environment variables are configured correctly (LLM_PROVIDER can be switched)
 - docker-compose health checks work correctly
 - docker-compose secrets management works (production config)
+- LLM provider can be changed via environment variable without rebuilding image
 
 **Create `docker-compose.yml` for Local Development:**
 
@@ -2450,8 +1718,11 @@ services:
       start_period: 40s
 ```
 
-**Update docker-compose.yml for Production:**
+**Create `docker-compose.prod.yml` for Production:**
+
 ```yaml
+version: '3.8'
+
 services:
   api:
     image: agentic-tictactoe:${VERSION:-latest}
@@ -2490,139 +1761,165 @@ secrets:
     external: true
 ```
 
-#### 9.2. Local Deployment
-
-**Spec Reference**: Section 10.1 - Local Development
-
-**Subsection Tests**:
-- Local deployment instructions are clear and complete
-- Installation script/commands work (venv creation, pip install)
-- .env.example file exists with all required variables documented
-- Environment variables can be set and loaded correctly
-- Application starts locally with `uvicorn src.api.main:app --reload`
-- Local deployment can run tests successfully (`pytest` command works)
-- Local deployment can access UI at http://localhost:8000
-- Local deployment logs are written to logs/ directory
-- Local deployment supports hot reload during development
-
-**Setup:**
-```bash
-# Clone repository
-git clone https://github.com/arun-gupta/agentic-tictactoe.git
-cd agentic-tictactoe
-
-# Install dependencies
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your API keys
-
-# Run tests
-pytest
-
-# Start API server
-uvicorn src.api.main:app --reload
-
-# Open UI in browser
-open http://localhost:8000
-```
-
-#### 9.3. Production Deployment
+#### 6.1. Kubernetes Deployment
 
 **Spec Reference**: Section 10.2 - Production Deployment
 
-**Subsection Tests**:
-- Production deployment guide documents all three deployment options (Docker on VM, Kubernetes, Serverless)
-- Docker on Cloud VM deployment instructions are complete (reverse proxy, SSL/TLS setup)
-- Kubernetes manifests are created (Deployment, Service, Ingress)
-- Kubernetes ConfigMap and Secrets are configured correctly
-- Kubernetes autoscaling configuration is documented
-- Serverless deployment considerations are documented (timeout adjustments, limitations)
-- Production deployment includes monitoring and alerting setup
-- Production deployment includes backup and recovery procedures
-- Production deployment includes security best practices (non-root user, secrets management, network policies)
+**Files to Create:**
+- `k8s/deployment.yaml`
+- `k8s/service.yaml`
+- `k8s/ingress.yaml`
+- `k8s/configmap.yaml`
+- `k8s/secrets.yaml`
+- `k8s/hpa.yaml` (Horizontal Pod Autoscaler)
 
-**Deployment Options:**
-
-**Option 1: Docker on Cloud VM**
-- Deploy to AWS EC2, Google Cloud Compute, Azure VM
-- Use docker-compose for orchestration
-- Set up reverse proxy (Nginx)
-- Configure SSL/TLS certificates
-
-**Option 2: Kubernetes**
-- Create Kubernetes manifests (Deployment, Service, Ingress)
-- Deploy to EKS, GKE, or AKS
-- Set up ConfigMap and Secrets for configuration
-- Configure autoscaling
-
-**Option 3: Serverless** (if applicable)
-- AWS Lambda + API Gateway
-- Google Cloud Run
-- Limitations: May need to adjust timeout values
-
-#### 9.4. Add Docker Build to CI Pipeline
+**8.1.1. Kubernetes Manifests**
 
 **Subsection Tests**:
-- CI pipeline includes Docker build job
-- Docker build job runs after test job passes
-- Docker build job builds image successfully
-- Docker build job tests image (import test, health check)
-- Docker build job only runs on main branch (or specified conditions)
-- Docker build uses Buildx for multi-platform support (if needed)
-- Docker build job fails appropriately on build errors
-- Docker build cache is used for faster builds
+- Kubernetes manifests created (Deployment, Service, Ingress)
+- ConfigMap configured for LLM provider switching (LLM_PROVIDER, LLM_MODEL)
+- Secrets configured for API keys (OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY)
+- Deployment can switch LLM provider via ConfigMap update (hot-swappable)
+- Service exposes API on correct port
+- Ingress configured with SSL/TLS termination
+- Horizontal Pod Autoscaler configured for auto-scaling based on CPU/memory
+- Deployment scales horizontally (multiple replicas)
+- Rolling updates work without downtime
+
+**Create `k8s/deployment.yaml`:**
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentic-tictactoe
+  labels:
+    app: agentic-tictactoe
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: agentic-tictactoe
+  template:
+    metadata:
+      labels:
+        app: agentic-tictactoe
+    spec:
+      containers:
+      - name: api
+        image: agentic-tictactoe:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: LLM_PROVIDER
+          valueFrom:
+            configMapKeyRef:
+              name: llm-config
+              key: provider
+        - name: LLM_MODEL
+          valueFrom:
+            configMapKeyRef:
+              name: llm-config
+              key: model
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llm-secrets
+              key: openai_api_key
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llm-secrets
+              key: anthropic_api_key
+        - name: GOOGLE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: llm-secrets
+              key: google_api_key
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+```
+
+**Create `k8s/configmap.yaml`** (enables hot-swappable LLM providers):
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llm-config
+data:
+  provider: "openai"  # Can be changed to "anthropic" or "gemini" without redeployment
+  model: "gpt-4o-mini"
+```
+
+**Create `k8s/hpa.yaml`** (Horizontal Pod Autoscaler):
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agentic-tictactoe-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agentic-tictactoe
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+```
+
+**8.1.2. Provider Switching Strategy**
+
+**Implementation:**
+- LLM provider selection via ConfigMap (environment variable)
+- Runtime provider switching without pod restart (via ConfigMap update + pod rolling update)
+- Support for all three providers (OpenAI, Anthropic, Google Gemini)
+- Zero-downtime provider switching using rolling updates
+
+**Subsection Tests**:
+- LLM provider can be changed by updating ConfigMap (kubectl apply -f k8s/configmap.yaml)
+- ConfigMap update triggers rolling update (pods restart with new provider)
+- Rolling update maintains service availability (no downtime)
+- Provider switching verified via API calls (agent uses new provider)
+- Multiple pods can use different providers during rolling update (eventually consistent)
+
+#### 6.2. CI/CD Integration
+
+**8.2.1. Docker Build in CI Pipeline**
 
 **Update `.github/workflows/ci.yml`** to add Docker build verification:
 
 ```yaml
-name: CI
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .
-        pip install pytest pytest-cov black ruff mypy
-
-    - name: Run linting (black)
-      run: black --check src/ tests/
-
-    - name: Run linting (ruff)
-      run: ruff check src/ tests/
-
-    - name: Run type checking (mypy)
-      run: mypy src/ --strict
-
-    - name: Run tests with coverage
-      run: pytest tests/ --cov=src --cov-report=xml --cov-report=term --cov-fail-under=80
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        fail_ci_if_error: false
-
   docker-build:
     runs-on: ubuntu-latest
     needs: test
@@ -2642,25 +1939,9 @@ jobs:
         docker run --rm agentic-tictactoe:${{ github.sha }} python -c "import src; print('Import successful')"
 ```
 
-#### 9.5. Continuous Deployment Pipeline
+**8.2.2. Kubernetes Deployment Pipeline**
 
-**Note**: CI pipeline was enhanced above. This adds CD (deployment) pipeline.
-
-**Files to Create:**
-- `.github/workflows/deploy.yml`
-
-**Subsection Tests**:
-- CD pipeline (deploy.yml) exists and is configured correctly
-- CD pipeline triggers on push to main branch or version tags (v*)
-- CD pipeline builds Docker image with correct tags
-- CD pipeline pushes Docker image to registry (Docker Hub, ECR, GCR, etc.)
-- CD pipeline deploys to production environment
-- CD pipeline runs smoke tests after deployment
-- CD pipeline handles deployment failures gracefully (rollback capability)
-- CD pipeline requires manual approval for production (if configured)
-- CD pipeline secrets are configured correctly (DOCKER_USERNAME, DOCKER_PASSWORD, cloud credentials)
-
-**CD Pipeline:**
+**Create `.github/workflows/deploy.yml`** for CD:
 
 ```yaml
 name: Deploy
@@ -2682,80 +1963,87 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Login to Docker Hub
+    - name: Login to Docker Registry
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Extract metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: your-dockerhub-username/agentic-tictactoe
-        tags: |
-          type=ref,event=branch
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
         push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        tags: your-registry/agentic-tictactoe:latest,your-registry/agentic-tictactoe:${{ github.sha }}
 
-    - name: Deploy to production (example)
+    - name: Deploy to Kubernetes
       run: |
-        # Add your deployment script here
-        # Examples:
-        # - SSH to server and pull new image
-        # - Update Kubernetes deployment
-        # - Deploy to cloud platform (AWS ECS, Google Cloud Run, etc.)
-        echo "Deploy to production server"
-
-    - name: Run smoke tests
-      run: |
-        # Wait for deployment
-        sleep 30
-        # Run basic health check
-        curl -f https://your-production-url.com/health || exit 1
+        # Update Kubernetes deployment with new image
+        kubectl set image deployment/agentic-tictactoe api=your-registry/agentic-tictactoe:${{ github.sha }}
+        kubectl rollout status deployment/agentic-tictactoe
 ```
 
-**Deployment Secrets to Add:**
-- `DOCKER_USERNAME`: Docker Hub username
-- `DOCKER_PASSWORD`: Docker Hub password or token
-- Cloud platform credentials (if deploying to AWS/GCP/Azure)
+**Subsection Tests**:
+- CI pipeline includes Docker build job
+- Docker build job runs after test job passes
+- Docker build job builds image successfully
+- CD pipeline pushes Docker image to registry
+- CD pipeline deploys to Kubernetes cluster
+- Kubernetes rolling update completes successfully
+- Zero-downtime deployment verified
 
-**Phase 9 Deliverables:**
-- Complete documentation (README, API docs, deployment guide)
+#### 6.3. Hot-Swappable LLM Providers
+
+**Goal**: Enable runtime switching of LLM providers without code redeployment
+
+**Implementation:**
+- LLM provider configured via Kubernetes ConfigMap
+- Application reads `LLM_PROVIDER` environment variable from ConfigMap
+- ConfigMap update triggers rolling update with new provider
+- All three providers (OpenAI, Anthropic, Google Gemini) supported
+
+**Subsection Tests**:
+- Application reads LLM_PROVIDER from ConfigMap environment variable
+- Changing ConfigMap provider value triggers pod restart with new provider
+- Rolling update maintains service availability during provider switch
+- Agent uses correct LLM provider after ConfigMap update
+- Provider switching logged and traceable
+- API endpoints respond correctly after provider switch
+
+**Phase 6 Deliverables:**
 - Docker containerization (Dockerfile, docker-compose.yml, .dockerignore)
-- Docker build added to CI pipeline
-- CD pipeline configured for automatic deployment
-- Production deployment ready
-- Monitoring and alerting set up
+- Kubernetes manifests (Deployment, Service, Ingress, ConfigMap, Secrets, HPA)
+- CI/CD integration (Docker build in CI, Kubernetes deployment in CD)
+- Hot-swappable LLM providers via ConfigMap
+- Zero-downtime deployment capability
+- Comprehensive test coverage for containerization and Kubernetes deployment
 
 **Spec References:**
 - Section 10: Deployment Considerations
-- Section 10.1: Local Development
 - Section 10.2: Production Deployment
+- Section 16: LLM Integration (provider configuration)
 
 ---
 
-### Phase 10: MCP Distributed Mode (Optional)
+### Phase 7: MCP Distributed Mode
 
 **Duration**: 3-5 days
 
 **Goal**: Implement distributed agent coordination using Model Context Protocol
 
+**Why Seventh**: After cloud native deployment (Phase 6), MCP enables:
+- **Distributed agent architecture**: Deploy agents as separate Kubernetes services
+- **Independent agent scaling**: Scale Scout, Strategist, and Executor independently
+- **Network-based agent communication**: Agents communicate via MCP protocol over HTTP/WebSocket
+- **Hot-swappable agents**: Replace or upgrade individual agents without affecting others
+
+**Prerequisites**: Phase 6 (Cloud Native Deployment) must be complete
+
 **Spec Reference**: Section 15 - Agent Mode Architecture - Mode 2: Distributed MCP
 
-**Note**: This phase is optional. The system is fully functional in local mode. Implement MCP mode only if you want to explore distributed agent architecture.
+**Note**: This phase builds on cloud native infrastructure. Agents can now be deployed as separate Kubernetes services, enabling true distributed architecture.
 
-#### 10.0. MCP Protocol Implementation
+#### 7.0. MCP Protocol Implementation
 
 **Files to Create:**
 - `src/mcp/client.py`
@@ -2784,11 +2072,11 @@ jobs:
 - Connection management handles connection timeouts
 
 **Test Coverage**:
-- **Subsection Tests**: ~12 tests for Phase 10.0 incremental development
+- **Subsection Tests**: ~12 tests for Phase 7.0 incremental development
 - **Acceptance Criteria**: MCP Protocol Implementation (Section 15.2 - Mode 2: Distributed MCP) - protocol compliance, message serialization, transport, error handling
 - **Test Files**: `tests/unit/mcp/test_client.py`, `tests/unit/mcp/test_server.py`, `tests/unit/mcp/test_protocol.py`
 
-#### 10.1. Agent MCP Adaptation
+#### 7.1. Agent MCP Adaptation
 
 **Tasks:**
 - Wrap Scout agent as MCP server
@@ -2811,11 +2099,11 @@ jobs:
 - MCP agents handle errors and timeouts consistently with local agents
 
 **Test Coverage**:
-- **Subsection Tests**: ~12 tests for Phase 10.1 incremental development
+- **Subsection Tests**: ~12 tests for Phase 7.1 incremental development
 - **Acceptance Criteria**: Agent MCP Adaptation (Section 15.2) - tool exposure, request handling, behavior consistency, coordination
 - **Test Files**: `tests/integration/test_mcp_agents.py`, `tests/integration/test_mcp_coordinator.py`
 
-#### 10.2. Mode Switching
+#### 7.2. Mode Switching
 
 **Implementation:**
 - Configuration: `AGENT_MODE=local` or `AGENT_MODE=mcp`
@@ -2836,16 +2124,43 @@ jobs:
 - Mode switching logs mode change events
 
 **Test Coverage**:
-- **Subsection Tests**: ~10 tests for Phase 10.2 incremental development
+- **Subsection Tests**: ~10 tests for Phase 7.2 incremental development
 - **Acceptance Criteria**: Mode Switching (Section 15 - Agent Mode Architecture) - configuration-based selection, factory pattern, interface consistency, fallback, error handling
 - **Test Files**: `tests/integration/test_mode_switching.py`, `tests/integration/test_mcp_fallback.py`
 
-**Phase 10 Deliverables:**
+#### 7.3. Kubernetes Deployment for MCP Agents
+
+**Implementation:**
+- Deploy Scout, Strategist, and Executor as separate Kubernetes services
+- Each agent runs as independent pod with MCP server endpoint
+- Coordinator pod connects to agent services via MCP protocol
+- Independent scaling per agent (HorizontalPodAutoscaler for each agent service)
+- Service discovery via Kubernetes DNS
+
+**Subsection Tests**:
+- Scout agent deployed as separate Kubernetes service (scout-service)
+- Strategist agent deployed as separate Kubernetes service (strategist-service)
+- Executor agent deployed as separate Kubernetes service (executor-service)
+- Coordinator connects to agent services via MCP over HTTP
+- Agent services expose MCP endpoints on standard ports
+- Service discovery works via Kubernetes DNS (scout-service.default.svc.cluster.local)
+- Independent scaling works (can scale Scout without affecting Strategist)
+- Agent services handle multiple concurrent MCP requests
+- Load balancing works when multiple agent pods are running
+- Agent pod restarts don't affect coordinator (reconnection handled)
+
+**Test Coverage**:
+- **Subsection Tests**: ~10 tests for Phase 7.3 incremental development
+- **Test Files**: `tests/integration/test_mcp_kubernetes.py`, `k8s/mcp-agents/` manifests
+
+**Phase 7 Deliverables:**
 - MCP protocol implementation
 - Agents runnable as MCP servers
 - Coordinator communicates via MCP
 - Mode switching between local and MCP
-- Comprehensive test coverage for MCP protocol, agent adaptation, and mode switching
+- Kubernetes deployment for distributed agents
+- Independent agent scaling capability
+- Comprehensive test coverage for MCP protocol, agent adaptation, mode switching, and Kubernetes deployment
 
 **Spec References:**
 - Section 15: Agent Mode Architecture
@@ -2853,126 +2168,777 @@ jobs:
 
 ---
 
-## Testing Checklist by Phase
+### Phase 8: Web UI (User Interface Layer)
 
-Use this checklist to verify each phase is complete:
+**Duration**: 4-6 days
 
-### Phase 1: Domain Models
-- [ ] All 84 domain model tests pass
-- [ ] 100% coverage on domain layer
-- [ ] `mypy` type checking passes with no errors
-- [ ] All `AC-2.X.Y` acceptance criteria covered
+**Goal**: Build interactive web UI for playing the game
 
-### Phase 2: Game Engine
-- [ ] All 58 game engine tests pass
-- [ ] 100% coverage on game engine
-- [ ] Can play full game (human vs human) via engine API
-- [ ] All `AC-4.1.X.Y` acceptance criteria covered
+**Why Eighth**: UI is the presentation layer. After cloud native deployment (Phase 6) and optional MCP (Phase 7), the UI provides the user-facing interface for the complete system.
 
-### Phase 3: Agent System
-- [ ] All 66 agent tests pass (10 + 8 + 7 + 41)
-- [ ] Agent pipeline completes within 15s
-- [ ] AI can make valid moves in all game states
-- [ ] Fallback strategies work when primary logic fails
-- [ ] All `AC-3.X.Y` acceptance criteria covered
+#### 8.0. UI Foundation
 
-### Phase 4: REST API
-- [ ] All 36+ API tests pass
-- [ ] Can make moves via curl/Postman
-- [ ] Error responses include correct HTTP status codes
-- [ ] `/health` and `/ready` endpoints work
-- [ ] All `AC-5.X.Y` acceptance criteria covered
-- [ ] Contract tests implemented (see Section 4.6)
-- [ ] OpenAPI schema validation tests passing
-- [ ] Schemathesis API tests passing
-- [ ] Response contract validation tests passing
+**Spec Reference**: Section 6 - Web UI Functional Requirements, docs/spec/ui-spec.md
 
-### Phase 5: LLM Integration
-- [ ] LLM provider abstraction works (all providers tested)
-- [ ] Scout enhanced with LLM analysis
-- [ ] Strategist enhanced with LLM recommendations
-- [ ] Fallback to rule-based logic works
-- [ ] Configuration supports provider switching
-- [ ] LLM metrics tracked correctly
-- [ ] All LLM integration tests passing (provider, agent integration, config, metrics)
+**Files to Create:**
+- `src/ui/index.html`
+- `src/ui/styles.css`
+- `src/ui/app.js`
+- `src/ui/api-client.js`
 
-### Phase 6: Web UI
-- [ ] All 25 user stories implemented
-- [ ] UI matches visual design spec (ui-spec.md)
-- [ ] Game playable in browser
-- [ ] Error messages display correctly
-- [ ] All `AC-US00X.Y` acceptance criteria covered
+**Tech Stack:**
+- Vanilla JavaScript (or React/Vue if preferred)
+- CSS with design tokens from ui-spec.md
+- Fetch API for REST calls
 
-### Phase 7: Testing & QA
-- [ ] 399 tests passing (one per AC)
-- [ ] ≥80% code coverage overall
-- [ ] 100% coverage on domain models and game engine
-- [ ] Performance requirements met (15s agent timeout, 100ms UI updates)
-- [ ] E2E scenarios validated
+**8.0.1. Design System Setup**
+- Implement color palette (ui-spec.md Section: Color Palette)
+- Set up typography (SF Pro Display font)
+- Define spacing scale (8px base unit)
+- Create CSS variables for design tokens
 
-### Phase 8: Configuration & Observability
-- [ ] Configuration loads from environment variables
-- [ ] Structured logging outputs JSON
-- [ ] Metrics collected and exportable
-- [ ] Health checks return correct status
-- [ ] All configuration tests passing
-- [ ] All logging tests passing
-- [ ] All metrics tests passing
-- [ ] All health check tests passing
+**Subsection Tests**:
+- CSS variables defined for color palette (primary, secondary, background, text colors)
+- CSS variables defined for spacing scale (8px base unit: 8px, 16px, 24px, 32px)
+- Typography uses SF Pro Display font family
+- All design tokens accessible via CSS variables
 
-### Phase 9: Documentation & Deployment
-- [ ] README complete with usage examples
-- [ ] Docker image builds successfully
-- [ ] `docker-compose up` starts the application
-- [ ] CI/CD pipeline runs on push
-- [ ] Production deployment guide complete
+**8.0.2. API Client**
+- Create JavaScript wrapper for REST API
+- Methods: `makeMove()`, `getGameStatus()`, `resetGame()`
+- Handle errors and display to user
 
-### Phase 10: MCP Mode (Optional)
-- [ ] MCP protocol implemented
-- [ ] Agents runnable as MCP servers
-- [ ] Mode switching works (local ↔ MCP)
-- [ ] All MCP protocol tests passing
-- [ ] All agent MCP adaptation tests passing
-- [ ] All mode switching tests passing
+**Subsection Tests**:
+- API client makeMove() method calls POST /api/game/move with correct parameters
+- API client getGameStatus() method calls GET /api/game/status
+- API client resetGame() method calls POST /api/game/reset
+- API client handles 400 errors (invalid move) and displays error message
+- API client handles 500 errors (server error) and displays error message
+- API client handles network errors and displays user-friendly message
+
+#### 8.1. Game Board UI
+
+**Spec Reference**: US-001, US-002, US-003, US-004, US-005 (Section 6)
+
+**8.1.1. Display Game Board (US-001)**
+- Render 3x3 grid with cells
+- Cell dimensions: 100px × 100px
+- Gap: 12px between cells
+- Display X, O, or empty
+
+**Subsection Tests**:
+- Game board renders 3x3 grid (9 cells total)
+- Each cell has dimensions 100px × 100px
+- Gap between cells is 12px
+- Cells display X, O, or empty state correctly
+- Board layout matches ui-spec.md design
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 8.1.1 incremental development
+- **Acceptance Criteria**: AC-US001.1 through AC-US001.3 (3 official tests for final verification)
+
+**8.1.2. Make Player Move (US-002)**
+- Click handler on empty cells
+- Disable board during AI turn
+- Show hover effects on valid cells
+- Display error messages for invalid moves
+
+**Subsection Tests**:
+- Click handler attached to empty cells only
+- Clicking empty cell triggers makeMove() API call
+- Board disabled (pointer-events: none) during AI turn
+- Hover effect visible on valid (empty) cells
+- Hover effect hidden on occupied cells
+- Invalid move displays error message with shake animation
+- Cell occupied error highlights occupied cell in red
+- Out of bounds error displays appropriate message
+- Error messages auto-dismiss after 5 seconds
+
+**Test Coverage**:
+- **Subsection Tests**: ~9 E2E/UI tests for Phase 8.1.2 incremental development
+- **Acceptance Criteria**: AC-US002.1 through AC-US002.12 (12 official tests for final verification)
+
+**8.1.3. View Last Move (US-003)**
+- Highlight last played cell
+- Border color: highlight pink (#f72585)
+- Glow effect per ui-spec.md
+
+**Subsection Tests**:
+- Last played cell highlighted with border color #f72585
+- Glow effect applied to last played cell per ui-spec.md
+- Highlight moves to new cell when next move is made
+- Highlight persists until game ends or reset
+
+**Test Coverage**:
+- **Subsection Tests**: ~4 E2E/UI tests for Phase 8.1.3 incremental development
+- **Acceptance Criteria**: AC-US003.1 through AC-US003.2 (2 official tests for final verification)
+
+**8.1.4. View Current Turn (US-004)**
+- Display whose turn (Player or AI)
+- Color-code by player symbol
+- Show move count
+
+**Subsection Tests**:
+- Turn indicator displays "Player" or "AI" correctly
+- Turn indicator color-coded by current player symbol (X/O)
+- Move count displayed and updates after each move
+- Turn indicator updates when turn changes
+- Turn indicator reflects correct player at game start
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 8.1.4 incremental development
+- **Acceptance Criteria**: AC-US004.1 through AC-US004.8 (8 official tests for final verification)
+
+**8.1.5. View Game Status (US-005)**
+- Display game over message
+- Show winner (X, O, or DRAW)
+- Fade board when game ends
+
+**Subsection Tests**:
+- Game over message displayed when game ends
+- Winner displayed correctly (X wins, O wins, or DRAW)
+- Board fades (opacity reduced) when game ends
+- Game over message persists until reset
+- Board interactions disabled when game over
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 8.1.5 incremental development
+- **Acceptance Criteria**: AC-US005.1 through AC-US005.3 (3 official tests for final verification)
+
+#### 8.2. Move History Panel
+
+**Spec Reference**: US-006, US-007
+
+**8.2.1. View Move History (US-006)**
+- Chronological list of all moves
+- Show player/AI indicator, move number, position, timestamp
+- Scrollable panel (max-height: 400px)
+
+**Subsection Tests**:
+- Move history displays all moves in chronological order
+- Each move entry shows player/AI indicator
+- Each move entry shows move number, position (row, col), timestamp
+- Move history panel scrollable when content exceeds max-height 400px
+- Move history updates after each move
+- Move history cleared on game reset
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 8.2.1 incremental development
+- **Acceptance Criteria**: AC-US006.1 through AC-US006.2 (2 official tests for final verification)
+
+**8.2.2. View Move Details (US-007)**
+- Expandable move entries
+- Show agent reasoning (Scout analysis, Strategist strategy, Executor details)
+- Collapse/expand animation
+
+**Subsection Tests**:
+- Move entries expandable via click/tap
+- Expanded entry shows Scout analysis (threats, opportunities)
+- Expanded entry shows Strategist strategy (primary move, alternatives, reasoning)
+- Expanded entry shows Executor details (execution time, validation status)
+- Collapse/expand animation smooth and visible
+- Multiple entries can be expanded simultaneously
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 8.2.2 incremental development
+- **Acceptance Criteria**: AC-US007.1 through AC-US007.2 (2 official tests for final verification)
+
+#### 8.3. Agent Insights Panel
+
+**Spec Reference**: US-008, US-009, US-010, US-011, US-012
+
+**8.3.1. View Agent Analysis (US-008)**
+- Real-time agent status display
+- Show threats, opportunities, recommended moves
+- Three sections: Scout, Strategist, Executor
+
+**Subsection Tests**:
+- Agent insights panel displays Scout, Strategist, Executor sections
+- Scout section shows threats detected (immediate wins/blocks)
+- Scout section shows opportunities identified (strategic positions)
+- Strategist section shows recommended moves with priority
+- Executor section shows move execution status and timing
+- Agent analysis updates in real-time during AI turn
+- Agent analysis cleared on game reset
+
+**Test Coverage**:
+- **Subsection Tests**: ~7 E2E/UI tests for Phase 8.3.1 incremental development
+- **Acceptance Criteria**: AC-US008.1 through AC-US008.11 (11 official tests for final verification)
+
+**8.3.2. Processing Status (US-009, US-010)**
+- Loading indicators while agents think
+- Progressive status updates:
+  - 0-2s: Simple spinner
+  - 2-5s: Processing message
+  - 5-10s: Progress bar with elapsed time
+  - 10-15s: Warning with fallback notice
+  - 15s+: Automatic fallback
+
+**Subsection Tests**:
+- Simple spinner displayed during 0-2s of agent processing
+- Processing message displayed during 2-5s
+- Progress bar with elapsed time displayed during 5-10s
+- Warning with fallback notice displayed during 10-15s
+- Automatic fallback triggered after 15s
+- Processing status updates every 100ms
+- Processing status cleared when agent completes
+
+**Test Coverage**:
+- **Subsection Tests**: ~7 E2E/UI tests for Phase 8.3.2 incremental development
+- **Acceptance Criteria**: AC-US009.1 through AC-US010.1e (9 official tests for final verification)
+
+**8.3.3. Force Fallback and Retry (US-011, US-012)**
+- "Force Fallback" button after 10s
+- "Retry" button on agent failure
+- Clear explanations of fallback strategy
+
+**Subsection Tests**:
+- "Force Fallback" button appears after 10s of processing
+- Clicking "Force Fallback" triggers immediate fallback move
+- "Retry" button appears when agent fails
+- Clicking "Retry" attempts agent processing again
+- Fallback strategy explanation displayed when fallback used
+- Buttons disabled during fallback/retry execution
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 8.3.3 incremental development
+- **Acceptance Criteria**: AC-US011.1 through AC-US012.2 (5 official tests for final verification)
+
+#### 8.4. Post-Game Metrics
+
+**Spec Reference**: US-013, US-014, US-015, US-016, US-017, US-018
+
+**8.4.1. Metrics Tab (US-013)**
+- Only visible after game ends
+- Tabbed interface: Summary | Performance | LLM | Communication
+
+**Subsection Tests**:
+- Metrics tab only visible after game ends (hidden during active game)
+- Tabbed interface displays: Summary, Performance, LLM, Communication tabs
+- Each tab displays correct content when selected
+- Tab switching works correctly
+- Metrics tab hidden on game reset until next game ends
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 8.4.1 incremental development
+- **Acceptance Criteria**: AC-US013.1 through AC-US013.2 (2 official tests for final verification)
+
+**8.4.2. Agent Communication (US-014)**
+- Show request/response data for each agent call
+- Display JSON with syntax highlighting
+
+**Subsection Tests**:
+- Agent Communication tab shows request/response for each agent call
+- JSON data displayed with syntax highlighting
+- Request shows input parameters (game state, board analysis, etc.)
+- Response shows agent output (BoardAnalysis, Strategy, MoveExecution)
+- Each agent (Scout, Strategist, Executor) has separate communication logs
+- Communication logs in chronological order
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 8.4.2 incremental development
+- **Acceptance Criteria**: AC-US014.1 through AC-US014.3 (3 official tests for final verification)
+
+**8.4.3. LLM Interactions (US-015)**
+- Show prompts sent to LLM
+- Show LLM responses
+- Display token usage, latency, model/provider
+
+**Subsection Tests**:
+- LLM Interactions tab shows prompts sent to LLM (Scout, Strategist)
+- LLM Interactions tab shows LLM responses with structured output
+- Token usage displayed for each LLM call (input tokens, output tokens, total)
+- Latency displayed for each LLM call (in milliseconds)
+- Model and provider name displayed for each LLM call
+- LLM interactions only shown if LLM was used (rule-based mode shows empty)
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 8.4.3 incremental development
+- **Acceptance Criteria**: AC-US015.1 through AC-US015.6 (6 official tests for final verification)
+
+**8.4.4. Agent Configuration (US-016)**
+- Display agent mode (local vs MCP)
+- Show LLM framework used
+- Show initialization details
+
+**Subsection Tests**:
+- Agent Configuration tab displays agent mode (local vs MCP/distributed)
+- Agent Configuration tab shows LLM framework used (Pydantic AI, etc.)
+- Agent Configuration tab shows initialization details (provider, model, timeouts)
+- Configuration reflects current game session settings
+- Configuration updates when settings changed during game
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 8.4.4 incremental development
+- **Acceptance Criteria**: AC-US016.1 through AC-US016.4 (4 official tests for final verification)
+
+**8.4.5. Performance Summary (US-017)**
+- Per-agent execution times (min, max, avg)
+- Total LLM calls and tokens
+- Success/failure rates
+
+**Subsection Tests**:
+- Performance Summary tab shows per-agent execution times (Scout, Strategist, Executor)
+- Execution times include min, max, average for each agent
+- Total LLM calls count displayed
+- Total token usage displayed (input + output tokens)
+- Success/failure rates displayed for each agent
+- Performance data calculated correctly from game session
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 8.4.5 incremental development
+- **Acceptance Criteria**: AC-US017.1 through AC-US017.5 (5 official tests for final verification)
+
+**8.4.6. Game Summary (US-018)**
+- Total moves, duration, outcome
+- Average move time
+
+**Subsection Tests**:
+- Game Summary tab shows total moves count
+- Game duration displayed (start time to end time)
+- Game outcome displayed (X wins, O wins, DRAW)
+- Average move time calculated and displayed correctly
+- Summary data matches actual game play
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 8.4.6 incremental development
+- **Acceptance Criteria**: AC-US018.1 through AC-US018.4 (4 official tests for final verification)
+
+#### 8.5. Configuration Panel
+
+**Spec Reference**: US-019, US-020, US-021
+
+**8.5.1. LLM Provider Selection (US-019)**
+- Dropdown for provider (OpenAI, Anthropic, Google)
+- Model name input
+- Save preferences to localStorage
+
+**Subsection Tests**:
+- Provider dropdown includes OpenAI, Anthropic, Google options
+- Model name input accepts valid model names per provider
+- Preferences saved to localStorage on change
+- Preferences loaded from localStorage on page load
+- Provider/model selection persists across sessions
+- Invalid model names rejected with error message
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 8.5.1 incremental development
+- **Acceptance Criteria**: AC-US019.1 through AC-US019.3 (3 official tests for final verification)
+
+**8.5.2. Agent Mode Selection (US-020)**
+- Toggle: Local vs Distributed MCP
+- LLM framework dropdown
+
+**Subsection Tests**:
+- Toggle switches between Local and Distributed MCP modes
+- LLM framework dropdown displays available frameworks (Pydantic AI, etc.)
+- Mode selection saved to localStorage
+- Mode selection persists across sessions
+- Mode change requires game reset to take effect (with confirmation)
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 8.5.2 incremental development
+- **Acceptance Criteria**: AC-US020.1 through AC-US020.2 (2 official tests for final verification)
+
+**8.5.3. Game Settings (US-021)**
+- Reset game button
+- Player symbol selection (X or O)
+- Difficulty slider (optional)
+
+**Subsection Tests**:
+- Reset game button clears current game and starts new game
+- Player symbol selection allows choosing X or O
+- Player symbol selection applies to next game
+- Difficulty slider (if implemented) adjusts agent behavior
+- Settings saved to localStorage
+- Settings persist across sessions
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 8.5.3 incremental development
+- **Acceptance Criteria**: AC-US021.1 through AC-US021.3 (3 official tests for final verification)
+
+#### 8.6. Error Handling UI
+
+**Spec Reference**: US-024, US-025, Section 12 - Failure Matrix
+
+**8.6.1. Display Error Messages (US-024)**
+- Critical errors: Red modal
+- Warnings: Orange/yellow badges
+- Info: Blue toasts (bottom-right)
+- Cell-level errors: Shake animation + red highlight
+
+**Subsection Tests**:
+- Critical errors display in red modal dialog (requires user acknowledgment)
+- Warnings display as orange/yellow badges in UI
+- Info messages display as blue toast notifications (bottom-right)
+- Cell-level errors trigger shake animation + red highlight on affected cell
+- Error messages match error codes from Failure Matrix (Section 12)
+- Error messages auto-dismiss after appropriate timeout (modals require click)
+
+**Test Coverage**:
+- **Subsection Tests**: ~6 E2E/UI tests for Phase 8.6.1 incremental development
+- **Acceptance Criteria**: AC-US024.1 through AC-US024.4 (4 official tests for final verification)
+
+**8.6.2. Fallback Indication (US-025)**
+- Notify user when fallback is triggered
+- Explain why fallback was needed
+- Show which fallback strategy was used
+
+**Subsection Tests**:
+- User notified when fallback is triggered (orange badge or toast)
+- Fallback notification explains why fallback was needed (timeout, parse error, auth error, etc.)
+- Fallback notification shows which strategy was used (rule-based analysis, priority-based selection, random valid move)
+- Fallback indication persists until next move or game reset
+- Fallback indication appears in agent insights panel
+
+**Test Coverage**:
+- **Subsection Tests**: ~5 E2E/UI tests for Phase 8.6.2 incremental development
+- **Acceptance Criteria**: AC-US025.1 through AC-US025.3 (3 official tests for final verification)
+
+**Phase 8 Deliverables:**
+- Complete web UI with all 25 user stories implemented
+- Responsive design (desktop-first per spec)
+- All UI acceptance criteria met (104 total)
+- Visual design matches ui-spec.md
+- Full game playable in browser
+
+**Spec References:**
+- Section 6: Web UI Functional Requirements (all 25 user stories)
+- docs/spec/ui-spec.md: Visual Design Specification
 
 ---
 
-## Estimated Timeline
+### Phase 9: Testing and Quality Assurance
 
-**Total Duration: 28-42 days (6-8 weeks)**
+**Duration**: 3-4 days
 
-| Phase | Duration | Cumulative |
-|-------|----------|------------|
-| Phase 0: Project Setup + Basic CI | 1 day | 1 day |
-| Phase 1: Domain Models + Enhanced CI/CD | 3-5 days | 6 days |
-| Phase 2: Game Engine | 3-4 days | 10 days |
-| Phase 3: Agent System | 5-7 days | 17 days |
-| Phase 4: REST API | 3-4 days | 21 days |
-| Phase 5: LLM Integration | 3-4 days | 25 days |
-| Phase 6: Web UI | 4-6 days | 31 days |
-| Phase 7: Testing & QA | 3-4 days | 35 days |
-| Phase 8: Config & Observability | 2-3 days | 38 days |
-| Phase 9: Documentation & Deployment | 1-2 days | 40 days |
-| Phase 10: MCP Mode (Optional) | 3-5 days | 45 days |
+**Goal**: Comprehensive testing across all layers
 
-**Notes:**
-- Timeline assumes one developer working full-time
-- **Phase 0** is lightweight (1 day) - basic CI to get started quickly
-- **Phase 1** includes CI/CD enhancement (coverage, type checking) + domain models
-- **Phase 9** adds Docker containerization and deployment automation
-- Adjust based on your experience level
-- Phases 0-4 are minimum viable product (MVP) - **21 days (~3 weeks)**
-- Phases 5-9 are production-ready system - **40 days (~6 weeks)**
-- Phase 10 is optional enhancement
+**Spec Reference**: Section 11 - Testing Strategy
 
-**Key Milestones:**
-- ✅ Day 1: Basic CI running, can start coding immediately
-- ✅ Day 6: Production-grade CI/CD (coverage, type checking) + domain models complete
-- ✅ Day 10: Game engine complete, can play human vs human
-- ✅ Day 21: MVP complete - API-driven game with rule-based AI
-- ✅ Day 25: LLM-enhanced AI intelligence
-- ✅ Day 31: Full UI with all features
-- ✅ Day 40: Production-ready system
+#### 9.0. Unit Test Coverage
+
+**Target**: 100% coverage for domain models and game engine, 80%+ overall
+
+**Tasks:**
+- Review all unit tests from Phases 1-8
+- Fill coverage gaps
+- Ensure all acceptance criteria have corresponding tests
+- Generate coverage report: `pytest --cov=src --cov-report=html`
+
+**Deliverable**: Coverage report showing ≥80% overall, 100% for critical paths
+
+**Subsection Tests**:
+- Coverage report generated with pytest --cov=src --cov-report=html
+- Domain models have 100% test coverage (Position, Board, GameState, AgentResult, etc.)
+- Game engine has 100% test coverage (GameEngine, win conditions, draw conditions, move validation)
+- Overall code coverage ≥80%
+- All acceptance criteria have corresponding unit tests
+- Coverage gaps identified and filled
+- Coverage report accessible in htmlcov/index.html
+
+#### 9.1. Integration Tests
+
+**Files to Create:**
+- `tests/integration/test_full_pipeline.py`
+- `tests/integration/test_api_integration.py`
+
+**Test Scenarios:**
+- Complete game flow: Player move → AI move → repeat until win/draw
+- Agent pipeline with all three agents
+- API endpoints with real game engine and agents
+- Error handling across layers
+
+**Subsection Tests**:
+- test_full_pipeline.py tests complete game flow (player move → AI move → repeat until win/draw)
+- test_full_pipeline.py tests agent pipeline with all three agents (Scout → Strategist → Executor)
+- test_api_integration.py tests API endpoints with real game engine and agents
+- test_api_integration.py tests error handling across layers (validation → agent → execution)
+- Integration tests verify state transitions across components
+- Integration tests verify data flow between API, game engine, and agents
+
+#### 9.2. End-to-End Tests
+
+**Files to Create:**
+- `tests/e2e/test_game_scenarios.py`
+
+**Test Scenarios:**
+- Player wins scenario
+- AI wins scenario
+- Draw scenario
+- Player makes invalid move
+- Agent timeout triggers fallback
+- LLM provider failure
+
+**Subsection Tests**:
+- E2E test: Player wins scenario (player makes winning moves, AI responds, game ends with player win)
+- E2E test: AI wins scenario (AI makes winning moves, player responds, game ends with AI win)
+- E2E test: Draw scenario (9 moves made, no winner, game ends in draw)
+- E2E test: Player makes invalid move (out of bounds, occupied cell, game over) → error displayed
+- E2E test: Agent timeout triggers fallback (simulate slow agent, verify fallback move executed)
+- E2E test: LLM provider failure (simulate LLM error, verify fallback to rule-based logic)
+
+#### 9.3. Performance Tests
+
+**Spec Reference**: Section 15 - Performance Optimization
+
+**Files to Create:**
+- `tests/performance/test_agent_timeout.py`
+
+**Requirements:**
+- Agent pipeline completes within 15s (Section 3.6)
+- UI updates within 100ms of state change (AC-US023.3)
+- Agent status updates within 500ms (AC-US023.4)
+
+**Subsection Tests**:
+- Performance test: Agent pipeline completes within 15s (measure end-to-end pipeline execution time)
+- Performance test: UI updates within 100ms of state change (measure DOM update latency)
+- Performance test: Agent status updates within 500ms (measure status update propagation)
+- Performance test: Move validation completes within 10ms (measure validation latency)
+- Performance test: API response time < 200ms for game status endpoint (measure API latency)
+
+#### 9.4. Resilience Tests
+
+**Spec Reference**: Section 12 - Error Handling and Resilience
+
+**Test Scenarios:**
+- Network timeout
+- LLM API failure
+- Invalid API responses
+- Concurrent API requests
+- Agent crash and recovery
+
+**Subsection Tests**:
+- Resilience test: Network timeout (simulate network delay, verify timeout handling and fallback)
+- Resilience test: LLM API failure (simulate 500 error, verify fallback to rule-based logic)
+- Resilience test: Invalid API responses (simulate malformed JSON, verify error handling)
+- Resilience test: Concurrent API requests (multiple simultaneous game requests, verify no state leakage)
+- Resilience test: Agent crash and recovery (simulate agent failure, verify system continues with fallback)
+- Resilience test: Rate limiting (simulate 429 error, verify retry with backoff)
+- Resilience test: Invalid API key (simulate 401/403, verify fallback and error messaging)
+
+**Phase 9 Deliverables:**
+- 399 tests passing (one per acceptance criterion)
+- ≥80% code coverage overall
+- 100% coverage on domain models and game engine
+- All performance requirements met
+- Resilience scenarios validated
+
+**Spec References:**
+- Section 11: Testing Strategy
+- Section 15: Performance Optimization
+- Section 12: Error Handling and Resilience
+
+---
+
+### Phase 10: Configuration and Observability
+
+**Duration**: 2-3 days
+
+**Goal**: Production-ready configuration, logging, and metrics
+
+#### 10.0. Configuration Management
+
+**Spec Reference**: Section 9 - Configuration Management
+
+**Files to Create:**
+- `src/config/settings.py`
+- `.env.example`
+- `config.yaml` (optional)
+
+**Implementation:**
+- Environment-based configuration (dev, staging, prod)
+- Configuration validation on startup
+- Support for environment variables and config files
+- Hot-reload for non-critical settings
+
+**Configuration Sections:**
+- LLM provider settings
+- Agent timeout values
+- API server settings (host, port, CORS)
+- Logging levels
+- Feature flags (e.g., enable LLM, enable metrics)
+
+**Subsection Tests**:
+- Configuration loads from environment variables (LLM_PROVIDER, LLM_MODEL, etc.)
+- Configuration loads from config file (YAML/JSON) if provided
+- Configuration hierarchy respected (env vars > config file > defaults)
+- Configuration validation on startup (invalid values rejected with clear errors)
+- Environment-based configuration (dev, staging, prod) loads correct settings
+- Hot-reload works for non-critical settings (logging level, feature flags)
+- Configuration error handling (missing required values, invalid types)
+- LLM provider settings validated (provider name, model name per provider)
+
+**Test Coverage**:
+- **Subsection Tests**: ~8 tests for Phase 10.0 incremental development
+- **Acceptance Criteria**: Configuration Management (Section 9) - environment support, validation, hierarchy, error handling
+- **Test Files**: `tests/unit/config/test_settings.py`, `tests/integration/test_config_loading.py`
+
+#### 10.1. Logging
+
+**Spec Reference**: Section 17 - Metrics and Observability - Log Format Specification
+
+**Implementation:**
+- Structured logging (JSON format)
+- Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- Contextual logging (request ID, game ID, agent ID)
+- Log rotation and retention
+
+**Log Events:**
+- API requests/responses
+- Agent execution (start, end, duration)
+- LLM calls (prompt, response, tokens)
+- Errors and exceptions
+- State transitions
+
+**Subsection Tests**:
+- Structured logging outputs JSON format (valid JSON per log entry)
+- Log levels work correctly (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- Contextual logging includes request ID, game ID, agent ID when available
+- Log rotation works (log files rotated when size/age limits reached)
+- Log retention policy enforced (old logs deleted after retention period)
+- API request/response events logged with correct format
+- Agent execution events logged (start, end, duration)
+- LLM call events logged (prompt, response, tokens, latency)
+- Error and exception events logged with stack traces
+- State transition events logged (game state changes)
+
+**Test Coverage**:
+- **Subsection Tests**: ~10 tests for Phase 10.1 incremental development
+- **Acceptance Criteria**: Logging (Section 17 - Log Format Specification) - JSON format, log levels, contextual logging, rotation, retention
+- **Test Files**: `tests/unit/test_logging.py`, `tests/integration/test_logging_integration.py`
+
+#### 10.2. Metrics
+
+**Spec Reference**: Section 17 - Metrics Format Specification
+
+**Files to Create:**
+- `src/metrics/collector.py`
+- `src/metrics/exporter.py`
+
+**Metrics to Track:**
+- **Agent Metrics** (per Section 17.1):
+  - Execution time (min, max, avg, p95, p99)
+  - Success/failure rates
+  - Timeout counts
+  - Fallback usage
+- **Game Metrics** (per Section 17.2):
+  - Total games played
+  - Win/loss/draw counts
+  - Average game duration
+  - Moves per game
+- **System Metrics** (per Section 17.3):
+  - API request rate
+  - Response times
+  - Error rates
+  - LLM token usage
+
+**Export Formats:**
+- JSON API endpoint: `/api/metrics`
+- Prometheus format (optional)
+- CloudWatch/DataDog integration (optional)
+
+**Subsection Tests**:
+- Agent metrics collected: execution time (min, max, avg, p95, p99)
+- Agent metrics collected: success/failure rates per agent
+- Agent metrics collected: timeout counts per agent
+- Agent metrics collected: fallback usage counts per agent
+- Game metrics collected: total games, win/loss/draw counts
+- Game metrics collected: average game duration, moves per game
+- System metrics collected: API request rate, response times, error rates
+- System metrics collected: LLM token usage (total, per provider, per model)
+- Metrics export via JSON API endpoint `/api/metrics` returns valid JSON
+- Metrics aggregation calculates min, max, avg, p95, p99 correctly
+- Metrics format complies with Section 17 specification
+
+**Test Coverage**:
+- **Subsection Tests**: ~11 tests for Phase 10.2 incremental development
+- **Acceptance Criteria**: Metrics Collection (Section 17 - Metrics Format Specification) - agent metrics, game metrics, system metrics, export formats
+- **Test Files**: `tests/unit/metrics/test_collector.py`, `tests/unit/metrics/test_exporter.py`, `tests/integration/test_metrics_api.py`
+
+#### 10.3. Health Checks
+
+**Implementation:**
+- Liveness probe: `/health` (already implemented in Phase 4)
+- Readiness probe: `/ready` (already implemented in Phase 4)
+- Deep health check: `/health/deep` (check all dependencies)
+
+**Subsection Tests**:
+- Liveness probe `/health` returns 200 with correct response format when healthy
+- Liveness probe `/health` returns 503 when unhealthy
+- Readiness probe `/ready` checks game engine initialization
+- Readiness probe `/ready` checks agent system readiness
+- Readiness probe `/ready` checks LLM configuration (optional in Phase 4)
+- Deep health check `/health/deep` validates all dependencies (game engine, agents, LLM config, metrics collector)
+- Health check error scenarios handled (dependency failures return appropriate status codes)
+- Health check response time < 100ms for `/health`, < 500ms for `/ready`, < 1000ms for `/health/deep`
+
+**Test Coverage**:
+- **Subsection Tests**: ~8 tests for Phase 10.3 incremental development
+- **Acceptance Criteria**: Health Checks (Section 10 - Deployment Considerations) - liveness, readiness, deep health checks, response times
+- **Test Files**: `tests/integration/test_health_checks.py`
+
+**Phase 10 Deliverables:**
+- Configuration system supporting multiple environments
+- Structured logging with JSON format
+- Comprehensive metrics collection
+- Health check endpoints ready for orchestration
+- Comprehensive test coverage for configuration, logging, metrics, and health checks
+
+**Spec References:**
+- Section 9: Configuration Management
+- Section 17: Metrics and Observability
+
+---
+
+### Phase 11: Documentation
+
+**Duration**: 1-2 days
+
+**Goal**: Complete user and developer documentation
+
+**Note**: Docker/Kubernetes deployment is now covered in Phase 6 (Cloud Native Deployment). This phase focuses on documentation only.
+
+#### 11.0. Documentation
+
+**Files to Create:**
+- `README.md` (update with complete usage)
+- `docs/API.md` (API documentation with examples)
+- `docs/DEPLOYMENT.md` (deployment guide)
+- `docs/DEVELOPMENT.md` (developer setup guide)
+- `docs/ARCHITECTURE.md` (system architecture overview)
+
+**README Contents:**
+- Project overview
+- Quick start guide
+- Installation instructions
+- Running locally
+- Running tests
+- Configuration options
+- API usage examples
+- License and contributing
+
+**Subsection Tests**:
+- README.md exists and contains all required sections (overview, quick start, installation, usage, configuration, API examples)
+- docs/API.md exists with complete API endpoint documentation and request/response examples
+- docs/DEPLOYMENT.md exists with deployment instructions (references Phase 6 for Docker/Kubernetes)
+- docs/DEVELOPMENT.md exists with developer setup guide (environment setup, running tests, contributing)
+- docs/ARCHITECTURE.md exists with system architecture overview (component diagrams, data flow)
+- All documentation files use consistent formatting and are up-to-date
+- Code examples in documentation are tested and working
+
+**Note**: Docker and Kubernetes deployment documentation is part of Phase 6 (Cloud Native Deployment).
+
+**Phase 11 Deliverables:**
+- Complete documentation (README, API docs, deployment guide references Phase 6)
+- Developer setup guide
+- Architecture documentation
+- All documentation files updated and consistent
+
+**Spec References:**
+- Section 1: Project Overview and Requirements
+- Section 6: Web UI Functional Requirements
+- Section 11: Testing Strategy
 
 ---
 
@@ -3015,8 +2981,7 @@ Use this checklist to verify each phase is complete:
 
 **Questions to Consider:**
 - Do you want to implement all phases or stop at MVP (Phase 4)?
-- Will you implement MCP mode (Phase 10)?
-- Any adjustments to the timeline based on your availability?
+- Will you implement MCP mode (Phase 7)?
 
 **Spec Coverage:**
 This implementation plan covers:
