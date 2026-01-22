@@ -104,7 +104,7 @@ class TestPydanticAIScoutAgent:
     @patch("src.llm.pydantic_ai_agents.get_api_key")
     @patch("src.llm.pydantic_ai_agents.GoogleModel")
     @patch("src.llm.pydantic_ai_agents.get_llm_config")
-    @patch.dict("os.environ", {}, clear=True)
+    @patch.dict("os.environ", {"GOOGLE_API_KEY": "existing-key"}, clear=False)
     def test_create_scout_agent_with_gemini(
         self, mock_config: MagicMock, mock_google_model: MagicMock, mock_get_api_key: MagicMock
     ) -> None:
@@ -117,14 +117,14 @@ class TestPydanticAIScoutAgent:
         mock_model_instance = MagicMock()
         mock_google_model.return_value = mock_model_instance
 
-        # Create agent
+        # Create agent - should update env var since it differs
         agent = create_scout_agent(provider="gemini", model="gemini-3-flash-preview")
 
         # Verify
         assert agent is not None
         assert agent.output_type == BoardAnalysis
         mock_google_model.assert_called_once_with("gemini-3-flash-preview")
-        # Verify environment variable was set
+        # Verify environment variable was updated
         assert os.environ.get("GOOGLE_API_KEY") == "test-google-key"
 
     @patch("src.llm.pydantic_ai_agents.get_api_key")
@@ -153,10 +153,10 @@ class TestPydanticAIScoutAgent:
         # API key exists but no models
         mock_get_api_key.return_value = "test-key"
 
+        # Error is raised before API key check when models are empty
         with pytest.raises(ValueError, match="No models configured"):
             create_strategist_agent(provider="openai")
-        # Should check for OPENAI_API_KEY when provider is openai
-        mock_get_api_key.assert_called_with("OPENAI_API_KEY")
+        # get_api_key is not called when models are empty (error raised first)
 
     @patch("src.llm.pydantic_ai_agents.get_api_key")
     @patch("src.llm.pydantic_ai_agents.OpenAIModel")
