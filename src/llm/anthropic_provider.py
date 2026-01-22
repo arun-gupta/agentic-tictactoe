@@ -21,8 +21,18 @@ class AnthropicProvider(LLMProvider):
     error handling for timeouts, rate limits, and authentication errors.
     """
 
-    # Supported Anthropic models
-    SUPPORTED_MODELS = {"claude-3-5-sonnet", "claude-3-opus", "claude-3-haiku"}
+    # Supported Anthropic models (Claude 4.5 series - latest models)
+    # See https://platform.claude.com/docs/en/about-claude/models/overview
+    # Claude Sonnet 4.5 recommended for best balance of intelligence, speed, and cost
+    SUPPORTED_MODELS = {
+        "claude-sonnet-4-5-20250929",  # Best balance of intelligence, speed, and cost
+        "claude-opus-4-5-20251101",  # Premium model with maximum intelligence
+        "claude-haiku-4-5-20251001",  # Fastest model with near-frontier intelligence
+        # Aliases (automatically point to latest snapshot)
+        "claude-sonnet-4-5",
+        "claude-opus-4-5",
+        "claude-haiku-4-5",
+    }
 
     def __init__(self, api_key: str | None = None) -> None:
         """Initialize Anthropic provider.
@@ -86,9 +96,7 @@ class AnthropicProvider(LLMProvider):
             # Extract response data
             text = response.content[0].text if response.content else ""
             tokens_used = (
-                response.usage.input_tokens + response.usage.output_tokens
-                if response.usage
-                else 0
+                response.usage.input_tokens + response.usage.output_tokens if response.usage else 0
             )
             latency_ms = (time.time() - start_time) * 1000
 
