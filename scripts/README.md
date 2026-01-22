@@ -60,3 +60,39 @@ Demonstrates Phase 4 (REST API Layer):
 If running the script directly, start the server manually with: `uvicorn src.api.main:app --reload`
 
 **Run:** `./run_demo.sh api` (recommended - automatically starts server if needed) or `python scripts/play_via_api.py`
+
+### Test LLM Providers
+
+Demonstrates Phase 5.0 (LLM Integration):
+- Tests OpenAI, Anthropic, and Google Gemini providers with real API calls
+- Tests Pydantic AI agents (Scout and Strategist) with structured outputs
+- Requires API keys in `.env` file or environment variables
+- Validates LLM provider abstraction and Pydantic AI integration
+
+**Prerequisites:**
+- Set up `.env` file with API keys (see `.env.example`)
+- At least one API key must be configured (OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY)
+
+**Run:**
+```bash
+# Test all available providers
+python scripts/test_llm_providers.py
+
+# Test specific provider
+python scripts/test_llm_providers.py openai
+python scripts/test_llm_providers.py anthropic
+python scripts/test_llm_providers.py gemini
+```
+
+### Test API Key Infrastructure
+
+Verifies that API key loading works correctly (Phase 5.0):
+- Tests loading from `.env` file
+- Tests loading from environment variables
+- Tests priority order (.env file > environment variables)
+- Tests missing key handling
+- Tests provider integration
+
+**Run:** `python scripts/test_api_keys.py`
+
+**Note:** This test does NOT make real API calls - it only tests the key loading mechanism. Safe to run without API keys.
