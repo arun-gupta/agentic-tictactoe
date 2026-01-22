@@ -115,6 +115,94 @@ class TestOpenAIProviderGenerate:
             with pytest.raises(ValueError, match="Unsupported model"):
                 provider.generate(prompt="Test", model="gpt-3.5-turbo")
 
+    def test_generate_validates_max_tokens_minimum(self) -> None:
+        """Test that generate() validates max_tokens is at least 1."""
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
+            provider = OpenAIProvider()
+            with pytest.raises(ValueError, match="max_tokens must be at least 1"):
+                provider.generate(prompt="Test", model="gpt-5.2", max_tokens=0)
+
+    def test_generate_validates_temperature_range(self) -> None:
+        """Test that generate() validates temperature is between 0.0 and 2.0."""
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
+            provider = OpenAIProvider()
+            with pytest.raises(ValueError, match="temperature must be between 0.0 and 2.0"):
+                provider.generate(prompt="Test", model="gpt-5.2", temperature=2.1)
+
+    @patch("src.llm.openai_provider.OpenAI")
+    def test_generate_handles_empty_response_content(self, mock_openai_class: MagicMock) -> None:
+        """Test that generate() handles empty response content."""
+        mock_response = Mock()
+        mock_response.choices = [Mock(message=Mock(content=None))]
+        mock_response.usage = Mock(total_tokens=10)
+
+        mock_client = Mock()
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_openai_class.return_value = mock_client
+
+        provider = OpenAIProvider(api_key="test-key")
+        response = provider.generate(prompt="Test", model="gpt-5.2")
+
+        assert response.text == ""
+        assert response.tokens_used == 10
+
+    @patch("src.llm.openai_provider.OpenAI")
+    @patch("src.llm.openai_provider.time.sleep")
+    def test_handles_rate_limit_with_retry_after_header(
+        self, mock_sleep: MagicMock, mock_openai_class: MagicMock
+    ) -> None:
+        """Test that OpenAIProvider handles rate limit with Retry-After header."""
+        mock_client = Mock()
+        # Create mock response with Retry-After header
+        mock_response = Mock()
+        mock_response.headers = {"Retry-After": "5"}
+        rate_limit_error = openai.RateLimitError(
+            message="Rate limit exceeded", response=mock_response, body=None
+        )
+
+        # First call fails with rate limit, second succeeds
+        mock_client.chat.completions.create.side_effect = [
+            rate_limit_error,
+            Mock(
+                choices=[Mock(message=Mock(content="Success"))],
+                usage=Mock(total_tokens=10),
+            ),
+        ]
+        mock_openai_class.return_value = mock_client
+
+        provider = OpenAIProvider(api_key="test-key")
+        response = provider.generate(prompt="Test", model="gpt-5.2")
+
+        assert response.text == "Success"
+        # Should wait 5 seconds (from Retry-After header) before retry
+        mock_sleep.assert_called_with(5.0)
+
+    @patch("src.llm.openai_provider.OpenAI")
+    @patch("src.llm.openai_provider.time.sleep")
+    def test_handles_other_api_errors_with_retry(
+        self, mock_sleep: MagicMock, mock_openai_class: MagicMock
+    ) -> None:
+        """Test that OpenAIProvider handles other API errors with retry."""
+        mock_client = Mock()
+        api_error = openai.APIError(message="Internal server error", request=Mock(), body=None)
+
+        # First call fails, second succeeds
+        mock_client.chat.completions.create.side_effect = [
+            api_error,
+            Mock(
+                choices=[Mock(message=Mock(content="Success"))],
+                usage=Mock(total_tokens=10),
+            ),
+        ]
+        mock_openai_class.return_value = mock_client
+
+        provider = OpenAIProvider(api_key="test-key")
+        response = provider.generate(prompt="Test", model="gpt-5.2")
+
+        assert response.text == "Success"
+        assert mock_client.chat.completions.create.call_count == 2
+        mock_sleep.assert_called_once_with(1)  # Exponential backoff: 2^0 = 1
+
 
 class TestOpenAIProviderErrorHandling:
     """Test OpenAIProvider error handling and retries."""
