@@ -21,16 +21,11 @@ class AnthropicProvider(LLMProvider):
     error handling for timeouts, rate limits, and authentication errors.
     """
 
-    # Supported Anthropic models (Claude 4.5 series - latest models)
+    # Supported Anthropic models (Claude Haiku 4.5 - fastest model)
     # See https://platform.claude.com/docs/en/about-claude/models/overview
-    # Claude Sonnet 4.5 recommended for best balance of intelligence, speed, and cost
     SUPPORTED_MODELS = {
-        "claude-sonnet-4-5-20250929",  # Best balance of intelligence, speed, and cost
-        "claude-opus-4-5-20251101",  # Premium model with maximum intelligence
         "claude-haiku-4-5-20251001",  # Fastest model with near-frontier intelligence
-        # Aliases (automatically point to latest snapshot)
-        "claude-sonnet-4-5",
-        "claude-opus-4-5",
+        # Alias (automatically points to latest snapshot)
         "claude-haiku-4-5",
     }
 
