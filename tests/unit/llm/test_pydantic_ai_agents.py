@@ -29,6 +29,7 @@ class TestPydanticAIScoutAgent:
     @patch("src.llm.pydantic_ai_agents.get_api_key")
     @patch("src.llm.pydantic_ai_agents.OpenAIModel")
     @patch("src.llm.pydantic_ai_agents.get_llm_config")
+    @patch.dict("os.environ", {}, clear=True)
     def test_create_scout_agent_with_openai(
         self, mock_config: MagicMock, mock_openai_model: MagicMock, mock_get_api_key: MagicMock
     ) -> None:
@@ -49,6 +50,30 @@ class TestPydanticAIScoutAgent:
         assert agent.output_type == BoardAnalysis
         mock_openai_model.assert_called_once_with("gpt-5.2")
         mock_get_api_key.assert_called_once_with("OPENAI_API_KEY")
+        # Verify environment variable was set
+        assert os.environ.get("OPENAI_API_KEY") == "test-openai-key"
+
+    @patch("src.llm.pydantic_ai_agents.get_api_key")
+    @patch("src.llm.pydantic_ai_agents.OpenAIModel")
+    @patch("src.llm.pydantic_ai_agents.get_llm_config")
+    @patch.dict("os.environ", {"OPENAI_API_KEY": "existing-key"}, clear=False)
+    def test_create_scout_agent_updates_env_when_different(
+        self, mock_config: MagicMock, mock_openai_model: MagicMock, mock_get_api_key: MagicMock
+    ) -> None:
+        """Test that create_scout_agent updates environment variable when it differs."""
+        # Setup mocks
+        mock_config_instance = MagicMock()
+        mock_config_instance.get_supported_models.return_value = {"gpt-5.2"}
+        mock_config.return_value = mock_config_instance
+        mock_get_api_key.return_value = "new-key-from-env"
+        mock_model_instance = MagicMock()
+        mock_openai_model.return_value = mock_model_instance
+
+        # Create agent - should update env var since it differs
+        create_scout_agent(provider="openai", model="gpt-5.2")
+
+        # Verify environment variable was updated
+        assert os.environ.get("OPENAI_API_KEY") == "new-key-from-env"
 
     @patch("src.llm.pydantic_ai_agents.get_api_key")
     @patch("src.llm.pydantic_ai_agents.AnthropicModel")

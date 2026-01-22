@@ -135,6 +135,20 @@ class TestAnthropicProviderGenerate:
             with pytest.raises(ValueError, match="Unsupported model"):
                 provider.generate(prompt="Test", model="claude-2")
 
+    def test_generate_validates_max_tokens_minimum(self) -> None:
+        """Test that generate() validates max_tokens is at least 1."""
+        with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}):
+            provider = AnthropicProvider()
+            with pytest.raises(ValueError, match="max_tokens must be at least 1"):
+                provider.generate(prompt="Test", model="claude-haiku-4-5-20251001", max_tokens=0)
+
+    def test_generate_validates_temperature_range(self) -> None:
+        """Test that generate() validates temperature is between 0.0 and 2.0."""
+        with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}):
+            provider = AnthropicProvider()
+            with pytest.raises(ValueError, match="temperature must be between 0.0 and 2.0"):
+                provider.generate(prompt="Test", model="claude-haiku-4-5-20251001", temperature=2.1)
+
 
 class TestAnthropicProviderErrorHandling:
     """Test AnthropicProvider error handling and retries."""
