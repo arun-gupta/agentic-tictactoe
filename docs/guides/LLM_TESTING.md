@@ -1,19 +1,33 @@
 # LLM Integration Testing Guide
 
-This guide explains how to test the LLM integrations (Phase 5.0) with real API calls.
+This guide explains how to test the LLM integrations (Phase 5.0) with both mocked and real API calls.
+
+## Test Types Overview
+
+**Mocked Tests (No API Calls - Safe for CI/CD):**
+- ✅ All unit tests in `tests/unit/llm/` - Use `unittest.mock` to mock API clients
+- ✅ `scripts/test_api_keys.py` - Tests API key loading infrastructure (mocked environment)
+- ✅ Fast, free, and safe to run without API keys
+
+**Real API Call Tests (Requires Valid API Keys):**
+- ⚠️ `scripts/test_llm_providers.py` - Makes actual LLM API calls to verify integration
+- ⚠️ Requires valid API keys in `.env` file or environment variables
+- ⚠️ Incurs small costs (~$0.01-0.05 per test run)
 
 ## Prerequisites
 
-1. **API Keys**: Set up at least one API key in your `.env` file:
-   ```bash
-   # Copy the example file
-   cp .env.example .env
+1. **API Keys**: Set up at least one API key in your `.env` file
+   - **Quick Setup**: See [Integration Test Setup Guide](./INTEGRATION_TEST_SETUP.md) for detailed instructions
+   - **Quick Start**:
+     ```bash
+     # Copy the example file
+     cp .env.example .env
 
-   # Edit .env and add your API keys:
-   OPENAI_API_KEY=sk-...
-   ANTHROPIC_API_KEY=sk-ant-...
-   GOOGLE_API_KEY=...
-   ```
+     # Edit .env and add your API keys (get them from provider websites)
+     # OpenAI: https://platform.openai.com/api-keys
+     # Anthropic: https://console.anthropic.com/settings/keys
+     # Google: https://aistudio.google.com/app/apikey
+     ```
 
 2. **Dependencies**: Ensure all dependencies are installed:
    ```bash
@@ -22,7 +36,12 @@ This guide explains how to test the LLM integrations (Phase 5.0) with real API c
 
 ## Testing Methods
 
-### 1. Unit Tests (Mocked - No API Calls)
+### 1. Unit Tests (Mocked - No API Calls) ✅
+
+**Type**: Mocked tests using `unittest.mock`
+**API Calls**: None (completely mocked)
+**Cost**: Free
+**Requires API Keys**: No
 
 The unit tests use mocks and don't make real API calls. They verify:
 - Provider interface implementation
@@ -30,12 +49,54 @@ The unit tests use mocks and don't make real API calls. They verify:
 - Parameter validation
 - Response structure
 
+**How they work:**
+- Use `@patch` decorators to mock API clients (OpenAI, Anthropic, Google)
+- Mock responses simulate real API behavior
+- Test error conditions (timeouts, rate limits, auth errors)
+- Verify correct parameters are passed to APIs
+
 **Run unit tests:**
 ```bash
 pytest tests/unit/llm/ -v
 ```
 
-### 2. Integration Test Script (Real API Calls)
+**Test files:**
+- `tests/unit/llm/test_openai_provider.py` - Mocks OpenAI client
+- `tests/unit/llm/test_anthropic_provider.py` - Mocks Anthropic client
+- `tests/unit/llm/test_gemini_provider.py` - Mocks Google Gemini client
+- `tests/unit/llm/test_pydantic_ai_agents.py` - Mocks Pydantic AI models
+
+### 2. API Key Infrastructure Tests (Mocked - No API Calls) ✅
+
+**Type**: Mocked tests using `unittest.mock`
+**API Calls**: None (only tests key loading logic)
+**Cost**: Free
+**Requires API Keys**: No
+
+The `scripts/test_api_keys.py` script tests API key loading infrastructure **without making any API calls**. This is useful for:
+- Verifying `.env` file loading works
+- Testing environment variable fallback
+- Verifying priority order (`.env` > env vars)
+- Testing provider integration with key loading
+
+**Run API key tests:**
+```bash
+python scripts/test_api_keys.py
+```
+
+**What it tests:**
+- ✅ Loading from `.env` file (mocked test file)
+- ✅ Loading from environment variables
+- ✅ Priority order verification
+- ✅ Missing key handling
+- ✅ Provider integration (verifies providers use `_load_api_key()` correctly)
+
+### 3. Integration Test Script (Real API Calls) ⚠️
+
+**Type**: Real API calls to LLM providers
+**API Calls**: Yes (actual API requests)
+**Cost**: ~$0.01-0.05 per test run
+**Requires API Keys**: Yes (at least one provider)
 
 The `scripts/test_llm_providers.py` script tests LLM providers with **real API calls**. This is useful for:
 - Verifying API keys work
@@ -45,7 +106,7 @@ The `scripts/test_llm_providers.py` script tests LLM providers with **real API c
 
 **Run integration tests:**
 ```bash
-# Test all available providers
+# Test all available providers (requires API keys)
 python scripts/test_llm_providers.py
 
 # Test specific provider
@@ -53,6 +114,8 @@ python scripts/test_llm_providers.py openai
 python scripts/test_llm_providers.py anthropic
 python scripts/test_llm_providers.py gemini
 ```
+
+**⚠️ Warning**: This script makes real API calls and will incur costs. Ensure you have valid API keys configured.
 
 **What it tests:**
 - ✅ OpenAI Provider: Real API call with gpt-5.2
@@ -74,7 +137,7 @@ Prompt: Say 'Hello from OpenAI!' in exactly 5 words.
    Provider: openai
 ```
 
-### 3. Manual Testing via Python REPL
+### 4. Manual Testing via Python REPL
 
 You can also test providers interactively:
 
@@ -99,7 +162,7 @@ print(f"Tokens: {response.tokens_used}")
 print(f"Latency: {response.latency_ms}ms")
 ```
 
-### 4. Testing Pydantic AI Agents
+### 5. Testing Pydantic AI Agents
 
 Test the Scout and Strategist agents with structured outputs:
 

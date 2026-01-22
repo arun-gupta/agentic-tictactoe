@@ -70,7 +70,9 @@ Demonstrates Phase 5.0 (LLM Integration):
 - Validates LLM provider abstraction and Pydantic AI integration
 
 **Prerequisites:**
-- Set up `.env` file with API keys (see `.env.example`)
+- Set up `.env` file with API keys
+- **Detailed Setup**: See [Integration Test Setup Guide](../docs/guides/INTEGRATION_TEST_SETUP.md) for step-by-step instructions
+- **Quick Setup**: Copy `.env.example` to `.env` and add your API keys
 - At least one API key must be configured (OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY)
 
 **Run:**
@@ -83,6 +85,8 @@ python scripts/test_llm_providers.py openai
 python scripts/test_llm_providers.py anthropic
 python scripts/test_llm_providers.py gemini
 ```
+
+**Note**: These tests make real API calls and incur small costs (~$0.01-0.05 per test run). See setup guide for details.
 
 ### Test API Key Infrastructure
 

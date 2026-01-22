@@ -3,6 +3,9 @@
 This module implements the Gemini provider using the Google Generative AI SDK directly.
 Supported models are loaded from config file.
 Reference: https://ai.google.dev/gemini-api/docs/models
+
+Note: google.generativeai is deprecated in favor of google.genai.
+See issue: TODO - Migrate Gemini provider to google.genai package
 """
 
 import time
@@ -87,7 +90,26 @@ class GeminiProvider(LLMProvider):
             )
 
             # Extract response data
-            text = response.text if hasattr(response, "text") else ""
+            # Handle cases where response was blocked by safety filters
+            text = ""
+            if hasattr(response, "text"):
+                try:
+                    text = response.text
+                except ValueError as e:
+                    # Response was blocked (finish_reason: SAFETY) or has no content
+                    # Check finish_reason for more details
+                    if hasattr(response, "candidates") and response.candidates:
+                        candidate = response.candidates[0]
+                        finish_reason = getattr(candidate, "finish_reason", None)
+                        if finish_reason == 2 or (
+                            isinstance(finish_reason, str) and "SAFETY" in finish_reason.upper()
+                        ):
+                            raise RuntimeError(
+                                "Google Gemini API blocked the response due to safety filters. "
+                                "Try adjusting the prompt or safety settings."
+                            ) from e
+                    # Re-raise if it's a different error
+                    raise
 
             # Get token usage from response
             tokens_used = 0

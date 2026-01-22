@@ -44,19 +44,19 @@ class LLMConfig:
             self._config = self._get_default_config()
 
     def _get_default_config(self) -> dict[str, Any]:
-        """Get default configuration."""
+        """Get default configuration.
+
+        Note: This is a fallback when config.json doesn't exist.
+        All model names should be defined in config/config.json (single source of truth).
+        """
+        # Return empty config structure - config.json must exist for models
+        # This ensures config.json is the single source of truth
         return {
             "llm": {
                 "providers": {
-                    "openai": {
-                        "models": ["gpt-5.2"],
-                    },
-                    "anthropic": {
-                        "models": ["claude-haiku-4-5-20251001", "claude-haiku-4-5"],
-                    },
-                    "gemini": {
-                        "models": ["gemini-3-flash-preview", "gemini-3-flash"],
-                    },
+                    "openai": {"models": []},
+                    "anthropic": {"models": []},
+                    "gemini": {"models": []},
                 },
             },
         }

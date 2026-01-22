@@ -25,7 +25,7 @@ def _get_pydantic_ai_model(provider: str, model: str) -> Any:
 
     Args:
         provider: Provider name (openai, anthropic, gemini)
-        model: Model name (e.g., "gpt-5.2", "claude-haiku-4-5-20251001")
+        model: Model name (must be one of the models configured in config/config.json)
 
     Returns:
         Pydantic AI model instance

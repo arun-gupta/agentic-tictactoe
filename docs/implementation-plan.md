@@ -1424,7 +1424,7 @@ pre-commit install --overwrite
 **5.0.4. Google Gemini Provider** ✅
 - ✅ Implement using Google Generative AI SDK
 - ✅ Support Gemini 3 Flash: gemini-3-flash-preview (most balanced model for speed, scale, and frontier intelligence)
-- ✅ Support model alias: gemini-3-flash
+- ⚠️ Note: Model alias `gemini-3-flash` is not recognized by the API - only `gemini-3-flash-preview` works
 - ✅ Gemini 3 Flash recommended per [Google Gemini docs](https://ai.google.dev/gemini-api/docs/models)
 
 **Implementation Notes:**
@@ -1435,13 +1435,18 @@ pre-commit install --overwrite
 - Handles authentication errors without retry (immediate failure)
 - Returns structured LLMResponse with text, tokens_used (prompt + candidates), and latency_ms
 - Token usage calculated from response.usage_metadata.prompt_token_count + candidates_token_count
-- Note: `google.generativeai` package has deprecation warning (migrate to `google.genai` in future)
+
+**Known Issues:**
+- ⚠️ **Issue**: `google.generativeai` package is deprecated and emits FutureWarning on import
+  - **Impact**: Deprecation warning appears when importing GeminiProvider
+  - **Fix**: Migrate to `google.genai` package (see https://github.com/google-gemini/deprecated-generative-ai-python)
+  - **Status**: Filed as future work - no functional impact, only warning message
 
 **Subsection Tests** ✅:
 - ✅ GeminiProvider implements LLMProvider interface
 - ✅ GeminiProvider.generate() calls Google Gemini API with correct parameters
 - ✅ GeminiProvider supports gemini-3-flash-preview model
-- ✅ GeminiProvider supports gemini-3-flash alias
+- ⚠️ Note: `gemini-3-flash` alias not supported by API - only `gemini-3-flash-preview` works
 - ✅ GeminiProvider handles API timeout errors (retries 3 times with exponential backoff)
 - ✅ GeminiProvider handles rate limit errors (429) with Retry-After header
 - ✅ GeminiProvider handles authentication errors (401/403) without retry
@@ -1491,6 +1496,83 @@ pre-commit install --overwrite
 - **Subsection Tests**: ✅ 11 tests implemented and passing
 - **Test File**: ✅ `tests/unit/llm/test_pydantic_ai_agents.py`
 - **Note**: Pydantic AI's built-in validation, error handling, retry logic, and token tracking are tested implicitly through agent creation. Full integration testing with actual LLM calls will be done in Phase 5.1 (Agent LLM Integration).
+
+**5.0.6. API Key Integration Testing** ✅
+
+**Goal**: Verify that API key loading infrastructure works correctly across all LLM providers, ensuring secure and reliable key management.
+
+**Files Created:**
+- ✅ `scripts/test_api_keys.py` (executable test script)
+- ✅ `docs/guides/LLM_TESTING.md` (testing guide with API key testing section)
+
+**Implementation Notes:**
+- Created comprehensive test script (`scripts/test_api_keys.py`) to verify API key infrastructure
+- Tests cover the complete API key loading pipeline: `.env` file → environment variables → provider integration
+- Verifies priority order: `.env` file takes precedence over environment variables
+- Tests provider integration to ensure all LLM providers correctly use the centralized `_load_api_key()` method
+- Distinguishes between core infrastructure tests (always run) and optional tests (real `.env` file, skipped if not present)
+- Provides clear, actionable output with pass/fail/skip status for each test
+
+**What Gets Tested:**
+
+1. **Core Infrastructure Tests (Required)**:
+   - ✅ Loading API keys from `.env` file (mocked test file)
+   - ✅ Loading API keys from environment variables (when no `.env` file)
+   - ✅ Priority order verification (`.env` file > environment variables)
+   - ✅ Missing key handling (returns `None` gracefully)
+   - ✅ Provider integration (OpenAI, Anthropic, Gemini providers use `_load_api_key()` correctly)
+
+2. **Optional Tests**:
+   - ✅ Real `.env` file loading (if `.env` file exists in project root)
+   - ✅ Verification that keys from real `.env` file are actually loaded
+
+**Test Script Usage:**
+```bash
+# Run all API key infrastructure tests
+python scripts/test_api_keys.py
+```
+
+**Expected Output:**
+- Core infrastructure tests: All must pass (required for system to work)
+- Optional tests: May be skipped if `.env` file doesn't exist (not a failure)
+- Clear summary showing which tests passed/failed/skipped
+- Actionable guidance if tests fail (e.g., "Create .env file to test real loading")
+
+**Subsection Tests** ✅:
+- ✅ API keys load correctly from `.env` file (via `python-dotenv`)
+- ✅ API keys load correctly from environment variables (fallback when no `.env`)
+- ✅ Priority order: `.env` file values override environment variables
+- ✅ Missing API keys return `None` (graceful handling)
+- ✅ Real `.env` file loading works (if file exists in project root)
+- ✅ OpenAIProvider integrates with API key loading (`_load_api_key()` method)
+- ✅ AnthropicProvider integrates with API key loading (`_load_api_key()` method)
+- ✅ GeminiProvider integrates with API key loading (`_load_api_key()` method)
+- ✅ Providers raise appropriate `ValueError` when API keys are missing
+- ✅ Error messages include provider name and environment variable name for clarity
+
+**Test Coverage** ✅:
+- **Subsection Tests**: ✅ 6 core tests + 1 optional test = 7 total tests
+- **Test Script**: ✅ `scripts/test_api_keys.py` (executable, can be run independently)
+- **Documentation**: ✅ `docs/guides/LLM_TESTING.md` includes API key testing section
+- **Integration**: ✅ Tests verify end-to-end integration from `env_loader.py` → `LLMProvider._load_api_key()` → provider initialization
+
+**Key Features:**
+- ✅ No actual API calls made (safe to run without valid keys)
+- ✅ Uses mocked `.env` files for core tests (no file system pollution)
+- ✅ Tests real `.env` file if present (optional, informative)
+- ✅ Verifies provider integration (ensures providers use centralized key loading)
+- ✅ Clear pass/fail/skip reporting for each test
+- ✅ Actionable error messages and guidance
+
+**Related Files:**
+- `src/utils/env_loader.py`: Core API key loading logic (`.env` file and environment variables)
+- `src/llm/provider.py`: Base `LLMProvider` class with `_load_api_key()` method
+- `src/llm/openai_provider.py`: Uses `_load_api_key()` for OpenAI API key
+- `src/llm/anthropic_provider.py`: Uses `_load_api_key()` for Anthropic API key
+- `src/llm/gemini_provider.py`: Uses `_load_api_key()` for Google API key
+- `.env.example`: Template file showing required API key format
+
+**Note**: This testing infrastructure ensures that API key management works correctly before attempting actual LLM API calls. It's a prerequisite for Phase 5.1 (Agent LLM Integration) where real API keys will be used.
 
 #### 5.1. Agent LLM Integration with Pydantic AI
 
@@ -1623,7 +1705,8 @@ GOOGLE_API_KEY=...
 - Fallback to rule-based logic still works
 - Configuration supports provider switching
 - Metrics tracked for all LLM calls
-- Comprehensive test coverage for LLM integration (provider abstraction, agent integration, configuration, metrics)
+- API key integration testing infrastructure (5.0.6)
+- Comprehensive test coverage for LLM integration (provider abstraction, agent integration, configuration, metrics, API key management)
 
 **Spec References:**
 - Section 16: LLM Integration (provider and model configuration)

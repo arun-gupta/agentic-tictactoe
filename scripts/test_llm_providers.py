@@ -17,11 +17,11 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.config.llm_config import get_llm_config
-from src.llm.anthropic_provider import AnthropicProvider
-from src.llm.gemini_provider import GeminiProvider
-from src.llm.openai_provider import OpenAIProvider
-from src.utils.env_loader import get_api_key
+from src.config.llm_config import get_llm_config  # noqa: E402
+from src.llm.anthropic_provider import AnthropicProvider  # noqa: E402
+from src.llm.gemini_provider import GeminiProvider  # noqa: E402
+from src.llm.openai_provider import OpenAIProvider  # noqa: E402
+from src.utils.env_loader import get_api_key  # noqa: E402
 
 
 def test_openai_provider() -> bool:
@@ -134,6 +134,7 @@ def test_gemini_provider() -> bool:
             print("❌ No Gemini models configured in config.json")
             return False
 
+        # Use first model from config (config is the single source of truth)
         model = list(models)[0]
         print(f"Using model: {model}")
 
@@ -151,7 +152,7 @@ def test_gemini_provider() -> bool:
         print(f"   Tokens used: {response.tokens_used}")
         print(f"   Latency: {response.latency_ms:.2f}ms")
         print(f"   Model: {model}")
-        print("   Provider: anthropic")
+        print("   Provider: gemini")
         return True
 
     except Exception as e:

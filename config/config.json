@@ -8,7 +8,7 @@
         "models": ["claude-haiku-4-5-20251001", "claude-haiku-4-5"]
       },
       "gemini": {
-        "models": ["gemini-3-flash-preview", "gemini-3-flash"]
+        "models": ["gemini-3-flash-preview"]
       }
     }
   }
