@@ -1421,18 +1421,35 @@ pre-commit install --overwrite
 - **Subsection Tests**: ✅ 13 tests implemented and passing (2 interface + 3 initialization + 4 generate + 4 error handling)
 - **Test File**: ✅ `tests/unit/llm/test_anthropic_provider.py`
 
-**5.0.4. Google Gemini Provider**
-- Implement using Google SDK
-- Support models: gemini-1.5-pro, gemini-1.5-flash
+**5.0.4. Google Gemini Provider** ✅
+- ✅ Implement using Google Generative AI SDK
+- ✅ Support Gemini 3 Flash: gemini-3-flash-preview (most balanced model for speed, scale, and frontier intelligence)
+- ✅ Support model alias: gemini-3-flash
+- ✅ Gemini 3 Flash recommended per [Google Gemini docs](https://ai.google.dev/gemini-api/docs/models)
 
-**Subsection Tests**:
-- GeminiProvider implements LLMProvider interface
-- GeminiProvider.generate() calls Google Gemini API with correct parameters
-- GeminiProvider supports gemini-1.5-pro, gemini-1.5-flash models
-- GeminiProvider handles API timeout errors (retries 3 times with exponential backoff)
-- GeminiProvider handles rate limit errors (429) with Retry-After header
-- GeminiProvider handles authentication errors (401/403) without retry
-- GeminiProvider returns structured response with text, tokens_used, latency_ms
+**Implementation Notes:**
+- Implemented GeminiProvider following the same pattern as OpenAIProvider and AnthropicProvider
+- Uses Google Generative AI SDK's `GenerativeModel.generate_content()` API
+- Supports Gemini 3 Flash Preview model (gemini-3-flash-preview) - most balanced model
+- Supports retry logic with exponential backoff (1s, 2s, 4s) for timeouts and rate limits
+- Handles authentication errors without retry (immediate failure)
+- Returns structured LLMResponse with text, tokens_used (prompt + candidates), and latency_ms
+- Token usage calculated from response.usage_metadata.prompt_token_count + candidates_token_count
+- Note: `google.generativeai` package has deprecation warning (migrate to `google.genai` in future)
+
+**Subsection Tests** ✅:
+- ✅ GeminiProvider implements LLMProvider interface
+- ✅ GeminiProvider.generate() calls Google Gemini API with correct parameters
+- ✅ GeminiProvider supports gemini-3-flash-preview model
+- ✅ GeminiProvider supports gemini-3-flash alias
+- ✅ GeminiProvider handles API timeout errors (retries 3 times with exponential backoff)
+- ✅ GeminiProvider handles rate limit errors (429) with Retry-After header
+- ✅ GeminiProvider handles authentication errors (401/403) without retry
+- ✅ GeminiProvider returns structured response with text, tokens_used, latency_ms
+
+**Test Coverage** ✅:
+- **Subsection Tests**: ✅ 13 tests implemented and passing (2 interface + 3 initialization + 4 generate + 4 error handling)
+- **Test File**: ✅ `tests/unit/llm/test_gemini_provider.py`
 
 **5.0.5. Pydantic AI Implementation**
 

@@ -9,7 +9,14 @@ and structured outputs, but provides a provider abstraction for flexibility.
 """
 
 from src.llm.anthropic_provider import AnthropicProvider
+from src.llm.gemini_provider import GeminiProvider
 from src.llm.openai_provider import OpenAIProvider
 from src.llm.provider import LLMProvider, LLMResponse
 
-__all__ = ["LLMProvider", "LLMResponse", "OpenAIProvider", "AnthropicProvider"]
+__all__ = [
+    "LLMProvider",
+    "LLMResponse",
+    "OpenAIProvider",
+    "AnthropicProvider",
+    "GeminiProvider",
+]
