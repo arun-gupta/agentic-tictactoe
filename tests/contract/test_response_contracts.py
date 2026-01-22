@@ -15,9 +15,9 @@ pytestmark = pytest.mark.contract
 def test_new_game_response_deserializes_correctly(client: TestClient) -> None:
     """Test that POST /api/game/new response deserializes to NewGameResponse."""
     response = client.post("/api/game/new", json={})
-    
+
     assert response.status_code == 201, f"Expected 201, got {response.status_code}: {response.text}"
-    
+
     # Validate response deserializes to NewGameResponse
     try:
         new_game_response = NewGameResponse.model_validate(response.json())
@@ -32,9 +32,9 @@ def test_error_response_deserializes_correctly(client: TestClient) -> None:
     """Test that error responses deserialize to ErrorResponse."""
     # Request a non-existent game to get a 404 error
     response = client.get("/api/game/status?game_id=00000000-0000-0000-0000-000000000000")
-    
+
     assert response.status_code == 404, f"Expected 404, got {response.status_code}: {response.text}"
-    
+
     # Validate response deserializes to ErrorResponse
     try:
         error_response = ErrorResponse.model_validate(response.json())
@@ -50,9 +50,9 @@ def test_agent_status_deserializes_correctly(client: TestClient) -> None:
     """Test that GET /api/agents/{name}/status response deserializes to AgentStatus."""
     # Test with a valid agent name
     response = client.get("/api/agents/scout/status")
-    
+
     assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-    
+
     # Validate response deserializes to AgentStatus
     try:
         agent_status = AgentStatus.model_validate(response.json())
@@ -67,12 +67,12 @@ def test_game_status_response_deserializes_correctly(client: TestClient) -> None
     new_game_response = client.post("/api/game/new", json={})
     assert new_game_response.status_code == 201
     game_id = new_game_response.json()["game_id"]
-    
+
     # Then get game status
     response = client.get(f"/api/game/status?game_id={game_id}")
-    
+
     assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-    
+
     # Validate response deserializes to GameStatusResponse
     try:
         game_status_response = GameStatusResponse.model_validate(response.json())
@@ -85,9 +85,9 @@ def test_game_status_response_deserializes_correctly(client: TestClient) -> None
 def test_error_response_for_invalid_agent_name(client: TestClient) -> None:
     """Test that invalid agent name returns ErrorResponse."""
     response = client.get("/api/agents/invalid-agent/status")
-    
+
     assert response.status_code == 404, f"Expected 404, got {response.status_code}: {response.text}"
-    
+
     # Validate response deserializes to ErrorResponse
     try:
         error_response = ErrorResponse.model_validate(response.json())

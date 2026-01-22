@@ -215,7 +215,7 @@ tests/contract/pact/
 - Optional request bodies (e.g., `NewGameRequest | None`) can accept empty bodies, which is valid
 - Schemathesis's negative testing may flag some edge cases as violations when they're actually acceptable
 
-**Impact**: 
+**Impact**:
 - One test case may intermittently fail during property-based testing
 - This does not indicate an API bug - the API correctly rejects invalid data
 - All functional validation tests pass

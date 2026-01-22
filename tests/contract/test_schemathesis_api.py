@@ -26,10 +26,10 @@ schema = from_asgi("/openapi.json", app)
 @schema.parametrize()
 def test_api_contracts(case: schemathesis.Case) -> None:
     """Auto-generated contract test for all API endpoints.
-    
+
     Schemathesis generates test cases for all endpoints in the OpenAPI schema
     and validates that responses match the schema.
-    
+
     Known Limitation:
     Property-based testing may generate edge cases for endpoints with optional
     request bodies (e.g., POST /api/game/new, POST /api/game/move) that are flagged
@@ -40,7 +40,7 @@ def test_api_contracts(case: schemathesis.Case) -> None:
     # Skip test endpoints that are not part of the public API
     if case.operation.path.startswith("/test/"):
         pytest.skip("Skipping test endpoints")
-    
+
     # Make the request and validate response
     # Note: Some edge cases may fail due to property-based testing limitations
     # with optional request bodies. This is documented as a known limitation.
