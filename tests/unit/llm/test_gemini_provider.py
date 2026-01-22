@@ -117,10 +117,10 @@ class TestGeminiProviderGenerate:
 
     @patch("src.llm.gemini_provider.genai.GenerativeModel")
     @patch("src.llm.gemini_provider.genai.configure")
-    def test_generate_supports_gemini_3_flash_alias(
+    def test_generate_supports_configured_models(
         self, mock_configure: MagicMock, mock_generative_model: MagicMock
     ) -> None:
-        """Test that GeminiProvider supports gemini-3-flash alias."""
+        """Test that GeminiProvider supports all models configured in config.json."""
         mock_response = Mock()
         mock_response.text = "Response"
         mock_response.usage_metadata = Mock(prompt_token_count=10, candidates_token_count=10)
@@ -130,9 +130,13 @@ class TestGeminiProviderGenerate:
         mock_generative_model.return_value = mock_model
 
         provider = GeminiProvider(api_key="test-key")
-        response = provider.generate(prompt="Test", model="gemini-3-flash")
 
-        assert response.text == "Response"
+        # Test all models from config (config is single source of truth)
+        for model in provider.SUPPORTED_MODELS:
+            response = provider.generate(prompt="Test", model=model)
+            assert response.text == "Response"
+            # Verify API was called with correct model
+            mock_generative_model.assert_called_with(model)
 
     def test_generate_rejects_unsupported_model(self) -> None:
         """Test that generate() rejects unsupported models."""
@@ -380,7 +384,9 @@ class TestGeminiProviderErrorHandling:
         assert hasattr(provider, "_call_with_retry")
         assert callable(provider._call_with_retry)
 
-        # Verify SUPPORTED_MODELS includes Gemini 3 Flash
+        # Verify SUPPORTED_MODELS are loaded from config (config is single source of truth)
         provider = GeminiProvider(api_key="test-key")
+        # Models should come from config.json, not hardcoded
+        assert len(provider.SUPPORTED_MODELS) > 0, "No models configured in config.json"
+        # Verify at least one model is configured (exact model names come from config)
         assert "gemini-3-flash-preview" in provider.SUPPORTED_MODELS
-        assert "gemini-3-flash" in provider.SUPPORTED_MODELS
