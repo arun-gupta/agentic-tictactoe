@@ -1,16 +1,16 @@
 """Anthropic LLM provider implementation.
 
 This module implements the Anthropic provider using the Anthropic SDK directly.
-Supports models: claude-3-5-sonnet, claude-3-opus, claude-3-haiku
+Supported models are loaded from config file.
 """
 
-import os
 import time
 from typing import Any
 
 import anthropic
 from anthropic import Anthropic
 
+from src.config.llm_config import get_llm_config
 from src.llm.provider import LLMProvider, LLMResponse
 
 
@@ -19,29 +19,26 @@ class AnthropicProvider(LLMProvider):
 
     Uses the Anthropic SDK to make API calls. Supports retry logic and
     error handling for timeouts, rate limits, and authentication errors.
-    """
 
-    # Supported Anthropic models (Claude Haiku 4.5 - fastest model)
-    # See https://platform.claude.com/docs/en/about-claude/models/overview
-    SUPPORTED_MODELS = {
-        "claude-haiku-4-5-20251001",  # Fastest model with near-frontier intelligence
-        # Alias (automatically points to latest snapshot)
-        "claude-haiku-4-5",
-    }
+    Supported models are loaded from config file (config/config.json).
+    """
 
     def __init__(self, api_key: str | None = None) -> None:
         """Initialize Anthropic provider.
 
         Args:
-            api_key: Anthropic API key. If None, reads from ANTHROPIC_API_KEY env var.
+            api_key: Anthropic API key. If None, reads from .env file or ANTHROPIC_API_KEY env var.
+                    Priority: explicit api_key > .env file > environment variable.
         """
-        api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-        if not api_key:
-            raise ValueError(
-                "Anthropic API key is required. Set ANTHROPIC_API_KEY environment variable."
-            )
+        self._api_key = self._load_api_key(api_key, "ANTHROPIC_API_KEY", "Anthropic")
 
-        self.client = Anthropic(api_key=api_key)
+        self._client = Anthropic(api_key=self._api_key)
+        self._config = get_llm_config()
+
+    @property
+    def SUPPORTED_MODELS(self) -> set[str]:
+        """Get supported models from config."""
+        return self._config.get_supported_models("anthropic")
 
     def generate(
         self,
@@ -135,7 +132,7 @@ class AnthropicProvider(LLMProvider):
 
         for attempt in range(max_retries):
             try:
-                response = self.client.messages.create(
+                response = self._client.messages.create(
                     model=model,
                     max_tokens=max_tokens,
                     temperature=temperature,

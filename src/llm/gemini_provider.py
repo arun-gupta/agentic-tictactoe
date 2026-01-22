@@ -1,17 +1,17 @@
 """Google Gemini LLM provider implementation.
 
 This module implements the Gemini provider using the Google Generative AI SDK directly.
-Supports models: gemini-3-flash-preview (Gemini 3 Flash - most balanced model)
+Supported models are loaded from config file.
 Reference: https://ai.google.dev/gemini-api/docs/models
 """
 
-import os
 import time
 
 import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
 from google.generativeai.types import GenerateContentResponse
 
+from src.config.llm_config import get_llm_config
 from src.llm.provider import LLMProvider, LLMResponse
 
 
@@ -20,28 +20,26 @@ class GeminiProvider(LLMProvider):
 
     Uses the Google Generative AI SDK to make API calls. Supports retry logic and
     error handling for timeouts, rate limits, and authentication errors.
-    """
 
-    # Supported Gemini models (Gemini 3 Flash - most balanced model)
-    # See https://ai.google.dev/gemini-api/docs/models
-    SUPPORTED_MODELS = {
-        "gemini-3-flash-preview",  # Most balanced model built for speed, scale, and frontier intelligence
-        # Aliases
-        "gemini-3-flash",
-    }
+    Supported models are loaded from config file (config/config.json).
+    """
 
     def __init__(self, api_key: str | None = None) -> None:
         """Initialize Gemini provider.
 
         Args:
-            api_key: Google API key. If None, reads from GOOGLE_API_KEY env var.
+            api_key: Google API key. If None, reads from .env file or GOOGLE_API_KEY env var.
+                    Priority: explicit api_key > .env file > environment variable.
         """
-        api_key = api_key or os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            raise ValueError("Google API key is required. Set GOOGLE_API_KEY environment variable.")
+        self._api_key = self._load_api_key(api_key, "GOOGLE_API_KEY", "Google")
 
-        genai.configure(api_key=api_key)  # type: ignore[attr-defined]
-        self.api_key = api_key
+        genai.configure(api_key=self._api_key)  # type: ignore[attr-defined]
+        self._config = get_llm_config()
+
+    @property
+    def SUPPORTED_MODELS(self) -> set[str]:
+        """Get supported models from config."""
+        return self._config.get_supported_models("gemini")
 
     def generate(
         self,

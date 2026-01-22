@@ -1,16 +1,16 @@
 """OpenAI LLM provider implementation.
 
 This module implements the OpenAI provider using the OpenAI SDK directly.
-Supports models: gpt-4o, gpt-4o-mini, gpt-5-mini
+Supported models are loaded from config file.
 """
 
-import os
 import time
 from typing import Any
 
 import openai
 from openai import OpenAI
 
+from src.config.llm_config import get_llm_config
 from src.llm.provider import LLMProvider, LLMResponse
 
 
@@ -19,22 +19,26 @@ class OpenAIProvider(LLMProvider):
 
     Uses the OpenAI SDK to make API calls. Supports retry logic and
     error handling for timeouts, rate limits, and authentication errors.
-    """
 
-    # Supported OpenAI models
-    SUPPORTED_MODELS = {"gpt-4o", "gpt-4o-mini", "gpt-5-mini"}
+    Supported models are loaded from config file (config/config.json).
+    """
 
     def __init__(self, api_key: str | None = None) -> None:
         """Initialize OpenAI provider.
 
         Args:
-            api_key: OpenAI API key. If None, reads from OPENAI_API_KEY env var.
+            api_key: OpenAI API key. If None, reads from .env file or OPENAI_API_KEY env var.
+                    Priority: explicit api_key > .env file > environment variable.
         """
-        api_key = api_key or os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("OpenAI API key is required. Set OPENAI_API_KEY environment variable.")
+        self._api_key = self._load_api_key(api_key, "OPENAI_API_KEY", "OpenAI")
 
-        self.client = OpenAI(api_key=api_key)
+        self._client = OpenAI(api_key=self._api_key)
+        self._config = get_llm_config()
+
+    @property
+    def SUPPORTED_MODELS(self) -> set[str]:
+        """Get supported models from config."""
+        return self._config.get_supported_models("openai")
 
     def generate(
         self,
@@ -126,7 +130,7 @@ class OpenAIProvider(LLMProvider):
 
         for attempt in range(max_retries):
             try:
-                response = self.client.chat.completions.create(
+                response = self._client.chat.completions.create(
                     model=model,
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=max_tokens,
@@ -162,7 +166,7 @@ class OpenAIProvider(LLMProvider):
                     continue
                 raise
 
-            except (openai.AuthenticationError, openai.PermissionDeniedError) as e:
+            except (openai.AuthenticationError, openai.PermissionDeniedError):
                 # Authentication errors - don't retry
                 raise
 

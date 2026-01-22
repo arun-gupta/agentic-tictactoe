@@ -37,13 +37,13 @@ class TestAnthropicProviderInitialization:
     def test_initialization_with_api_key(self) -> None:
         """Test initialization with explicit API key."""
         provider = AnthropicProvider(api_key="test-key-123")
-        assert provider.client is not None
+        assert provider._client is not None
 
     def test_initialization_with_env_var(self) -> None:
         """Test initialization reads API key from environment variable."""
         with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "env-key-456"}):
             provider = AnthropicProvider()
-            assert provider.client is not None
+            assert provider._client is not None
 
     def test_initialization_fails_without_api_key(self) -> None:
         """Test initialization fails when no API key provided."""
@@ -219,6 +219,7 @@ class TestAnthropicProviderErrorHandling:
         assert callable(provider._call_with_retry)
 
         # Verify SUPPORTED_MODELS includes Claude Haiku 4.5
-        assert "claude-haiku-4-5-20251001" in AnthropicProvider.SUPPORTED_MODELS
+        provider = AnthropicProvider(api_key="test-key")
+        assert "claude-haiku-4-5-20251001" in provider.SUPPORTED_MODELS
         # Verify alias is also supported
-        assert "claude-haiku-4-5" in AnthropicProvider.SUPPORTED_MODELS
+        assert "claude-haiku-4-5" in provider.SUPPORTED_MODELS

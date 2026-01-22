@@ -12,6 +12,7 @@ from src.llm.anthropic_provider import AnthropicProvider
 from src.llm.gemini_provider import GeminiProvider
 from src.llm.openai_provider import OpenAIProvider
 from src.llm.provider import LLMProvider, LLMResponse
+from src.llm.pydantic_ai_agents import create_scout_agent, create_strategist_agent
 
 __all__ = [
     "LLMProvider",
@@ -19,4 +20,6 @@ __all__ = [
     "OpenAIProvider",
     "AnthropicProvider",
     "GeminiProvider",
+    "create_scout_agent",
+    "create_strategist_agent",
 ]

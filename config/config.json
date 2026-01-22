@@ -1,0 +1,15 @@
+{
+  "llm": {
+    "providers": {
+      "openai": {
+        "models": ["gpt-5.2"]
+      },
+      "anthropic": {
+        "models": ["claude-haiku-4-5-20251001", "claude-haiku-4-5"]
+      },
+      "gemini": {
+        "models": ["gemini-3-flash-preview", "gemini-3-flash"]
+      }
+    }
+  }
+}

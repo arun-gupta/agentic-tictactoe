@@ -8,6 +8,8 @@ ensuring a consistent interface regardless of the underlying provider
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from src.utils.env_loader import get_api_key
+
 
 @dataclass
 class LLMResponse:
@@ -30,6 +32,28 @@ class LLMProvider(ABC):
     All LLM providers must implement the generate() method to provide
     a consistent interface for LLM calls across different providers.
     """
+
+    def _load_api_key(self, api_key: str | None, env_key_name: str, provider_name: str) -> str:
+        """Load API key with priority: explicit > .env file > environment variable.
+
+        Args:
+            api_key: Explicitly provided API key (optional)
+            env_key_name: Name of the environment variable (e.g., "OPENAI_API_KEY")
+            provider_name: Name of the provider (e.g., "OpenAI") for error messages
+
+        Returns:
+            API key string
+
+        Raises:
+            ValueError: If API key is not found in any source
+        """
+        loaded_key = api_key or get_api_key(env_key_name)
+        if not loaded_key:
+            raise ValueError(
+                f"{provider_name} API key is required. Set {env_key_name} in .env file, "
+                "environment variable, or pass api_key parameter."
+            )
+        return loaded_key
 
     @abstractmethod
     def generate(

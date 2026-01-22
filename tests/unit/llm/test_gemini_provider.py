@@ -38,7 +38,7 @@ class TestGeminiProviderInitialization:
     def test_initialization_with_api_key(self, mock_configure: MagicMock) -> None:
         """Test initialization with explicit API key."""
         provider = GeminiProvider(api_key="test-key-123")
-        assert provider.api_key == "test-key-123"
+        assert provider._api_key == "test-key-123"
         mock_configure.assert_called_once_with(api_key="test-key-123")
 
     @patch("src.llm.gemini_provider.genai.configure")
@@ -46,7 +46,7 @@ class TestGeminiProviderInitialization:
         """Test initialization reads API key from environment variable."""
         with patch.dict(os.environ, {"GOOGLE_API_KEY": "env-key-456"}):
             provider = GeminiProvider()
-            assert provider.api_key == "env-key-456"
+            assert provider._api_key == "env-key-456"
             mock_configure.assert_called_once_with(api_key="env-key-456")
 
     def test_initialization_fails_without_api_key(self) -> None:
@@ -230,5 +230,6 @@ class TestGeminiProviderErrorHandling:
         assert callable(provider._call_with_retry)
 
         # Verify SUPPORTED_MODELS includes Gemini 3 Flash
-        assert "gemini-3-flash-preview" in GeminiProvider.SUPPORTED_MODELS
-        assert "gemini-3-flash" in GeminiProvider.SUPPORTED_MODELS
+        provider = GeminiProvider(api_key="test-key")
+        assert "gemini-3-flash-preview" in provider.SUPPORTED_MODELS
+        assert "gemini-3-flash" in provider.SUPPORTED_MODELS
