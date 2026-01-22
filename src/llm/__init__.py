@@ -8,7 +8,8 @@ The implementation uses Pydantic AI under the hood for type-safe agent definitio
 and structured outputs, but provides a provider abstraction for flexibility.
 """
 
+from src.llm.anthropic_provider import AnthropicProvider
 from src.llm.openai_provider import OpenAIProvider
 from src.llm.provider import LLMProvider, LLMResponse
 
-__all__ = ["LLMProvider", "LLMResponse", "OpenAIProvider"]
+__all__ = ["LLMProvider", "LLMResponse", "OpenAIProvider", "AnthropicProvider"]
