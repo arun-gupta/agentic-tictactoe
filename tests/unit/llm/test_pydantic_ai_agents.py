@@ -155,7 +155,8 @@ class TestPydanticAIScoutAgent:
 
         with pytest.raises(ValueError, match="No models configured"):
             create_strategist_agent(provider="openai")
-        mock_get_api_key.assert_called_once_with("ANTHROPIC_API_KEY")
+        # Should check for OPENAI_API_KEY when provider is openai
+        mock_get_api_key.assert_called_with("OPENAI_API_KEY")
 
     @patch("src.llm.pydantic_ai_agents.get_api_key")
     @patch("src.llm.pydantic_ai_agents.OpenAIModel")
