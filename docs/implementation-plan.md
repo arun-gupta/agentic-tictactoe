@@ -1597,7 +1597,7 @@ GOOGLE_API_KEY=...
 - `docker-compose.yml` (local development)
 - `docker-compose.prod.yml` (production)
 
-**8.0.1. Dockerfile Implementation**
+**6.0.1. Dockerfile Implementation**
 
 **Subsection Tests**:
 - Dockerfile exists and follows multi-stage build pattern
@@ -1676,7 +1676,7 @@ tests/
 .env.local
 ```
 
-**8.0.2. Docker Compose Configuration**
+**6.0.2. Docker Compose Configuration**
 
 **Subsection Tests**:
 - docker-compose.yml for local development exists and works
@@ -1773,7 +1773,7 @@ secrets:
 - `k8s/secrets.yaml`
 - `k8s/hpa.yaml` (Horizontal Pod Autoscaler)
 
-**8.1.1. Kubernetes Manifests**
+**6.1.1. Kubernetes Manifests**
 
 **Subsection Tests**:
 - Kubernetes manifests created (Deployment, Service, Ingress)
@@ -1898,7 +1898,7 @@ spec:
         averageUtilization: 80
 ```
 
-**8.1.2. Provider Switching Strategy**
+**6.1.2. Provider Switching Strategy**
 
 **Implementation:**
 - LLM provider selection via ConfigMap (environment variable)
@@ -1915,7 +1915,7 @@ spec:
 
 #### 6.2. CI/CD Integration
 
-**8.2.1. Docker Build in CI Pipeline**
+**6.2.1. Docker Build in CI Pipeline**
 
 **Update `.github/workflows/ci.yml`** to add Docker build verification:
 
@@ -1939,7 +1939,7 @@ spec:
         docker run --rm agentic-tictactoe:${{ github.sha }} python -c "import src; print('Import successful')"
 ```
 
-**8.2.2. Kubernetes Deployment Pipeline**
+**6.2.2. Kubernetes Deployment Pipeline**
 
 **Create `.github/workflows/deploy.yml`** for CD:
 
@@ -2034,7 +2034,7 @@ jobs:
 **Why Seventh**: After cloud native deployment (Phase 6), MCP enables:
 - **Distributed agent architecture**: Deploy agents as separate Kubernetes services
 - **Independent agent scaling**: Scale Scout, Strategist, and Executor independently
-- **Network-based agent communication**: Agents communicate via MCP protocol over HTTP/WebSocket
+- **Network-based agent communication**: Agents communicate via MCP protocol over HTTP
 - **Hot-swappable agents**: Replace or upgrade individual agents without affecting others
 
 **Prerequisites**: Phase 6 (Cloud Native Deployment) must be complete
@@ -2045,112 +2045,243 @@ jobs:
 
 #### 7.0. MCP Protocol Implementation
 
+**Spec Reference**: Section 15.2 - Mode 2: Distributed MCP
+
 **Files to Create:**
+- `src/mcp/protocol.py`
 - `src/mcp/client.py`
 - `src/mcp/server.py`
-- `src/mcp/protocol.py`
-- `tests/integration/test_mcp.py`
+- `tests/unit/mcp/test_protocol.py`
+- `tests/unit/mcp/test_client.py`
+- `tests/unit/mcp/test_server.py`
 
-**Implementation:**
-- MCP client for coordinator
-- MCP server wrappers for each agent
-- Protocol message definitions (JSON-RPC)
-- Transport layer (HTTP, WebSocket, or stdio)
+**Implementation Order:**
+
+**7.0.1. Protocol Message Definitions**
+- Define JSON-RPC message structures (request, response, error)
+- Implement message serialization/deserialization
+- Validate JSON-RPC protocol compliance
+- Error code definitions and handling
+
+**Subsection Tests**:
+- Protocol message definitions validate JSON-RPC structure
+- Request messages serialize to valid JSON-RPC format
+- Response messages serialize to valid JSON-RPC format
+- Error messages follow JSON-RPC error specification
+- Message deserialization handles invalid JSON gracefully
+
+**7.0.2. MCP Client Implementation**
+- Implement MCP client for coordinator
+- HTTP transport layer for client-server communication
+- Connection management (reconnection, timeouts)
+- Error handling and retry logic
 
 **Subsection Tests**:
 - MCP client implements protocol correctly (JSON-RPC message format)
 - MCP client serializes messages correctly (request/response)
 - MCP client handles connection errors gracefully
-- MCP server handles incoming requests correctly
-- MCP server formats responses according to protocol spec
-- Protocol message definitions validate JSON-RPC structure
-- Transport layer (HTTP) works correctly (client-server communication)
-- Transport layer (WebSocket) works correctly (if implemented)
-- Transport layer (stdio) works correctly (if implemented)
-- Protocol error handling returns appropriate error codes
 - Connection management handles reconnection on failure
 - Connection management handles connection timeouts
+- HTTP transport integrates with Kubernetes service discovery
+
+**7.0.3. MCP Server Implementation**
+- Implement MCP server wrappers for agents
+- HTTP endpoint handlers for MCP protocol
+- Request routing to agent methods
+- Response formatting according to protocol spec
+
+**Subsection Tests**:
+- MCP server handles incoming requests correctly
+- MCP server formats responses according to protocol spec
+- Server validates incoming JSON-RPC messages
+- Server returns appropriate error codes for invalid requests
+- Server handles concurrent requests correctly
 
 **Test Coverage**:
-- **Subsection Tests**: ~12 tests for Phase 7.0 incremental development
+- **Subsection Tests**: ~13 tests for Phase 7.0 incremental development (5 + 6 + 5)
 - **Acceptance Criteria**: MCP Protocol Implementation (Section 15.2 - Mode 2: Distributed MCP) - protocol compliance, message serialization, transport, error handling
-- **Test Files**: `tests/unit/mcp/test_client.py`, `tests/unit/mcp/test_server.py`, `tests/unit/mcp/test_protocol.py`
+- **Test Files**: `tests/unit/mcp/test_protocol.py`, `tests/unit/mcp/test_client.py`, `tests/unit/mcp/test_server.py`
 
 #### 7.1. Agent MCP Adaptation
 
-**Tasks:**
+**Spec Reference**: Section 15.2 - Mode 2: Distributed MCP
+
+**Files to Create:**
+- `src/mcp/agent_wrappers.py`
+- `src/agents/coordinator_mcp.py`
+- `tests/integration/test_mcp_agents.py`
+- `tests/integration/test_mcp_coordinator.py`
+
+**Implementation Order:**
+
+**7.1.1. Scout Agent MCP Wrapper**
 - Wrap Scout agent as MCP server
-- Wrap Strategist agent as MCP server
-- Wrap Executor agent as MCP server
-- Coordinator communicates via MCP protocol
+- Expose `analyze()` method as MCP tool
+- Map MCP requests to Scout agent interface
+- Return `BoardAnalysis` via MCP protocol
 
 **Subsection Tests**:
 - Scout agent MCP server exposes analyze() method as MCP tool
 - Scout agent MCP server handles analyze requests correctly
+- Scout agent MCP server validates input parameters (GameState)
+- Scout agent MCP server returns BoardAnalysis in correct format
+- Agent behavior is consistent between local mode and MCP mode (same outputs for same inputs)
+
+**7.1.2. Strategist Agent MCP Wrapper**
+- Wrap Strategist agent as MCP server
+- Expose `plan()` method as MCP tool
+- Map MCP requests to Strategist agent interface
+- Return `Strategy` via MCP protocol
+
+**Subsection Tests**:
 - Strategist agent MCP server exposes plan() method as MCP tool
 - Strategist agent MCP server handles plan requests correctly
+- Strategist agent MCP server validates input parameters (BoardAnalysis)
+- Strategist agent MCP server returns Strategy in correct format
+- Agent behavior is consistent between local mode and MCP mode (same outputs for same inputs)
+
+**7.1.3. Executor Agent MCP Wrapper**
+- Wrap Executor agent as MCP server
+- Expose `execute()` method as MCP tool
+- Map MCP requests to Executor agent interface
+- Return `MoveExecution` via MCP protocol
+
+**Subsection Tests**:
 - Executor agent MCP server exposes execute() method as MCP tool
 - Executor agent MCP server handles execute requests correctly
+- Executor agent MCP server validates input parameters (Strategy, GameState)
+- Executor agent MCP server returns MoveExecution in correct format
+- Agent behavior is consistent between local mode and MCP mode (same outputs for same inputs)
+
+**7.1.4. Coordinator MCP Integration**
+- Update coordinator to use MCP client for agent communication
+- Implement pipeline execution via MCP protocol
+- Handle MCP errors and timeouts consistently with local mode
+- Maintain same pipeline flow (Scout → Strategist → Executor)
+
+**Subsection Tests**:
 - Coordinator MCP client can communicate with Scout MCP server
 - Coordinator MCP client can communicate with Strategist MCP server
 - Coordinator MCP client can communicate with Executor MCP server
-- Agent behavior is consistent between local mode and MCP mode (same outputs for same inputs)
 - Distributed agent coordination works correctly (pipeline executes via MCP)
 - MCP agents handle errors and timeouts consistently with local agents
+- Pipeline maintains correct order (Scout → Strategist → Executor) in MCP mode
 
 **Test Coverage**:
-- **Subsection Tests**: ~12 tests for Phase 7.1 incremental development
+- **Subsection Tests**: ~17 tests for Phase 7.1 incremental development (5 + 5 + 5 + 6)
 - **Acceptance Criteria**: Agent MCP Adaptation (Section 15.2) - tool exposure, request handling, behavior consistency, coordination
 - **Test Files**: `tests/integration/test_mcp_agents.py`, `tests/integration/test_mcp_coordinator.py`
 
 #### 7.2. Mode Switching
 
-**Implementation:**
+**Spec Reference**: Section 15 - Agent Mode Architecture
+
+**Files to Create:**
+- `src/agents/factory.py`
+- `src/config/agent_mode.py`
+- `tests/integration/test_mode_switching.py`
+- `tests/integration/test_mcp_fallback.py`
+
+**Implementation Order:**
+
+**7.2.1. Configuration and Factory Pattern**
 - Configuration: `AGENT_MODE=local` or `AGENT_MODE=mcp`
 - Factory pattern to create local or MCP agents
-- Same interface regardless of mode
-- Runtime mode switching (optional)
+- Same interface regardless of mode (BaseAgent)
+- Agent factory selects correct implementation based on configuration
 
 **Subsection Tests**:
 - Configuration `AGENT_MODE=local` creates local agents (Scout, Strategist, Executor)
 - Configuration `AGENT_MODE=mcp` creates MCP client agents
 - Factory pattern creates correct agent type based on configuration
 - Local agents and MCP agents implement same interface (BaseAgent)
-- Runtime mode switching works (if implemented, agents can switch modes without restart)
+- Factory handles invalid configuration values gracefully
+
+**7.2.2. Fallback Strategy**
+- Fallback from MCP to local mode on connection failure
+- Fallback from MCP to local mode on timeout
+- Fallback error handling and logging
+- Preserve game state during fallback
+
+**Subsection Tests**:
 - Fallback from MCP to local mode triggers on MCP connection failure
 - Fallback from MCP to local mode triggers on MCP timeout
-- Mode switching error handling returns appropriate error messages
+- Fallback preserves game state (agents continue with same game state)
+- Fallback logs mode change events
+- Fallback error handling returns appropriate error messages
+
+**7.2.3. Runtime Mode Switching (Optional)**
+- Runtime mode switching without restart (if implemented)
+- Mode switching preserves game state
+- Mode switching error handling
+
+**Subsection Tests**:
+- Runtime mode switching works (if implemented, agents can switch modes without restart)
 - Mode switching preserves game state (agents continue with same game state)
 - Mode switching logs mode change events
+- Mode switching error handling returns appropriate error messages
 
 **Test Coverage**:
-- **Subsection Tests**: ~10 tests for Phase 7.2 incremental development
+- **Subsection Tests**: ~12 tests for Phase 7.2 incremental development (5 + 5 + 4)
 - **Acceptance Criteria**: Mode Switching (Section 15 - Agent Mode Architecture) - configuration-based selection, factory pattern, interface consistency, fallback, error handling
 - **Test Files**: `tests/integration/test_mode_switching.py`, `tests/integration/test_mcp_fallback.py`
 
 #### 7.3. Kubernetes Deployment for MCP Agents
 
-**Implementation:**
+**Spec Reference**: Section 10.2 - Production Deployment, Section 15.2 - Mode 2: Distributed MCP
+
+**Files to Create:**
+- `k8s/mcp-agents/scout-deployment.yaml`
+- `k8s/mcp-agents/strategist-deployment.yaml`
+- `k8s/mcp-agents/executor-deployment.yaml`
+- `k8s/mcp-agents/scout-service.yaml`
+- `k8s/mcp-agents/strategist-service.yaml`
+- `k8s/mcp-agents/executor-service.yaml`
+- `k8s/mcp-agents/scout-hpa.yaml`
+- `k8s/mcp-agents/strategist-hpa.yaml`
+- `k8s/mcp-agents/executor-hpa.yaml`
+- `tests/integration/test_mcp_kubernetes.py`
+
+**Implementation Order:**
+
+**7.3.1. Agent Service Deployment**
 - Deploy Scout, Strategist, and Executor as separate Kubernetes services
 - Each agent runs as independent pod with MCP server endpoint
-- Coordinator pod connects to agent services via MCP protocol
-- Independent scaling per agent (HorizontalPodAutoscaler for each agent service)
+- Agent services expose MCP endpoints on standard ports
 - Service discovery via Kubernetes DNS
 
 **Subsection Tests**:
 - Scout agent deployed as separate Kubernetes service (scout-service)
 - Strategist agent deployed as separate Kubernetes service (strategist-service)
 - Executor agent deployed as separate Kubernetes service (executor-service)
-- Coordinator connects to agent services via MCP over HTTP
 - Agent services expose MCP endpoints on standard ports
 - Service discovery works via Kubernetes DNS (scout-service.default.svc.cluster.local)
+
+**7.3.2. Coordinator Integration**
+- Coordinator pod connects to agent services via MCP protocol
+- Coordinator uses Kubernetes service discovery for agent endpoints
+- Coordinator handles agent service unavailability gracefully
+
+**Subsection Tests**:
+- Coordinator connects to agent services via MCP over HTTP
+- Coordinator resolves agent services via Kubernetes DNS
+- Coordinator handles agent service unavailability gracefully
+- Coordinator reconnects when agent services become available
+
+**7.3.3. Scaling and Load Balancing**
+- Independent scaling per agent (HorizontalPodAutoscaler for each agent service)
+- Load balancing across multiple agent pods
+- Agent pod restarts don't affect coordinator
+
+**Subsection Tests**:
 - Independent scaling works (can scale Scout without affecting Strategist)
 - Agent services handle multiple concurrent MCP requests
 - Load balancing works when multiple agent pods are running
 - Agent pod restarts don't affect coordinator (reconnection handled)
+- HorizontalPodAutoscaler scales agents based on CPU/memory metrics
 
 **Test Coverage**:
-- **Subsection Tests**: ~10 tests for Phase 7.3 incremental development
+- **Subsection Tests**: ~13 tests for Phase 7.3 incremental development (5 + 4 + 5)
 - **Test Files**: `tests/integration/test_mcp_kubernetes.py`, `k8s/mcp-agents/` manifests
 
 **Phase 7 Deliverables:**
@@ -2612,21 +2743,33 @@ jobs:
 
 **Duration**: 3-4 days
 
-**Goal**: Comprehensive testing across all layers
+**Goal**: System-level testing, performance validation, and resilience testing across all layers
+
+**Why Ninth**: While TDD has been used throughout all phases (unit and integration tests written alongside features), Phase 9 focuses on:
+- **System-level testing**: End-to-end scenarios that span multiple components
+- **Non-functional requirements**: Performance, resilience, and scalability testing
+- **Cross-cutting concerns**: Tests that require the full system to be implemented
+- **Coverage audit**: Final review to ensure all acceptance criteria are covered and no gaps exist
+
+**Note**: This phase does NOT replace TDD from previous phases. Instead, it adds system-level and non-functional testing that can only be done after all features are implemented.
 
 **Spec Reference**: Section 11 - Testing Strategy
 
-#### 9.0. Unit Test Coverage
+#### 9.0. Coverage Audit and Gap Analysis
 
 **Target**: 100% coverage for domain models and game engine, 80%+ overall
 
+**Purpose**: While TDD ensured tests were written during development, this phase audits coverage to identify any gaps or edge cases missed during feature implementation.
+
 **Tasks:**
 - Review all unit tests from Phases 1-8
-- Fill coverage gaps
-- Ensure all acceptance criteria have corresponding tests
-- Generate coverage report: `pytest --cov=src --cov-report=html`
+- Generate comprehensive coverage report: `pytest --cov=src --cov-report=html`
+- Identify coverage gaps (if any)
+- Fill any missing edge cases or error paths
+- Verify all acceptance criteria have corresponding tests
+- Document coverage metrics
 
-**Deliverable**: Coverage report showing ≥80% overall, 100% for critical paths
+**Deliverable**: Coverage report showing ≥80% overall, 100% for critical paths, with gap analysis
 
 **Subsection Tests**:
 - Coverage report generated with pytest --cov=src --cov-report=html
@@ -2637,17 +2780,20 @@ jobs:
 - Coverage gaps identified and filled
 - Coverage report accessible in htmlcov/index.html
 
-#### 9.1. Integration Tests
+#### 9.1. System Integration Tests
+
+**Purpose**: While integration tests were written during feature development (e.g., Phase 4 API tests), this phase adds **system-level integration tests** that verify the complete system working together end-to-end.
 
 **Files to Create:**
 - `tests/integration/test_full_pipeline.py`
 - `tests/integration/test_api_integration.py`
 
 **Test Scenarios:**
-- Complete game flow: Player move → AI move → repeat until win/draw
-- Agent pipeline with all three agents
-- API endpoints with real game engine and agents
-- Error handling across layers
+- Complete game flow: Player move → AI move → repeat until win/draw (full system)
+- Agent pipeline with all three agents (Scout → Strategist → Executor) with real LLM integration
+- API endpoints with real game engine, agents, and LLM providers
+- Error handling across layers (API → Agent → Engine → LLM)
+- Cross-component state consistency
 
 **Subsection Tests**:
 - test_full_pipeline.py tests complete game flow (player move → AI move → repeat until win/draw)
@@ -2659,16 +2805,18 @@ jobs:
 
 #### 9.2. End-to-End Tests
 
+**Purpose**: E2E tests verify complete user workflows from UI through API to agents. These require the full system (including UI from Phase 8) to be implemented.
+
 **Files to Create:**
 - `tests/e2e/test_game_scenarios.py`
 
 **Test Scenarios:**
-- Player wins scenario
-- AI wins scenario
-- Draw scenario
-- Player makes invalid move
-- Agent timeout triggers fallback
-- LLM provider failure
+- Player wins scenario (complete game from UI to API to agents)
+- AI wins scenario (complete game with AI making winning moves)
+- Draw scenario (complete game ending in draw)
+- Player makes invalid move (error handling from UI to API)
+- Agent timeout triggers fallback (system behavior under timeout conditions)
+- LLM provider failure (system behavior when LLM is unavailable)
 
 **Subsection Tests**:
 - E2E test: Player wins scenario (player makes winning moves, AI responds, game ends with player win)
@@ -2680,15 +2828,21 @@ jobs:
 
 #### 9.3. Performance Tests
 
+**Purpose**: Performance tests validate non-functional requirements that can only be measured with the complete system running. These are separate from functional TDD tests.
+
 **Spec Reference**: Section 15 - Performance Optimization
 
 **Files to Create:**
 - `tests/performance/test_agent_timeout.py`
+- `tests/performance/test_api_latency.py`
+- `tests/performance/test_ui_responsiveness.py`
 
 **Requirements:**
 - Agent pipeline completes within 15s (Section 3.6)
 - UI updates within 100ms of state change (AC-US023.3)
 - Agent status updates within 500ms (AC-US023.4)
+- API response times meet SLA requirements
+- System handles concurrent users without degradation
 
 **Subsection Tests**:
 - Performance test: Agent pipeline completes within 15s (measure end-to-end pipeline execution time)
@@ -2699,14 +2853,17 @@ jobs:
 
 #### 9.4. Resilience Tests
 
+**Purpose**: Resilience tests verify system behavior under failure conditions. While error handling was tested during TDD, these tests verify the system's ability to recover and continue operating under various failure scenarios.
+
 **Spec Reference**: Section 12 - Error Handling and Resilience
 
 **Test Scenarios:**
-- Network timeout
-- LLM API failure
-- Invalid API responses
-- Concurrent API requests
-- Agent crash and recovery
+- Network timeout (system behavior when network is slow/unavailable)
+- LLM API failure (fallback mechanisms when LLM providers fail)
+- Invalid API responses (malformed data handling)
+- Concurrent API requests (race conditions, state consistency)
+- Agent crash and recovery (system continues when agents fail)
+- Resource exhaustion (memory, CPU limits)
 
 **Subsection Tests**:
 - Resilience test: Network timeout (simulate network delay, verify timeout handling and fallback)
