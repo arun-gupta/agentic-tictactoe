@@ -78,6 +78,7 @@ class TestPydanticAIScoutAgent:
     @patch("src.llm.pydantic_ai_agents.get_api_key")
     @patch("src.llm.pydantic_ai_agents.AnthropicModel")
     @patch("src.llm.pydantic_ai_agents.get_llm_config")
+    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "existing-key"}, clear=False)
     def test_create_scout_agent_with_anthropic(
         self, mock_config: MagicMock, mock_anthropic_model: MagicMock, mock_get_api_key: MagicMock
     ) -> None:
@@ -90,18 +91,20 @@ class TestPydanticAIScoutAgent:
         mock_model_instance = MagicMock()
         mock_anthropic_model.return_value = mock_model_instance
 
-        # Create agent
+        # Create agent - should update env var since it differs
         agent = create_scout_agent(provider="anthropic", model="claude-haiku-4-5-20251001")
 
         # Verify
         assert agent is not None
         assert agent.output_type == BoardAnalysis
         mock_anthropic_model.assert_called_once_with("claude-haiku-4-5-20251001")
-        mock_get_api_key.assert_called_once_with("ANTHROPIC_API_KEY")
+        # Verify environment variable was updated
+        assert os.environ.get("ANTHROPIC_API_KEY") == "test-anthropic-key"
 
     @patch("src.llm.pydantic_ai_agents.get_api_key")
     @patch("src.llm.pydantic_ai_agents.GoogleModel")
     @patch("src.llm.pydantic_ai_agents.get_llm_config")
+    @patch.dict("os.environ", {}, clear=True)
     def test_create_scout_agent_with_gemini(
         self, mock_config: MagicMock, mock_google_model: MagicMock, mock_get_api_key: MagicMock
     ) -> None:
@@ -121,7 +124,38 @@ class TestPydanticAIScoutAgent:
         assert agent is not None
         assert agent.output_type == BoardAnalysis
         mock_google_model.assert_called_once_with("gemini-3-flash-preview")
-        mock_get_api_key.assert_called_once_with("GOOGLE_API_KEY")
+        # Verify environment variable was set
+        assert os.environ.get("GOOGLE_API_KEY") == "test-google-key"
+
+    @patch("src.llm.pydantic_ai_agents.get_api_key")
+    @patch("src.llm.pydantic_ai_agents.get_llm_config")
+    def test_create_scout_agent_handles_no_models_configured(
+        self, mock_config: MagicMock, mock_get_api_key: MagicMock
+    ) -> None:
+        """Test that create_scout_agent raises error when no models configured."""
+        mock_config_instance = MagicMock()
+        mock_config_instance.get_supported_models.return_value = set()  # Empty set
+        mock_config.return_value = mock_config_instance
+
+        with pytest.raises(ValueError, match="No models configured"):
+            create_scout_agent(provider="openai")
+
+    @patch("src.llm.pydantic_ai_agents.get_api_key")
+    @patch("src.llm.pydantic_ai_agents.get_llm_config")
+    def test_create_strategist_agent_handles_no_models_configured(
+        self, mock_config: MagicMock, mock_get_api_key: MagicMock
+    ) -> None:
+        """Test that create_strategist_agent raises error when no models configured."""
+        mock_config_instance = MagicMock()
+        # Return empty set when getting models for openai
+        mock_config_instance.get_supported_models.return_value = set()
+        mock_config.return_value = mock_config_instance
+        # API key exists but no models
+        mock_get_api_key.return_value = "test-key"
+
+        with pytest.raises(ValueError, match="No models configured"):
+            create_strategist_agent(provider="openai")
+        mock_get_api_key.assert_called_once_with("ANTHROPIC_API_KEY")
 
     @patch("src.llm.pydantic_ai_agents.get_api_key")
     @patch("src.llm.pydantic_ai_agents.OpenAIModel")

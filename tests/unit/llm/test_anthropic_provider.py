@@ -197,6 +197,104 @@ class TestAnthropicProviderErrorHandling:
         assert mock_client.messages.create.call_count == 1
 
     @patch("src.llm.anthropic_provider.Anthropic")
+    @patch("src.llm.anthropic_provider.time.sleep")
+    def test_handles_rate_limit_with_retry_after_header(
+        self, mock_sleep: MagicMock, mock_anthropic_class: MagicMock
+    ) -> None:
+        """Test that AnthropicProvider handles rate limit with Retry-After header."""
+        mock_client = Mock()
+        # Create mock response with Retry-After header
+        mock_response = Mock()
+        mock_response.headers = {"Retry-After": "3"}
+        rate_limit_error = anthropic.RateLimitError(
+            message="Rate limit exceeded", response=mock_response, body=None
+        )
+
+        # First call fails with rate limit, second succeeds
+        mock_client.messages.create.side_effect = [
+            rate_limit_error,
+            Mock(
+                content=[Mock(text="Success")],
+                usage=Mock(input_tokens=10, output_tokens=10),
+            ),
+        ]
+        mock_anthropic_class.return_value = mock_client
+
+        provider = AnthropicProvider(api_key="test-key")
+        response = provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+
+        assert response.text == "Success"
+        # Should wait 3 seconds (from Retry-After header) before retry
+        mock_sleep.assert_called_with(3.0)
+
+    @patch("src.llm.anthropic_provider.Anthropic")
+    @patch("src.llm.anthropic_provider.time.sleep")
+    def test_handles_other_api_errors_with_retry(
+        self, mock_sleep: MagicMock, mock_anthropic_class: MagicMock
+    ) -> None:
+        """Test that AnthropicProvider handles other API errors with retry."""
+        mock_client = Mock()
+        # Create a mock APIError (not using real constructor to avoid parameter issues)
+        api_error = Mock(spec=anthropic.APIError)
+        api_error.__class__ = anthropic.APIError
+
+        # First call fails, second succeeds
+        mock_client.messages.create.side_effect = [
+            api_error,
+            Mock(
+                content=[Mock(text="Success")],
+                usage=Mock(input_tokens=10, output_tokens=10),
+            ),
+        ]
+        mock_anthropic_class.return_value = mock_client
+
+        provider = AnthropicProvider(api_key="test-key")
+        response = provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+
+        assert response.text == "Success"
+        assert mock_client.messages.create.call_count == 2
+        mock_sleep.assert_called_once_with(1)  # Exponential backoff: 2^0 = 1
+
+    @patch("src.llm.anthropic_provider.Anthropic")
+    def test_handles_permission_denied_without_retry(self, mock_anthropic_class: MagicMock) -> None:
+        """Test that AnthropicProvider handles permission denied errors without retry."""
+        mock_client = Mock()
+        perm_error = Mock(spec=anthropic.PermissionDeniedError)
+        mock_client.messages.create.side_effect = perm_error
+        mock_anthropic_class.return_value = mock_client
+
+        provider = AnthropicProvider(api_key="test-key")
+        with pytest.raises(RuntimeError):
+            provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+
+        # Should not retry on permission errors
+        assert mock_client.messages.create.call_count == 1
+
+    @patch("src.llm.anthropic_provider.Anthropic")
+    def test_handles_api_error_exception_path(self, mock_anthropic_class: MagicMock) -> None:
+        """Test that AnthropicProvider handles APIError exception path."""
+        mock_client = Mock()
+        # Create a real APIError using the proper constructor
+        api_error = anthropic.APIError(message="API error", request=Mock(), body=None)
+        mock_client.messages.create.side_effect = api_error
+        mock_anthropic_class.return_value = mock_client
+
+        provider = AnthropicProvider(api_key="test-key")
+        with pytest.raises(RuntimeError, match="Anthropic API error"):
+            provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+
+    @patch("src.llm.anthropic_provider.Anthropic")
+    def test_handles_unexpected_exception_path(self, mock_anthropic_class: MagicMock) -> None:
+        """Test that AnthropicProvider handles unexpected exceptions."""
+        mock_client = Mock()
+        mock_client.messages.create.side_effect = ValueError("Unexpected error")
+        mock_anthropic_class.return_value = mock_client
+
+        provider = AnthropicProvider(api_key="test-key")
+        with pytest.raises(RuntimeError, match="Unexpected error"):
+            provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+
+    @patch("src.llm.anthropic_provider.Anthropic")
     def test_returns_structured_response(self, mock_anthropic_class: MagicMock) -> None:
         """Test that AnthropicProvider returns structured response with text, tokens_used, latency_ms."""
         mock_response = Mock()

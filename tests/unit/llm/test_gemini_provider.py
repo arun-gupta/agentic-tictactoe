@@ -5,7 +5,7 @@ supports Gemini 3 Flash model, and handles errors appropriately.
 """
 
 import os
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, PropertyMock, patch
 
 import google.api_core.exceptions as google_exceptions
 import pytest
@@ -202,6 +202,143 @@ class TestGeminiProviderErrorHandling:
 
         # Should not retry on auth errors
         assert mock_model.generate_content.call_count == 1
+
+    @patch("src.llm.gemini_provider.genai.GenerativeModel")
+    @patch("src.llm.gemini_provider.genai.configure")
+    @patch("src.llm.gemini_provider.time.sleep")
+    def test_handles_rate_limit_with_retry_after_header(
+        self,
+        mock_sleep: MagicMock,
+        mock_configure: MagicMock,
+        mock_generative_model: MagicMock,
+    ) -> None:
+        """Test that GeminiProvider handles rate limit with Retry-After header."""
+        mock_model = Mock()
+        mock_response_obj = Mock()
+        mock_response_obj.headers = {"Retry-After": "4"}
+        rate_limit_error = google_exceptions.ResourceExhausted(
+            message="Rate limit exceeded", response=mock_response_obj
+        )
+
+        # First call fails with rate limit, second succeeds
+        mock_model.generate_content.side_effect = [
+            rate_limit_error,
+            Mock(
+                text="Success",
+                usage_metadata=Mock(prompt_token_count=10, candidates_token_count=10),
+            ),
+        ]
+        mock_generative_model.return_value = mock_model
+
+        provider = GeminiProvider(api_key="test-key")
+        response = provider.generate(prompt="Test", model="gemini-3-flash-preview")
+
+        assert response.text == "Success"
+        # Should wait 4 seconds (from Retry-After header) before retry
+        mock_sleep.assert_called_with(4.0)
+
+    @patch("src.llm.gemini_provider.genai.GenerativeModel")
+    @patch("src.llm.gemini_provider.genai.configure")
+    @patch("src.llm.gemini_provider.time.sleep")
+    def test_handles_other_api_errors_with_retry(
+        self,
+        mock_sleep: MagicMock,
+        mock_configure: MagicMock,
+        mock_generative_model: MagicMock,
+    ) -> None:
+        """Test that GeminiProvider handles other API errors with retry."""
+        mock_model = Mock()
+        api_error = google_exceptions.GoogleAPIError("Internal server error")
+
+        # First call fails, second succeeds
+        mock_model.generate_content.side_effect = [
+            api_error,
+            Mock(
+                text="Success",
+                usage_metadata=Mock(prompt_token_count=10, candidates_token_count=10),
+            ),
+        ]
+        mock_generative_model.return_value = mock_model
+
+        provider = GeminiProvider(api_key="test-key")
+        response = provider.generate(prompt="Test", model="gemini-3-flash-preview")
+
+        assert response.text == "Success"
+        assert mock_model.generate_content.call_count == 2
+        mock_sleep.assert_called_once_with(1)  # Exponential backoff: 2^0 = 1
+
+    @patch("src.llm.gemini_provider.genai.GenerativeModel")
+    @patch("src.llm.gemini_provider.genai.configure")
+    def test_handles_permission_denied_without_retry(
+        self, mock_configure: MagicMock, mock_generative_model: MagicMock
+    ) -> None:
+        """Test that GeminiProvider handles permission denied errors without retry."""
+        mock_model = Mock()
+        perm_error = google_exceptions.PermissionDenied("Permission denied")
+        mock_model.generate_content.side_effect = perm_error
+        mock_generative_model.return_value = mock_model
+
+        provider = GeminiProvider(api_key="test-key")
+        with pytest.raises(RuntimeError):
+            provider.generate(prompt="Test", model="gemini-3-flash-preview")
+
+        # Should not retry on permission errors
+        assert mock_model.generate_content.call_count == 1
+
+    @patch("src.llm.gemini_provider.genai.GenerativeModel")
+    @patch("src.llm.gemini_provider.genai.configure")
+    def test_handles_fallback_token_usage_calculation(
+        self, mock_configure: MagicMock, mock_generative_model: MagicMock
+    ) -> None:
+        """Test that GeminiProvider handles fallback token usage calculation."""
+        mock_model = Mock()
+        # Mock response with usage (not usage_metadata)
+        # Use getattr to return actual integers, not Mocks
+        mock_usage = Mock()
+        type(mock_usage).prompt_token_count = PropertyMock(return_value=5)
+        type(mock_usage).candidates_token_count = PropertyMock(return_value=5)
+        mock_response = Mock()
+        mock_response.text = "Response"
+        mock_response.usage = mock_usage
+        # Make sure response doesn't have usage_metadata
+        del mock_response.usage_metadata
+        mock_model.generate_content.return_value = mock_response
+        mock_generative_model.return_value = mock_model
+
+        provider = GeminiProvider(api_key="test-key")
+        response = provider.generate(prompt="Test", model="gemini-3-flash-preview")
+
+        assert response.text == "Response"
+        assert response.tokens_used == 10
+
+    @patch("src.llm.gemini_provider.genai.GenerativeModel")
+    @patch("src.llm.gemini_provider.genai.configure")
+    def test_handles_api_error_exception_path(
+        self, mock_configure: MagicMock, mock_generative_model: MagicMock
+    ) -> None:
+        """Test that GeminiProvider handles GoogleAPIError exception path."""
+        mock_model = Mock()
+        api_error = google_exceptions.GoogleAPIError("API error")
+        mock_model.generate_content.side_effect = api_error
+        mock_generative_model.return_value = mock_model
+
+        provider = GeminiProvider(api_key="test-key")
+        with pytest.raises(RuntimeError, match="Google Gemini API error"):
+            provider.generate(prompt="Test", model="gemini-3-flash-preview")
+
+    @patch("src.llm.gemini_provider.genai.GenerativeModel")
+    @patch("src.llm.gemini_provider.genai.configure")
+    def test_handles_unexpected_exception_path(
+        self, mock_configure: MagicMock, mock_generative_model: MagicMock
+    ) -> None:
+        """Test that GeminiProvider handles unexpected exceptions."""
+        mock_model = Mock()
+        mock_model.generate_content.side_effect = ValueError("Unexpected error")
+        mock_generative_model.return_value = mock_model
+
+        provider = GeminiProvider(api_key="test-key")
+        with pytest.raises(RuntimeError, match="Unexpected error"):
+            provider.generate(prompt="Test", model="gemini-3-flash-preview")
 
     @patch("src.llm.gemini_provider.genai.GenerativeModel")
     @patch("src.llm.gemini_provider.genai.configure")
