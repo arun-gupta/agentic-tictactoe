@@ -14,7 +14,7 @@ Phase 4.2.1: New Game Models
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, ValidationInfo, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
 from src.domain.agent_models import MoveExecution
 from src.domain.models import GameState, PlayerSymbol, Position
@@ -33,6 +33,8 @@ class MoveRequest(BaseModel):
     Raises:
         ValueError: If row or col is not in range 0-2 (error code: E_MOVE_OUT_OF_BOUNDS)
     """
+
+    model_config = ConfigDict(extra="forbid")  # Reject extra fields for strict validation
 
     game_id: str = Field(..., description="Unique game identifier (UUID v4)")
     row: int = Field(..., description="Row index (0-2) - validated in endpoint")
@@ -124,6 +126,8 @@ class NewGameRequest(BaseModel):
         player_symbol: Optional player symbol preference ('X' or 'O'). Defaults to 'X' if not specified.
     """
 
+    model_config = ConfigDict(extra="forbid")  # Reject extra fields for strict validation
+
     player_symbol: PlayerSymbol | None = Field(
         default=None,
         description="Player symbol preference ('X' or 'O'). Defaults to 'X' if not specified.",
@@ -150,6 +154,8 @@ class ResetGameRequest(BaseModel):
     Attributes:
         game_id: Unique game identifier (UUID v4) for the game to reset
     """
+
+    model_config = ConfigDict(extra="forbid")  # Reject extra fields for strict validation
 
     game_id: str = Field(..., description="Unique game identifier (UUID v4)")
 

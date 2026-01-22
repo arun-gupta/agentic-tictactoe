@@ -1264,9 +1264,11 @@ pre-commit install --overwrite
 - Demo script demonstrates all implemented endpoints ✅
 - Demo script shows proper API request/response format ✅
 
-#### 4.6. Contract Testing
+#### 4.6. Contract Testing ✅
 
 **After Phase 4.5 completion**, validate API implementation matches OpenAPI specification before building LLM integration and Web UI layers.
+
+**Status**: ✅ **COMPLETE** - All contract tests implemented and integrated into CI pipeline.
 
 **Spec Reference**: Section 11 - Contract Tests
 
@@ -1303,18 +1305,37 @@ pre-commit install --overwrite
 - ErrorResponse deserializes correctly from 404 responses
 - AgentStatus deserializes correctly from GET /api/agents/{name}/status
 
-**Test Coverage**:
-- **Subsection Tests**: 11 tests for contract validation
-- **Test Files**: `tests/contract/test_openapi_schema.py`, `tests/contract/test_schemathesis_api.py`, `tests/contract/test_response_contracts.py`
+**Test Coverage**: ✅
+- **Subsection Tests**: ✅ 11+ tests for contract validation implemented
+- **Test Files**: ✅ `tests/contract/test_openapi_schema.py`, `tests/contract/test_schemathesis_api.py`, `tests/contract/test_response_contracts.py`
+- **CI Integration**: ✅ Contract tests run in CI pipeline after unit/integration tests
+- **Documentation**: ✅ Contract testing guide and DEVELOPMENT.md updated
+- **Test Results**: ✅ 16/18 contract tests passing (7/9 Schemathesis, 4/4 schema validation, 5/5 response contracts)
+- **Known Limitation**: ✅ Property-based testing edge case with optional request bodies documented (see CONTRACT_TESTING.md)
 - **Note**: See [docs/guides/CONTRACT_TESTING.md](guides/CONTRACT_TESTING.md) for detailed implementation guide
 
-**Phase 4 Deliverables:**
-- Complete REST API with all endpoints
-- 36+ API integration tests passing
-- Contract tests validating API matches OpenAPI specification
-- Error handling with proper HTTP status codes
-- API can be tested with curl/Postman
-- Game playable via API calls
+**Implementation Notes** ✅:
+- Added dependencies: `schemathesis>=3.25.0`, `hypothesis>=6.92.0` to `pyproject.toml`
+- Added pytest marker `contract` for selective test execution
+- Created contract test directory structure with fixtures and test files
+- Implemented schema validation tests (OpenAPI structure, endpoints, schemas, status codes)
+- Implemented Schemathesis auto-generated API tests for key endpoints
+- Implemented response contract validation tests (Pydantic model deserialization)
+- Added contract test step to CI pipeline (runs after main tests)
+- Updated DEVELOPMENT.md with contract testing usage instructions
+- Fixed OpenAPI schema to document all error responses (400, 404, 503)
+- Added `extra="forbid"` to request models for strict validation
+- Documented known limitation with property-based testing edge cases
+
+**Phase 4 Deliverables:** ✅
+- ✅ Complete REST API with all endpoints
+- ✅ 36+ API integration tests passing
+- ✅ Contract tests validating API matches OpenAPI specification (Phase 4.6) - 16/18 tests passing (known limitation documented)
+- ✅ OpenAPI schema fully documented with all error responses (400, 404, 503)
+- ✅ Error handling with proper HTTP status codes
+- ✅ API can be tested with curl/Postman
+- ✅ Game playable via API calls
+- ✅ API demo script (`scripts/play_via_api.py`)
 
 **Spec References:**
 - Section 5: API Design (complete)

@@ -440,7 +440,16 @@ def _check_service_readiness() -> bool:
 
 
 # Health endpoint
-@app.get("/health")
+@app.get(
+    "/health",
+    responses={
+        200: {"description": "Service is healthy"},
+        503: {
+            "description": "Service is shutting down",
+            "model": ErrorResponse,
+        },
+    },
+)
 async def health() -> JSONResponse:
     """Health check endpoint (liveness probe).
 
@@ -496,7 +505,16 @@ async def test_general_error() -> None:
 
 
 # Ready endpoint
-@app.get("/ready")
+@app.get(
+    "/ready",
+    responses={
+        200: {"description": "Service is ready"},
+        503: {
+            "description": "Service is not ready",
+            "model": ErrorResponse,
+        },
+    },
+)
 async def ready() -> JSONResponse:
     """Readiness check endpoint (readiness probe).
 
@@ -595,7 +613,20 @@ async def ready() -> JSONResponse:
 
 
 # Game endpoints
-@app.post("/api/game/new", response_model=NewGameResponse, status_code=status.HTTP_201_CREATED)
+@app.post(
+    "/api/game/new",
+    response_model=NewGameResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        201: {"description": "Game created successfully", "model": NewGameResponse},
+        400: {"description": "Bad request (malformed JSON)"},
+        503: {
+            "description": "Service is not ready",
+            "model": ErrorResponse,
+        },
+        422: {"description": "Validation error"},
+    },
+)
 async def create_new_game(request: NewGameRequest | None = None) -> NewGameResponse | JSONResponse:
     """Create a new game session.
 
@@ -673,7 +704,27 @@ async def create_new_game(request: NewGameRequest | None = None) -> NewGameRespo
     return NewGameResponse(game_id=game_id, game_state=initial_state)
 
 
-@app.post("/api/game/move", response_model=MoveResponse, status_code=status.HTTP_200_OK)
+@app.post(
+    "/api/game/move",
+    response_model=MoveResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"description": "Move successful", "model": MoveResponse},
+        400: {
+            "description": "Invalid move (out of bounds, occupied, game over, etc.) or malformed JSON",
+            "model": ErrorResponse,
+        },
+        404: {
+            "description": "Game not found",
+            "model": ErrorResponse,
+        },
+        503: {
+            "description": "Service is not ready",
+            "model": ErrorResponse,
+        },
+        422: {"description": "Validation error"},
+    },
+)
 async def make_move(request: MoveRequest) -> MoveResponse | JSONResponse:
     """Make a player move and trigger AI response.
 
@@ -949,7 +1000,23 @@ async def make_move(request: MoveRequest) -> MoveResponse | JSONResponse:
     )
 
 
-@app.get("/api/game/status", response_model=GameStatusResponse, status_code=status.HTTP_200_OK)
+@app.get(
+    "/api/game/status",
+    response_model=GameStatusResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"description": "Game status retrieved successfully", "model": GameStatusResponse},
+        404: {
+            "description": "Game not found",
+            "model": ErrorResponse,
+        },
+        503: {
+            "description": "Service is not ready",
+            "model": ErrorResponse,
+        },
+        422: {"description": "Validation error"},
+    },
+)
 async def get_game_status(game_id: str) -> GameStatusResponse | JSONResponse:
     """Get current game status.
 
@@ -1049,7 +1116,24 @@ async def get_game_status(game_id: str) -> GameStatusResponse | JSONResponse:
     )
 
 
-@app.post("/api/game/reset", response_model=ResetGameResponse, status_code=status.HTTP_200_OK)
+@app.post(
+    "/api/game/reset",
+    response_model=ResetGameResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"description": "Game reset successfully", "model": ResetGameResponse},
+        400: {"description": "Bad request (malformed JSON)"},
+        404: {
+            "description": "Game not found",
+            "model": ErrorResponse,
+        },
+        503: {
+            "description": "Service is not ready",
+            "model": ErrorResponse,
+        },
+        422: {"description": "Validation error"},
+    },
+)
 async def reset_game(request: ResetGameRequest) -> ResetGameResponse | JSONResponse:
     """Reset a game to initial state.
 
@@ -1139,7 +1223,22 @@ async def reset_game(request: ResetGameRequest) -> ResetGameResponse | JSONRespo
     return ResetGameResponse(game_id=game_id, game_state=reset_state)
 
 
-@app.get("/api/game/history", status_code=status.HTTP_200_OK)
+@app.get(
+    "/api/game/history",
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"description": "Move history retrieved successfully"},
+        404: {
+            "description": "Game not found",
+            "model": ErrorResponse,
+        },
+        503: {
+            "description": "Service is not ready",
+            "model": ErrorResponse,
+        },
+        422: {"description": "Validation error"},
+    },
+)
 async def get_game_history(game_id: str) -> JSONResponse:
     """Get move history for a game.
 
@@ -1232,7 +1331,17 @@ async def get_game_history(game_id: str) -> JSONResponse:
 
 
 @app.get(
-    "/api/agents/{agent_name}/status", response_model=AgentStatus, status_code=status.HTTP_200_OK
+    "/api/agents/{agent_name}/status",
+    response_model=AgentStatus,
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"description": "Agent status retrieved successfully", "model": AgentStatus},
+        404: {
+            "description": "Agent not found",
+            "model": ErrorResponse,
+        },
+        422: {"description": "Validation error"},
+    },
 )
 async def get_agent_status(agent_name: str) -> AgentStatus | JSONResponse:
     """Get status of a specific agent.

@@ -57,11 +57,17 @@ dev = [
 
     # Pre-commit hooks
     "pre-commit>=3.5.0",
+
+    # Contract Testing
+    "schemathesis>=3.25.0",
+    "hypothesis>=6.92.0",
 ]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -115,6 +121,9 @@ addopts = [
     "-v",
     "--strict-markers",
     "--tb=short",
+]
+markers = [
+    "contract: marks tests as contract tests (deselect with '-m \"not contract\"')",
 ]
 
 [tool.coverage.run]

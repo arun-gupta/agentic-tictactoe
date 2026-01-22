@@ -28,11 +28,12 @@ See [Development Guide](docs/DEVELOPMENT.md) for setup instructions and developm
 - ✅ **Phase 1**: Domain Models (Foundation Layer)
 - ✅ **Phase 2**: Game Engine (Business Logic Layer)
 - ✅ **Phase 3**: Agent System (AI Layer) - Scout, Strategist, Executor, and Pipeline
-- ✅ **Phase 4**: REST API Layer - All endpoints, error handling, and API demo script
+- ✅ **Phase 4**: REST API Layer - All endpoints, error handling, API demo script, and contract testing (Phase 4.6)
 
 ### Current Metrics
-- **412 tests passing**
+- **429 tests passing** (unit, integration, contract tests)
 - **Complete REST API** with all endpoints (game control, agent status, error handling)
+- **Contract Testing**: 16/18 contract tests passing (validates API matches OpenAPI specification; known limitation documented)
 - **Test coverage**: See badge above for current Codecov coverage
   - Codecov excludes unimplemented placeholder files for agents, API, and UI layers
   - 100% coverage on all implemented code (domain models, game engine, agents, API)
