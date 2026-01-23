@@ -2594,39 +2594,41 @@ jobs:
 - **Subsection Tests**: ~5 E2E/UI tests for Phase 8.1.5 incremental development
 - **Acceptance Criteria**: AC-US005.1 through AC-US005.3 (3 official tests for final verification)
 
-#### 8.2. Move History Panel
+#### 8.2. Move History Panel ✅
+
+**Status**: ✅ **COMPLETE** - MoveHistory component with expandable entries and agent reasoning.
 
 **Spec Reference**: US-006, US-007
 
-**8.2.1. View Move History (US-006)**
-- Chronological list of all moves
-- Show player/AI indicator, move number, position, timestamp
-- Scrollable panel (max-height: 400px)
+**8.2.1. View Move History (US-006)** ✅
+- ✅ Chronological list of all moves
+- ✅ Show player/AI indicator, move number, position, timestamp
+- ✅ Scrollable panel (max-height: 400px)
 
 **Subsection Tests**:
-- Move history displays all moves in chronological order
-- Each move entry shows player/AI indicator
-- Each move entry shows move number, position (row, col), timestamp
-- Move history panel scrollable when content exceeds max-height 400px
-- Move history updates after each move
-- Move history cleared on game reset
+- ✅ Move history displays all moves in chronological order
+- ✅ Each move entry shows player/AI indicator
+- ✅ Each move entry shows move number, position (row, col), timestamp
+- ✅ Move history panel scrollable when content exceeds max-height 400px
+- ✅ Move history updates after each move
+- ✅ Move history cleared on game reset
 
 **Test Coverage**:
 - **Subsection Tests**: ~6 E2E/UI tests for Phase 8.2.1 incremental development
 - **Acceptance Criteria**: AC-US006.1 through AC-US006.2 (2 official tests for final verification)
 
-**8.2.2. View Move Details (US-007)**
-- Expandable move entries
-- Show agent reasoning (Scout analysis, Strategist strategy, Executor details)
-- Collapse/expand animation
+**8.2.2. View Move Details (US-007)** ✅
+- ✅ Expandable move entries
+- ✅ Show agent reasoning (Scout analysis, Strategist strategy, Executor details)
+- ✅ Collapse/expand animation
 
 **Subsection Tests**:
-- Move entries expandable via click/tap
-- Expanded entry shows Scout analysis (threats, opportunities)
-- Expanded entry shows Strategist strategy (primary move, alternatives, reasoning)
-- Expanded entry shows Executor details (execution time, validation status)
-- Collapse/expand animation smooth and visible
-- Multiple entries can be expanded simultaneously
+- ✅ Move entries expandable via click/tap
+- ✅ Expanded entry shows Scout analysis (threats, opportunities)
+- ✅ Expanded entry shows Strategist strategy (primary move, alternatives, reasoning)
+- ✅ Expanded entry shows Executor details (execution time, validation status)
+- ✅ Collapse/expand animation smooth and visible
+- ✅ Multiple entries can be expanded simultaneously
 
 **Test Coverage**:
 - **Subsection Tests**: ~6 E2E/UI tests for Phase 8.2.2 incremental development

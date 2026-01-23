@@ -4,18 +4,19 @@ import { useState, useCallback, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Cell } from "./Cell";
+import { MoveHistory } from "./MoveHistory";
 import {
   apiClient,
   type GameState,
   type CellValue,
   type Position,
-  type MoveHistory,
+  type MoveHistory as MoveHistoryType,
   ApiError,
   NetworkError,
 } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
-type TabValue = "board" | "config" | "metrics";
+type TabValue = "board" | "history" | "config" | "metrics";
 
 interface GameBoardProps {
   initialTab?: TabValue;
@@ -26,7 +27,7 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
   const [gameId, setGameId] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [lastMove, setLastMove] = useState<Position | null>(null);
-  const [moveHistory, setMoveHistory] = useState<MoveHistory[]>([]);
+  const [moveHistory, setMoveHistory] = useState<MoveHistoryType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isAiTurn, setIsAiTurn] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -175,6 +176,12 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
               Board
             </TabsTrigger>
             <TabsTrigger
+              value="history"
+              className="data-[state=active]:bg-zinc-900 data-[state=active]:text-zinc-100 rounded-sm text-sm px-4 py-2"
+            >
+              History
+            </TabsTrigger>
+            <TabsTrigger
               value="config"
               className="data-[state=active]:bg-zinc-900 data-[state=active]:text-zinc-100 rounded-sm text-sm px-4 py-2"
             >
@@ -248,6 +255,16 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
             </p>
           )}
         </>
+      )}
+
+      {/* History Tab Content */}
+      {activeTab === "history" && (
+        <div className="absolute top-16 left-5 right-5 bottom-5 bg-white rounded-lg border border-zinc-200 overflow-hidden">
+          <MoveHistory
+            moves={moveHistory}
+            playerSymbol={gameState?.player_symbol ?? "X"}
+          />
+        </div>
       )}
 
       {/* Config Tab Content - Placeholder */}
