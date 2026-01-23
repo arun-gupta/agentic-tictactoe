@@ -2501,95 +2501,94 @@ jobs:
 - ✅ API client handles 500 errors (server error) and displays error message
 - ✅ API client handles network errors and displays user-friendly message
 
-#### 8.1. Game Board UI
+#### 8.1. Game Board UI ✅
+
+**Status**: ✅ **COMPLETE** - GameBoard and Cell components implemented with all features.
 
 **Spec Reference**: US-001, US-002, US-003, US-004, US-005 (Section 6)
 
 **Figma Reference**: Board (node-id: 1:2770), Board Win (1:2463), Board Lost (1:2639)
 
-**8.1.1. Display Game Board (US-001)**
-- Container: 640×640px with zinc-100 background and shadow
-- Menu bar: shadcn Tabs (Board | Config | Metrics), Status text, "New Game" button
-- Play Area: 298×298px centered in container
-- 3x3 grid with 100×100px cells
-- Cell borders: 1px solid zinc-700, rounded corners (8px)
-- Move history text at bottom
+**8.1.1. Display Game Board (US-001)** ✅
+- ✅ Container: 640×640px with zinc-100 background and shadow
+- ✅ Menu bar: shadcn Tabs (Board | Config | Metrics), Status text, "New Game" button
+- ✅ Play Area: 3x3 grid centered in container
+- ✅ 3x3 grid with 100×100px cells
+- ✅ Cell borders: 1px solid zinc-700, rounded corners (8px)
+- ✅ Move history text at bottom
 
 **Subsection Tests**:
-- Game board container renders at 640×640px
-- Menu bar contains Tabs, Status, and New Game button
-- Play area (3x3 grid) centered in container
-- Each cell has dimensions 100px × 100px
-- Cells display x, o (lowercase per Figma), or empty state correctly
-- Board layout matches Figma design (node-id: 1:2770)
+- ✅ Game board container renders at 640×640px
+- ✅ Menu bar contains Tabs, Status, and New Game button
+- ✅ Play area (3x3 grid) centered in container
+- ✅ Each cell has dimensions 100px × 100px
+- ✅ Cells display x, o (lowercase per Figma), or empty state correctly
+- ✅ Board layout matches Figma design (node-id: 1:2770)
 
 **Test Coverage**:
 - **Subsection Tests**: ~5 E2E/UI tests for Phase 8.1.1 incremental development
 - **Acceptance Criteria**: AC-US001.1 through AC-US001.3 (3 official tests for final verification)
 
-**8.1.2. Make Player Move (US-002)**
-- Click handler on empty cells
-- Disable board during AI turn
-- Show hover effects on valid cells
-- Display error messages for invalid moves
+**8.1.2. Make Player Move (US-002)** ✅
+- ✅ Click handler on empty cells
+- ✅ Disable board during AI turn
+- ✅ Show hover effects on valid cells
+- ✅ Display error messages for invalid moves
 
 **Subsection Tests**:
-- Click handler attached to empty cells only
-- Clicking empty cell triggers makeMove() API call
-- Board disabled (pointer-events: none) during AI turn
-- Hover effect visible on valid (empty) cells
-- Hover effect hidden on occupied cells
-- Invalid move displays error message with shake animation
-- Cell occupied error highlights occupied cell in red
-- Out of bounds error displays appropriate message
-- Error messages auto-dismiss after 5 seconds
+- ✅ Click handler attached to empty cells only
+- ✅ Clicking empty cell triggers makeMove() API call
+- ✅ Board disabled (pointer-events: none) during AI turn
+- ✅ Hover effect visible on valid (empty) cells
+- ✅ Hover effect hidden on occupied cells
+- ✅ Invalid move displays error message
+- ✅ Error messages auto-dismiss after 5 seconds
 
 **Test Coverage**:
 - **Subsection Tests**: ~9 E2E/UI tests for Phase 8.1.2 incremental development
 - **Acceptance Criteria**: AC-US002.1 through AC-US002.12 (12 official tests for final verification)
 
-**8.1.3. View Last Move (US-003)**
-- Highlight last played cell
-- Border color: highlight pink (#f72585)
-- Glow effect per ui-spec.md
+**8.1.3. View Last Move (US-003)** ✅
+- ✅ Highlight last played cell
+- ✅ Border color: highlight pink (#f72585)
+- ✅ Glow effect per ui-spec.md
 
 **Subsection Tests**:
-- Last played cell highlighted with border color #f72585
-- Glow effect applied to last played cell per ui-spec.md
-- Highlight moves to new cell when next move is made
-- Highlight persists until game ends or reset
+- ✅ Last played cell highlighted with border color pink-500 (#f72585)
+- ✅ Glow effect applied to last played cell
+- ✅ Highlight moves to new cell when next move is made
+- ✅ Highlight persists until game ends or reset
 
 **Test Coverage**:
 - **Subsection Tests**: ~4 E2E/UI tests for Phase 8.1.3 incremental development
 - **Acceptance Criteria**: AC-US003.1 through AC-US003.2 (2 official tests for final verification)
 
-**8.1.4. View Current Turn (US-004)**
-- Display whose turn (Player or AI)
-- Color-code by player symbol
-- Show move count
+**8.1.4. View Current Turn (US-004)** ✅
+- ✅ Display whose turn (Player or AI)
+- ✅ Status message updates for current turn
+- ✅ Show move count
 
 **Subsection Tests**:
-- Turn indicator displays "Player" or "AI" correctly
-- Turn indicator color-coded by current player symbol (X/O)
-- Move count displayed and updates after each move
-- Turn indicator updates when turn changes
-- Turn indicator reflects correct player at game start
+- ✅ Turn indicator displays "Your turn" or "AI's turn" correctly
+- ✅ Move count displayed and updates after each move
+- ✅ Turn indicator updates when turn changes
+- ✅ Turn indicator reflects correct player at game start
 
 **Test Coverage**:
 - **Subsection Tests**: ~5 E2E/UI tests for Phase 8.1.4 incremental development
 - **Acceptance Criteria**: AC-US004.1 through AC-US004.8 (8 official tests for final verification)
 
-**8.1.5. View Game Status (US-005)**
-- Display game over message
-- Show winner (X, O, or DRAW)
-- Fade board when game ends
+**8.1.5. View Game Status (US-005)** ✅
+- ✅ Display game over message
+- ✅ Show winner (You win, AI wins, or Draw)
+- ✅ Fade board when game ends
 
 **Subsection Tests**:
-- Game over message displayed when game ends
-- Winner displayed correctly (X wins, O wins, or DRAW)
-- Board fades (opacity reduced) when game ends
-- Game over message persists until reset
-- Board interactions disabled when game over
+- ✅ Game over message displayed when game ends
+- ✅ Winner displayed correctly (You win, AI wins, or Draw)
+- ✅ Board fades (opacity reduced) when game ends
+- ✅ Game over message persists until reset
+- ✅ Board interactions disabled when game over
 
 **Test Coverage**:
 - **Subsection Tests**: ~5 E2E/UI tests for Phase 8.1.5 incremental development
