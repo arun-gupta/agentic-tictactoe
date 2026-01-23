@@ -1,0 +1,25 @@
+"""LLM provider abstraction layer.
+
+This module provides an abstraction layer for LLM providers, allowing
+the system to work with multiple LLM providers (OpenAI, Anthropic, Google Gemini)
+through a unified interface.
+
+The implementation uses Pydantic AI under the hood for type-safe agent definitions
+and structured outputs, but provides a provider abstraction for flexibility.
+"""
+
+from src.llm.anthropic_provider import AnthropicProvider
+from src.llm.gemini_provider import GeminiProvider
+from src.llm.openai_provider import OpenAIProvider
+from src.llm.provider import LLMProvider, LLMResponse
+from src.llm.pydantic_ai_agents import create_scout_agent, create_strategist_agent
+
+__all__ = [
+    "LLMProvider",
+    "LLMResponse",
+    "OpenAIProvider",
+    "AnthropicProvider",
+    "GeminiProvider",
+    "create_scout_agent",
+    "create_strategist_agent",
+]
