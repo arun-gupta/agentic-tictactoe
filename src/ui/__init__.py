@@ -1,1 +1,0 @@
-"""Web-based UI application."""
