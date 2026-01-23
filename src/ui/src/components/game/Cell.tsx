@@ -10,6 +10,8 @@ interface CellProps {
   isLastMove: boolean;
   isDisabled: boolean;
   isGameOver: boolean;
+  hasError?: boolean;
+  isShaking?: boolean;
   onClick: (row: number, col: number) => void;
 }
 
@@ -31,6 +33,8 @@ export function Cell({
   isLastMove,
   isDisabled,
   isGameOver,
+  hasError = false,
+  isShaking = false,
   onClick,
 }: CellProps) {
   const isEmpty = value === null;
@@ -58,7 +62,11 @@ export function Cell({
         // Last move highlight
         isLastMove && "border-2 border-pink-500 shadow-[0_0_8px_rgba(247,37,133,0.5)]",
         // Game over fade
-        isGameOver && "opacity-60"
+        isGameOver && "opacity-60",
+        // Error state - red highlight
+        hasError && "border-2 border-red-500 bg-red-50",
+        // Shake animation
+        isShaking && "animate-shake"
       )}
       aria-label={`Cell ${row},${col}${value ? `: ${value}` : ": empty"}`}
     >

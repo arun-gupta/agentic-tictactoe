@@ -9,6 +9,13 @@ import { AgentInsights } from "./AgentInsights";
 import { PostGameMetrics } from "./PostGameMetrics";
 import { ConfigurationPanel } from "./ConfigurationPanel";
 import {
+  ErrorProvider,
+  ErrorDisplay,
+  FallbackBadge,
+  type FallbackNotification,
+  type FallbackStrategy,
+} from "./ErrorHandling";
+import {
   apiClient,
   type GameState,
   type CellValue,
@@ -35,6 +42,9 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
   const [isAiTurn, setIsAiTurn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("Click 'New Game' to start");
+  const [fallbackNotification, setFallbackNotification] = useState<FallbackNotification | null>(null);
+  const [errorCell, setErrorCell] = useState<Position | null>(null);
+  const [shakingCell, setShakingCell] = useState<Position | null>(null);
 
   // Auto-dismiss error after 5 seconds
   useEffect(() => {
@@ -48,6 +58,9 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
   const handleNewGame = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    setFallbackNotification(null);
+    setErrorCell(null);
+    setShakingCell(null);
     try {
       const response = await apiClient.createGame("X");
       setGameId(response.game_id);
@@ -69,13 +82,31 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
     }
   }, []);
 
+  // Trigger cell shake animation
+  const triggerCellShake = useCallback((position: Position) => {
+    setErrorCell(position);
+    setShakingCell(position);
+    // Clear shake animation after 500ms
+    setTimeout(() => setShakingCell(null), 500);
+    // Clear error highlight after 2s
+    setTimeout(() => setErrorCell(null), 2000);
+  }, []);
+
   // Make a player move
   const handleCellClick = useCallback(
     async (row: number, col: number) => {
       if (!gameId || !gameState || isAiTurn || gameState.is_game_over) return;
 
+      // Check if cell is already occupied
+      if (gameState.board[row][col] !== null) {
+        triggerCellShake({ row, col });
+        setError("Cell is already occupied");
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
+      setFallbackNotification(null);
       setIsAiTurn(true);
       setStatusMessage("AI is thinking...");
 
@@ -90,6 +121,17 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
             setLastMove(response.ai_move_execution.position);
           } else {
             setLastMove({ row, col });
+          }
+
+          // Check if fallback was used
+          if (response.fallback_used) {
+            const reason = response.ai_move_execution?.reasoning || "AI timeout or error";
+            setFallbackNotification({
+              id: `fallback-${Date.now()}`,
+              reason: reason,
+              strategy: "rule_based_analysis" as FallbackStrategy,
+              timestamp: new Date(),
+            });
           }
 
           // Update move history
@@ -115,6 +157,8 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
           }
         } else {
           setError(response.error_message || "Move failed");
+          // Shake the cell on error
+          triggerCellShake({ row, col });
         }
       } catch (err) {
         if (err instanceof ApiError) {
@@ -124,12 +168,14 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
         } else {
           setError("Failed to make move");
         }
+        // Shake the cell on error
+        triggerCellShake({ row, col });
       } finally {
         setIsLoading(false);
         setIsAiTurn(false);
       }
     },
-    [gameId, gameState, isAiTurn]
+    [gameId, gameState, isAiTurn, triggerCellShake]
   );
 
   // Format move history for display
@@ -155,6 +201,18 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
   const isLastMoveCell = (row: number, col: number): boolean => {
     if (!lastMove) return false;
     return lastMove.row === row && lastMove.col === col;
+  };
+
+  // Check if cell has error
+  const isCellError = (row: number, col: number): boolean => {
+    if (!errorCell) return false;
+    return errorCell.row === row && errorCell.col === col;
+  };
+
+  // Check if cell is shaking
+  const isCellShaking = (row: number, col: number): boolean => {
+    if (!shakingCell) return false;
+    return shakingCell.row === row && shakingCell.col === col;
   };
 
   return (
@@ -224,8 +282,18 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
 
       {/* Error Message */}
       {error && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm animate-pulse">
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm animate-pulse z-40">
           {error}
+        </div>
+      )}
+
+      {/* Fallback Notification */}
+      {fallbackNotification && !error && (
+        <div className="absolute top-16 left-5 right-5 z-40">
+          <FallbackBadge
+            notification={fallbackNotification}
+            onDismiss={() => setFallbackNotification(null)}
+          />
         </div>
       )}
 
@@ -245,6 +313,8 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
                     isLastMove={isLastMoveCell(row, col)}
                     isDisabled={isLoading || isAiTurn || !gameId}
                     isGameOver={gameState?.is_game_over ?? false}
+                    hasError={isCellError(row, col)}
+                    isShaking={isCellShaking(row, col)}
                     onClick={handleCellClick}
                   />
                 ))
