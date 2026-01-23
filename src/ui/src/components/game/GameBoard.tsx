@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Cell } from "./Cell";
 import { MoveHistory } from "./MoveHistory";
+import { AgentInsights } from "./AgentInsights";
 import {
   apiClient,
   type GameState,
@@ -16,7 +17,7 @@ import {
 } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
-type TabValue = "board" | "history" | "config" | "metrics";
+type TabValue = "board" | "history" | "insights" | "config" | "metrics";
 
 interface GameBoardProps {
   initialTab?: TabValue;
@@ -182,6 +183,12 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
               History
             </TabsTrigger>
             <TabsTrigger
+              value="insights"
+              className="data-[state=active]:bg-zinc-900 data-[state=active]:text-zinc-100 rounded-sm text-sm px-4 py-2"
+            >
+              Insights
+            </TabsTrigger>
+            <TabsTrigger
               value="config"
               className="data-[state=active]:bg-zinc-900 data-[state=active]:text-zinc-100 rounded-sm text-sm px-4 py-2"
             >
@@ -263,6 +270,16 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
           <MoveHistory
             moves={moveHistory}
             playerSymbol={gameState?.player_symbol ?? "X"}
+          />
+        </div>
+      )}
+
+      {/* Insights Tab Content */}
+      {activeTab === "insights" && (
+        <div className="absolute top-16 left-5 right-5 bottom-5 bg-white rounded-lg border border-zinc-200 overflow-hidden">
+          <AgentInsights
+            isProcessing={isAiTurn}
+            lastError={error}
           />
         </div>
       )}

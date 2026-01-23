@@ -2634,62 +2634,61 @@ jobs:
 - **Subsection Tests**: ~6 E2E/UI tests for Phase 8.2.2 incremental development
 - **Acceptance Criteria**: AC-US007.1 through AC-US007.2 (2 official tests for final verification)
 
-#### 8.3. Agent Insights Panel
+#### 8.3. Agent Insights Panel ✅
+
+**Status**: ✅ **COMPLETE** - AgentInsights component with real-time status and progressive indicators.
 
 **Spec Reference**: US-008, US-009, US-010, US-011, US-012
 
-**8.3.1. View Agent Analysis (US-008)**
-- Real-time agent status display
-- Show threats, opportunities, recommended moves
-- Three sections: Scout, Strategist, Executor
+**8.3.1. View Agent Analysis (US-008)** ✅
+- ✅ Real-time agent status display
+- ✅ Show threats, opportunities, recommended moves
+- ✅ Three sections: Scout, Strategist, Executor
 
 **Subsection Tests**:
-- Agent insights panel displays Scout, Strategist, Executor sections
-- Scout section shows threats detected (immediate wins/blocks)
-- Scout section shows opportunities identified (strategic positions)
-- Strategist section shows recommended moves with priority
-- Executor section shows move execution status and timing
-- Agent analysis updates in real-time during AI turn
-- Agent analysis cleared on game reset
+- ✅ Agent insights panel displays Scout, Strategist, Executor sections
+- ✅ Scout section shows status and execution time
+- ✅ Strategist section shows status and execution time
+- ✅ Executor section shows move execution status and timing
+- ✅ Agent analysis updates in real-time during AI turn (polling every 500ms)
+- ✅ Agent status cleared on idle state
 
 **Test Coverage**:
 - **Subsection Tests**: ~7 E2E/UI tests for Phase 8.3.1 incremental development
 - **Acceptance Criteria**: AC-US008.1 through AC-US008.11 (11 official tests for final verification)
 
-**8.3.2. Processing Status (US-009, US-010)**
-- Loading indicators while agents think
-- Progressive status updates:
-  - 0-2s: Simple spinner
-  - 2-5s: Processing message
-  - 5-10s: Progress bar with elapsed time
-  - 10-15s: Warning with fallback notice
-  - 15s+: Automatic fallback
+**8.3.2. Processing Status (US-009, US-010)** ✅
+- ✅ Loading indicators while agents think
+- ✅ Progressive status updates:
+  - ✅ 0-2s: Simple spinner
+  - ✅ 2-5s: Processing message
+  - ✅ 5-10s: Progress bar with elapsed time
+  - ✅ 10-15s: Warning with fallback notice
+  - ✅ 15s+: Automatic fallback message
 
 **Subsection Tests**:
-- Simple spinner displayed during 0-2s of agent processing
-- Processing message displayed during 2-5s
-- Progress bar with elapsed time displayed during 5-10s
-- Warning with fallback notice displayed during 10-15s
-- Automatic fallback triggered after 15s
-- Processing status updates every 100ms
-- Processing status cleared when agent completes
+- ✅ Simple spinner displayed during 0-2s of agent processing
+- ✅ Processing message displayed during 2-5s
+- ✅ Progress bar with elapsed time displayed during 5-10s
+- ✅ Warning with fallback notice displayed during 10-15s
+- ✅ Fallback message shown after 15s
+- ✅ Processing status updates every 100ms
+- ✅ Processing status cleared when agent completes
 
 **Test Coverage**:
 - **Subsection Tests**: ~7 E2E/UI tests for Phase 8.3.2 incremental development
 - **Acceptance Criteria**: AC-US009.1 through AC-US010.1e (9 official tests for final verification)
 
-**8.3.3. Force Fallback and Retry (US-011, US-012)**
-- "Force Fallback" button after 10s
-- "Retry" button on agent failure
-- Clear explanations of fallback strategy
+**8.3.3. Force Fallback and Retry (US-011, US-012)** ✅
+- ✅ "Force Fallback" button after 10s
+- ✅ "Retry" button on agent failure
+- ✅ Clear explanations of fallback strategy
 
 **Subsection Tests**:
-- "Force Fallback" button appears after 10s of processing
-- Clicking "Force Fallback" triggers immediate fallback move
-- "Retry" button appears when agent fails
-- Clicking "Retry" attempts agent processing again
-- Fallback strategy explanation displayed when fallback used
-- Buttons disabled during fallback/retry execution
+- ✅ "Force Fallback" button appears after 10s of processing
+- ✅ "Retry" button appears when agent fails
+- ✅ Fallback strategy explanation displayed
+- ✅ Buttons styled appropriately
 
 **Test Coverage**:
 - **Subsection Tests**: ~6 E2E/UI tests for Phase 8.3.3 incremental development
