@@ -64,6 +64,13 @@ class Board(BaseModel):
         description="3x3 matrix of cell states",
     )
 
+    def to_api_format(self) -> list[list[str | None]]:
+        """Convert board to API format with null for empty cells (for frontend compatibility)."""
+        return [
+            [None if cell == "EMPTY" else cell for cell in row]
+            for row in self.cells
+        ]
+
     @field_validator("cells")
     @classmethod
     def validate_board_size(cls, v: list[list[CellState]]) -> list[list[CellState]]:
@@ -287,8 +294,11 @@ class GameState(BaseModel):
 
     @model_serializer(mode="wrap")
     def serialize(self, serializer: Callable[[Any], dict[str, Any]], info: Any) -> dict[str, Any]:
-        """Serialize GameState to dict, including computed fields is_game_over and winner."""
+        """Serialize GameState to dict, including computed fields is_game_over, winner, and current_player."""
         data = serializer(self)
+        # Convert board to API format (EMPTY -> null)
+        data["board"] = self.board.to_api_format()
         data["is_game_over"] = self.is_game_over()
         data["winner"] = self.get_winner()
+        data["current_player"] = self.get_current_player()
         return data

@@ -95,10 +95,10 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
   // Make a player move
   const handleCellClick = useCallback(
     async (row: number, col: number) => {
-      if (!gameId || !gameState || isAiTurn || gameState.is_game_over) return;
+      if (!gameId || !gameState?.board || isAiTurn || gameState.is_game_over) return;
 
       // Check if cell is already occupied
-      if (gameState.board[row][col] !== null) {
+      if (gameState.board[row]?.[col]) {
         triggerCellShake({ row, col });
         setError("Cell is already occupied");
         return;
@@ -193,7 +193,7 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
 
   // Get cell value from board
   const getCellValue = (row: number, col: number): CellValue => {
-    if (!gameState) return null;
+    if (!gameState?.board?.[row]) return null;
     return gameState.board[row][col];
   };
 
