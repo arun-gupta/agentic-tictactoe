@@ -2796,16 +2796,18 @@ jobs:
 - **Subsection Tests**: ~5 E2E/UI tests for Phase 8.4.6 incremental development
 - **Acceptance Criteria**: AC-US018.1 through AC-US018.4 (4 official tests for final verification)
 
-#### 8.5. Configuration Panel
+#### 8.5. Configuration Panel ✅
+
+**Status**: ✅ **COMPLETE** - ConfigurationPanel component with agent LLM selection, API key inputs, and game settings.
 
 **Spec Reference**: US-019, US-020, US-021
 
 **Figma Reference**: Config (node-id: 1:2239)
 
-**8.5.1. Agent LLM Selection (US-019)**
-- Three shadcn Select dropdowns for Scout, Strategist, Executor
-- Each Select assigns an LLM provider to an agent
-- Options: OpenAI, Anthropic, Gemini (per available providers)
+**8.5.1. Agent LLM Selection (US-019)** ✅
+- ✅ Three shadcn Select dropdowns for Scout, Strategist, Executor
+- ✅ Each Select assigns an LLM provider to an agent
+- ✅ Options: OpenAI, Anthropic, Gemini (per available providers)
 
 **Subsection Tests**:
 - Three Select components render for Scout, Strategist, Executor
@@ -2819,10 +2821,10 @@ jobs:
 - **Subsection Tests**: ~6 E2E/UI tests for Phase 8.5.1 incremental development
 - **Acceptance Criteria**: AC-US019.1 through AC-US019.3 (3 official tests for final verification)
 
-**8.5.2. API Key Inputs (US-019, US-020)**
-- Three shadcn Input fields for API keys (OpenAI, Anthropic, Gemini)
-- Each input shows provider name and model name as label
-- Model names: GPT-5 mini (OpenAI), Claude Opus 4.5 (Anthropic), Gemini 3 Flash (Gemini)
+**8.5.2. API Key Inputs (US-019, US-020)** ✅
+- ✅ Three shadcn Input fields for API keys (OpenAI, Anthropic, Gemini)
+- ✅ Each input shows provider name and model name as label
+- ✅ Model names: GPT-5 mini (OpenAI), Claude Opus 4.5 (Anthropic), Gemini 3 Flash (Gemini)
 
 **Subsection Tests**:
 - Three Input components render for OpenAI, Anthropic, Gemini API keys
@@ -2837,9 +2839,9 @@ jobs:
 - **Subsection Tests**: ~5 E2E/UI tests for Phase 8.5.2 incremental development
 - **Acceptance Criteria**: AC-US020.1 through AC-US020.2 (2 official tests for final verification)
 
-**8.5.3. Game Settings (US-021)**
-- "New Game" button on Board tab handles game reset
-- Player symbol selection (optional, can be added as Select)
+**8.5.3. Game Settings (US-021)** ✅
+- ✅ "New Game" button on Board tab handles game reset
+- ✅ Player symbol selection (optional, can be added as Select)
 
 **Subsection Tests**:
 - New Game button clears current game and starts new game

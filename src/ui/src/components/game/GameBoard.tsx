@@ -7,6 +7,7 @@ import { Cell } from "./Cell";
 import { MoveHistory } from "./MoveHistory";
 import { AgentInsights } from "./AgentInsights";
 import { PostGameMetrics } from "./PostGameMetrics";
+import { ConfigurationPanel } from "./ConfigurationPanel";
 import {
   apiClient,
   type GameState,
@@ -285,10 +286,10 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
         </div>
       )}
 
-      {/* Config Tab Content - Placeholder */}
+      {/* Config Tab Content */}
       {activeTab === "config" && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-zinc-500 font-mono text-sm">
-          Configuration panel (Phase 8.5)
+        <div className="absolute top-16 left-5 right-5 bottom-5 bg-white rounded-lg border border-zinc-200 overflow-hidden">
+          <ConfigurationPanel />
         </div>
       )}
 
