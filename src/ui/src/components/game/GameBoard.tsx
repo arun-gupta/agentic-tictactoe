@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Cell } from "./Cell";
 import { MoveHistory } from "./MoveHistory";
 import { AgentInsights } from "./AgentInsights";
+import { PostGameMetrics } from "./PostGameMetrics";
 import {
   apiClient,
   type GameState,
@@ -291,10 +292,13 @@ export function GameBoard({ initialTab = "board" }: GameBoardProps) {
         </div>
       )}
 
-      {/* Metrics Tab Content - Placeholder */}
+      {/* Metrics Tab Content */}
       {activeTab === "metrics" && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-zinc-500 font-mono text-sm">
-          Metrics panel (Phase 8.6)
+        <div className="absolute top-16 left-5 right-5 bottom-5 bg-white rounded-lg border border-zinc-200 overflow-hidden">
+          <PostGameMetrics
+            gameId={gameId}
+            isGameOver={gameState?.is_game_over ?? false}
+          />
         </div>
       )}
 

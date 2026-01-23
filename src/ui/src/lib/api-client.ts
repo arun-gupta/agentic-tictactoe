@@ -98,6 +98,69 @@ export interface ErrorResponse {
   details: Record<string, unknown> | null;
 }
 
+// Post-Game Metrics Types (Phase 8.4)
+
+export interface AgentCommunication {
+  agent_name: string;
+  request: Record<string, unknown>;
+  response: Record<string, unknown>;
+  timestamp: string;
+  execution_time_ms: number;
+}
+
+export interface LLMInteraction {
+  agent_name: string;
+  prompt: string;
+  response: string;
+  model: string;
+  provider: string;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  latency_ms: number;
+  timestamp: string;
+}
+
+export interface AgentConfig {
+  agent_name: string;
+  mode: "local" | "mcp";
+  llm_framework: string;
+  provider: string | null;
+  model: string | null;
+  timeout_ms: number;
+}
+
+export interface AgentPerformance {
+  agent_name: string;
+  min_execution_ms: number;
+  max_execution_ms: number;
+  avg_execution_ms: number;
+  total_calls: number;
+  successful_calls: number;
+  failed_calls: number;
+  success_rate: number;
+}
+
+export interface GameSummary {
+  total_moves: number;
+  duration_ms: number;
+  outcome: "X_WINS" | "O_WINS" | "DRAW" | "IN_PROGRESS";
+  average_move_time_ms: number;
+  start_time: string;
+  end_time: string | null;
+}
+
+export interface PostGameMetrics {
+  game_id: string;
+  game_summary: GameSummary;
+  agent_communications: AgentCommunication[];
+  llm_interactions: LLMInteraction[];
+  agent_configs: AgentConfig[];
+  agent_performances: AgentPerformance[];
+  total_llm_calls: number;
+  total_tokens_used: number;
+}
+
 // API Error class for typed error handling
 export class ApiError extends Error {
   public readonly errorCode: string;
@@ -333,6 +396,19 @@ export class ApiClient {
     return this.request<{ status: string; checks: Record<string, string> }>(
       "GET",
       "/ready"
+    );
+  }
+
+  /**
+   * Get post-game metrics
+   *
+   * @param gameId - Game session ID
+   * @returns Post-game metrics including communications, LLM interactions, and performance
+   */
+  async getPostGameMetrics(gameId: string): Promise<PostGameMetrics> {
+    return this.request<PostGameMetrics>(
+      "GET",
+      `/api/game/metrics?game_id=${encodeURIComponent(gameId)}`
     );
   }
 }
