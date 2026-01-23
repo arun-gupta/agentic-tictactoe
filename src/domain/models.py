@@ -66,10 +66,7 @@ class Board(BaseModel):
 
     def to_api_format(self) -> list[list[str | None]]:
         """Convert board to API format with null for empty cells (for frontend compatibility)."""
-        return [
-            [None if cell == "EMPTY" else cell for cell in row]
-            for row in self.cells
-        ]
+        return [[None if cell == "EMPTY" else cell for cell in row] for row in self.cells]
 
     @field_validator("cells")
     @classmethod
