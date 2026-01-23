@@ -29,9 +29,11 @@ export interface GameState {
 
 export interface MoveExecution {
   position: Position | null;
-  confidence: number;
+  confidence?: number;
   reasoning: string | null;
-  fallback_used: boolean;
+  fallback_used?: boolean;
+  execution_time_ms?: number;
+  success?: boolean;
 }
 
 export interface NewGameRequest {
