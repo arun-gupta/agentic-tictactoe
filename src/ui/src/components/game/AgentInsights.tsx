@@ -195,6 +195,7 @@ export function AgentInsights({
   // Poll agent status while processing
   useEffect(() => {
     if (!isProcessing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset state when processing stops
       setStartTime(null);
       setElapsedMs(0);
       return;
@@ -235,6 +236,7 @@ export function AgentInsights({
   useEffect(() => {
     if (!isProcessing) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial fetch and polling pattern
     fetchAgentStatuses();
     const interval = setInterval(fetchAgentStatuses, 500);
 

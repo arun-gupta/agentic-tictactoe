@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
   apiClient,
@@ -512,7 +512,7 @@ export function PostGameMetrics({ gameId, isGameOver }: PostGameMetricsProps) {
     try {
       const data = await apiClient.getPostGameMetrics(gameId);
       setMetrics(data);
-    } catch (err) {
+    } catch {
       // For now, show placeholder data since backend may not have this endpoint yet
       setError("Metrics endpoint not available yet");
       // Create mock data for UI demonstration

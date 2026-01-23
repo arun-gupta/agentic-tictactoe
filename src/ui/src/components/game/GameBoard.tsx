@@ -9,8 +9,6 @@ import { AgentInsights } from "./AgentInsights";
 import { PostGameMetrics } from "./PostGameMetrics";
 import { ConfigurationPanel } from "./ConfigurationPanel";
 import {
-  ErrorProvider,
-  ErrorDisplay,
   FallbackBadge,
   type FallbackNotification,
   type FallbackStrategy,

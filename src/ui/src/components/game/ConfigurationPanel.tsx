@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 
 // Types for configuration
 export type LLMProvider = "openai" | "anthropic" | "gemini";
@@ -215,6 +214,7 @@ export function ConfigurationPanel({
     try {
       const savedConfig = localStorage.getItem(STORAGE_KEYS.agentConfig);
       if (savedConfig) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- Initialize from localStorage
         setAgentConfig(JSON.parse(savedConfig));
       }
 

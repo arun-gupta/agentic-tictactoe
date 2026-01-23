@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, createContext, useContext } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 // Error severity types
 export type ErrorSeverity = "critical" | "warning" | "info";
