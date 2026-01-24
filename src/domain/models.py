@@ -86,9 +86,7 @@ class Board(BaseModel):
         # If it's a list (API format), convert to dict with cells
         if isinstance(data, list):
             # Convert None back to "EMPTY"
-            converted_cells = [
-                ["EMPTY" if cell is None else cell for cell in row] for row in data
-            ]
+            converted_cells = [["EMPTY" if cell is None else cell for cell in row] for row in data]
             return {"cells": converted_cells}
 
         # Otherwise return as-is (likely already a dict with cells)
