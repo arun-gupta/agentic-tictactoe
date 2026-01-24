@@ -124,6 +124,10 @@ addopts = [
 ]
 markers = [
     "contract: marks tests as contract tests (deselect with '-m \"not contract\"')",
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "unit: marks tests as unit tests (deselect with '-m \"not unit\"')",
+    "live_llm: marks tests that make real LLM API calls (opt-in; may incur cost)",
+    "llm_integration: marks tests that validate LLM provider integrations",
 ]
 
 [tool.coverage.run]

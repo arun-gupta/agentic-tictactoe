@@ -88,6 +88,22 @@ python scripts/test_llm_providers.py gemini
 
 **Note**: These tests make real API calls and incur small costs (~$0.01-0.05 per test run). See setup guide for details.
 
+### Run LLM Integration Tests (pytest)
+
+Runs the pytest-based LLM integration suite under `tests/integration/llm/`.
+
+**Run:**
+```bash
+# Non-live (no network calls)
+./run_tests.sh --llm
+
+# Live (real API calls; opt-in; may incur cost)
+./run_tests.sh --llm-live
+
+# Live, but only for selected providers
+./run_tests.sh --llm-live --providers openai,anthropic
+```
+
 ### Test API Key Infrastructure
 
 Verifies that API key loading works correctly (Phase 5.0):

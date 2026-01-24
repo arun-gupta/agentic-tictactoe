@@ -33,6 +33,7 @@ When implementing new features:
   pytest tests/                    # Run all tests
   pytest tests/unit/domain/        # Run specific test file/directory
   pytest tests/ -k "test_name"      # Run specific test by name
+  ./run_tests.sh                   # Run all except contract + live LLM
   ```
 - **Run code quality checks locally**: Verify code quality before committing:
   ```bash
@@ -54,6 +55,20 @@ When implementing new features:
   pytest tests/contract -v -m contract        # Run only contract tests
   pytest tests/ -m "not contract"            # Run all tests except contract tests
   pytest tests/contract/ -v --tb=short       # Run contract tests with short traceback
+  ```
+- **Run live LLM tests (opt-in; may incur cost)**:
+  ```bash
+  RUN_LIVE_LLM_TESTS=1 python -m pytest -m live_llm -q
+  # Optionally select providers (defaults to all that have keys configured):
+  LIVE_LLM_PROVIDERS=openai,anthropic,gemini RUN_LIVE_LLM_TESTS=1 python -m pytest -m live_llm -q
+  ```
+- **Run LLM integration tests**:
+  ```bash
+  python -m pytest -m llm_integration -q
+  # Skip any live LLM tests:
+  python -m pytest -m "llm_integration and not live_llm" -q
+  # Script wrapper:
+  ./run_tests.sh --llm
   ```
 - **Wait for CI**: Wait for GitHub Actions to go green after the push before making any new changes to the repo.
 - **Monitor build time**: Check if the build time slows down (GitHub Actions will show this). If it does, investigate and debug the cause.
