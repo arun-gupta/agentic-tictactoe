@@ -6,7 +6,7 @@ This module contains the core game entities: Position, Board, and GameState.
 from collections.abc import Callable
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_serializer
+from pydantic import BaseModel, Field, field_validator, model_serializer, model_validator
 
 from src.domain.errors import E_INVALID_BOARD_SIZE, E_POSITION_OUT_OF_BOUNDS
 
@@ -63,6 +63,36 @@ class Board(BaseModel):
         default_factory=lambda: [["EMPTY" for _ in range(3)] for _ in range(3)],  # type: ignore[arg-type]
         description="3x3 matrix of cell states",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def convert_api_format(cls, data: Any) -> Any:
+        """Convert API format (flat list with None) to internal format (dict with cells).
+
+        Accepts both:
+        - Internal format: {"cells": [["EMPTY", ...], ...]}
+        - API format: [[None, "X", ...], ...] (flat list)
+
+        Args:
+            data: Input data in either format
+
+        Returns:
+            Data in the internal format suitable for Board creation
+        """
+        # If it's already a Board instance, return as-is
+        if isinstance(data, Board):
+            return data
+
+        # If it's a list (API format), convert to dict with cells
+        if isinstance(data, list):
+            # Convert None back to "EMPTY"
+            converted_cells = [
+                ["EMPTY" if cell is None else cell for cell in row] for row in data
+            ]
+            return {"cells": converted_cells}
+
+        # Otherwise return as-is (likely already a dict with cells)
+        return data
 
     def to_api_format(self) -> list[list[str | None]]:
         """Convert board to API format with null for empty cells (for frontend compatibility)."""

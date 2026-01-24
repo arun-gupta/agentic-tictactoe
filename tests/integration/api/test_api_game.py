@@ -75,12 +75,14 @@ class TestNewGameEndpoint:
         assert game_state["move_count"] == 0
         # With move_count=0, current player is player_symbol (which defaults to "X")
         assert game_state["player_symbol"] == "X"
-        # Verify board is empty
+        # Verify board is empty (API format uses flat list with None for empty cells)
         board = game_state["board"]
-        assert "cells" in board
-        for row in board["cells"]:
+        assert isinstance(board, list)
+        assert len(board) == 3
+        for row in board:
+            assert len(row) == 3
             for cell in row:
-                assert cell == "EMPTY"
+                assert cell is None  # API format uses None for empty cells
 
     def test_subsection_4_2_1_accepts_optional_player_symbol_preference(
         self, client: TestClient
@@ -381,11 +383,11 @@ class TestStatusEndpoint:
         assert "move_count" in game_state
         assert game_state["move_count"] >= 1  # At least one move made
 
-        # Verify board structure
+        # Verify board structure (API format uses flat list)
         board = game_state["board"]
-        assert "cells" in board
-        assert len(board["cells"]) == 3
-        for row in board["cells"]:
+        assert isinstance(board, list)
+        assert len(board) == 3
+        for row in board:
             assert len(row) == 3
 
     def test_subsection_4_2_3_returns_404_when_no_active_game_exists(
@@ -500,12 +502,14 @@ class TestResetEndpoint:
         data = response.json()
         game_state = data["game_state"]
         board = game_state["board"]
-        assert "cells" in board
+        assert isinstance(board, list)
+        assert len(board) == 3
 
-        # Verify all cells are EMPTY
-        for row in board["cells"]:
+        # Verify all cells are empty (API format uses None for empty cells)
+        for row in board:
+            assert len(row) == 3
             for cell in row:
-                assert cell == "EMPTY"
+                assert cell is None
 
     def test_subsection_4_2_4_sets_move_count_0_and_current_player_x(
         self, client: TestClient
@@ -555,10 +559,11 @@ class TestResetEndpoint:
         # For now, we verify the game is reset (move_count=0, empty board)
         assert game_state["move_count"] == 0
         # Verify board is empty (indirectly confirms history is cleared)
+        # API format uses flat list with None for empty cells
         board = game_state["board"]
-        for row in board["cells"]:
+        for row in board:
             for cell in row:
-                assert cell == "EMPTY"
+                assert cell is None
 
     def test_subsection_4_2_4_returns_game_id_for_new_game(self, client: TestClient) -> None:
         """Test POST /api/game/reset returns game_id (AC-5.6.3)."""
