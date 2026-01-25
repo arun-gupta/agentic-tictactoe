@@ -23,4 +23,4 @@ def test_anthropic_supported_models_loaded_from_config() -> None:
 
 def test_gemini_supported_models_loaded_from_config() -> None:
     provider = GeminiProvider(api_key="test-key")
-    assert "gemini-3-flash-preview" in provider.SUPPORTED_MODELS
+    assert "gemini-2.5-flash" in provider.SUPPORTED_MODELS
