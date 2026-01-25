@@ -8,8 +8,22 @@ This document defines the visual design for the Tic-Tac-Toe Multi-Agent Game UI.
 
 ### Figma File Reference
 
-**Primary Figma File**: [Tic-Tac-Toe Multi-Agent Game Design](https://www.figma.com/file/[FILE_ID]/Tic-Tac-Toe-Multi-Agent-Game)  
-**Design System File**: [Design System & Tokens](https://www.figma.com/file/[DESIGN_SYSTEM_ID]/Design-System) (if separate)
+**Primary Figma File**: [Tic-Tac-Toe Multi-Agent Game Design](https://www.figma.com/design/mhNp0FKIqT0mSBP8qKKvbi/Tic-Tac-Toe?node-id=2-510)
+
+**Key Design Frames**:
+- **Board** (node-id: 1:2770) - Game board with 3x3 grid, menu bar with tabs, status text, and New Game button
+- **Board Win** (node-id: 1:2463) - Win state with highlighted winning cells (green background)
+- **Board Lost** (node-id: 1:2639) - Loss state display
+- **Config** (node-id: 1:2239) - Configuration panel with agent LLM selection and API key inputs
+- **Metrics** (node-id: 1:2259) - Post-game metrics display (cost, tokens, latency, duration, moves)
+- **Components** (section: 2:507) - shadcn component library (Tabs, Button, Select, Input, Field states)
+
+**Component Library (shadcn/ui)**:
+This implementation **requires shadcn/ui** as the component library. All UI components are based on shadcn:
+- **Tabs**: https://ui.shadcn.com/docs/components/tabs
+- **Button**: https://ui.shadcn.com/docs/components/button
+- **Select**: https://ui.shadcn.com/docs/components/select
+- **Input**: https://ui.shadcn.com/docs/components/input
 
 **Access Requirements**:
 - Designers: Full edit access
@@ -17,10 +31,9 @@ This document defines the visual design for the Tic-Tac-Toe Multi-Agent Game UI.
 - Stakeholders: View-only access via share link
 
 **File Organization**:
-- **Pages**: Organized by feature area (Game Board, Metrics, Configuration, States)
-- **Frames**: Named with user story IDs for traceability (e.g., `US-001-Game-Board`, `US-008-Metrics-Panel`)
-- **Components**: Reusable UI components in dedicated component library page
-- **Design Tokens**: Centralized in Variables/Design Tokens section
+- **Section: Second Variation Design + UI Kit** (node-id: 2:510) - Main design section
+- **Components Shadcn+UPD** (section: 2:507) - Reusable shadcn-based UI components
+- **Field States**: Default, Win, Lost, Hover, Focus variants for game cells
 
 ### Design Frames
 
@@ -159,51 +172,37 @@ Each UI component in Figma MUST be linked to its specification in this document.
 
 ## Design System
 
-### Color Palette
+**IMPORTANT**: This design uses **shadcn/ui** components with their default zinc color palette and styling. The design follows a clean, light theme aesthetic.
 
-**Primary Colors:**
-- Background: `#1a1a2e` (Dark navy)
-- Surface: `#16213e` (Darker blue-gray)
-- Card/Panel: `#0f3460` (Deep blue)
+### Color Palette (Zinc-based Light Theme)
 
-**Game Colors:**
-- Player X: `#e94560` (Vibrant red/pink)
-- Player O: `#00adb5` (Cyan/teal)
-- Empty Cell: `#eaeaea` (Light gray)
-- Grid Lines: `#533483` (Purple-gray)
+**Base Colors (shadcn CSS Variables):**
+- `--background`: `#f4f4f5` (zinc-100) - Main background
+- `--foreground`: `#09090b` (zinc-950) - Primary text
+- `--accent`: `#f4f4f5` (zinc-100) - Accent background / `#27272a` (zinc-800) - Active tab text
+- `--muted-foreground`: `#a1a1aa` (zinc-400) - Placeholder text, muted content
+- `--secondary-foreground`: `#3f3f46` (zinc-700) - Secondary text, labels
+- `--border`: `#d4d4d8` (zinc-300) - Component borders
+- `--ring`: `#a1a1aa` (zinc-400) - Focus rings, inactive elements / `#71717a` (zinc-500) - Inactive tabs
+- `--sidebar-accent-foreground`: `#fafafa` (zinc-50) - Active tab background
+- `--ring-offset`: `#ffffff` (white) - Button backgrounds
 
-**UI Elements:**
-- Primary Action: `#00adb5` (Cyan)
-- Secondary Action: `#533483` (Purple)
-- Success: `#06d6a0` (Green)
-- Warning: `#ffd166` (Yellow)
-- Error: `#e94560` (Red)
-- Disabled: `#6c757d` (Gray)
+**Game State Colors:**
+- Win Cell Background: `#bbf7d0` (green-200) - Winning cells highlight
+- Loss Cell Background: `#fecaca` (red-200) - Losing cells highlight (if needed)
+- Player X Text: `#3f3f46` (zinc-700) - X symbol color
+- Player O Text: `#3f3f46` (zinc-700) - O symbol color
 
-**Text Colors:**
-- Primary Text: `#eaeaea` (Light gray)
-- Secondary Text: `#a8a8a8` (Medium gray)
-- Heading: `#ffffff` (White)
-
-**Accent Colors:**
-- Highlight: `#f72585` (Hot pink)
-- Agent Activity: `#4361ee` (Bright blue)
-- Win Line: `#06d6a0` (Green)
-
-**Agent Status Colors:**
-- Scout: `#4361ee` (Bright blue)
-- Strategist: `#533483` (Purple)
-- Executor: `#00adb5` (Cyan)
-- Idle: `#6c757d` (Gray)
-- Running: `#4361ee` (Bright blue) with pulse animation
-- Success: `#06d6a0` (Green)
-- Failed: `#e94560` (Red)
+**Shadows:**
+- `shadow-xs`: `0px 1px 2px rgba(0,0,0,0.05)` - Inputs, selects
+- `shadow-sm`: `0px 1px 3px rgba(0,0,0,0.1), 0px 1px 2px rgba(0,0,0,0.1)` - Active tabs
+- Board shadow: `0px 4px 4px rgba(0,0,0,0.25)` - Main board container
 
 ### Typography
 
 **Font Family:**
-- Primary: `'SF Pro Display', -apple-system, 'Helvetica Neue', 'Arial', sans-serif`
-- Monospace (for metrics/code): `'SF Mono', 'Monaco', 'Menlo', monospace`
+- Primary: `'JetBrains Mono Quattro', monospace` - All UI text (monospace aesthetic)
+- Fallback: `'JetBrains Mono', 'SF Mono', 'Monaco', 'Menlo', monospace`
 
 **Font Sizes:**
 - Heading 1: `2.5rem` (40px) - Page title
@@ -263,49 +262,64 @@ Each UI component in Figma MUST be linked to its specification in this document.
 
 ## Application Layout
 
-The UI is organized into three main tabs at the top level:
+The UI is organized into three main tabs using the shadcn Tabs component. The entire application fits within a 640x640px container.
 
-### Main Tab Navigation
+### Main Tab Navigation (shadcn Tabs)
 
 **Three-Tab Structure:**
 
-1. **Play Tab** (Default view)
-   - Game Board (primary focus)
-   - Move History panel
-   - Agent Insights (real-time agent status and analysis during gameplay)
-   - This is the active gameplay view where users spend most time
+1. **Board Tab** (Default view)
+   - 3x3 game grid centered in the container (298x298px play area)
+   - Menu bar at top with: Tabs, Status text, "New Game" button
+   - Move history text at bottom of container
+   - Status text shows: "Game Started", "Win", "Lost", etc.
 
-2. **Metrics Tab**
-   - Post-game metrics and analysis (visible only after game completion)
-   - Sub-tabs: Game Summary, Performance, LLM Interactions, Agent Communication
-   - Full-width layout for detailed data display
-   - Disabled/empty state until game completes
+2. **Config Tab**
+   - Agent LLM selection: Three Select dropdowns for Scout, Strategist, Executor
+   - API key inputs for each provider:
+     - OpenAI (model: GPT-5 mini) - API key input
+     - Anthropic (model: Claude Opus 4.5) - API key input
+     - Gemini (model: Gemini 3 Flash) - API key input
+   - Clean form layout with labels and model names displayed
 
-3. **Config Tab**
-   - Configuration panel for game setup
-   - LLM provider selection
-   - API key management
-   - Game settings (player symbol, etc.)
-   - Accessed before starting games or between games
+3. **Metrics Tab**
+   - Read-only metric inputs showing post-game data:
+     - Total cost ($)
+     - Tokens (count)
+     - Latency (ms)
+     - Duration (ms)
+     - Total moves
 
-**Tab Bar Specifications:**
-- Position: Top of application, below page title
-- Background: `#16213e` (Surface)
-- Height: `56px`
-- Border-bottom: `2px solid #533483` (Grid Lines)
-- Tab button padding: `16px 32px`
-- Tab font-size: `1rem` (16px)
-- Tab font-weight: `600` (Semibold)
-- Inactive tab color: `#a8a8a8` (Secondary Text)
-- Active tab color: `#eaeaea` (Primary Text)
-- Active tab border-bottom: `3px solid #00adb5` (Primary)
-- Tab hover: Background `rgba(0, 173, 181, 0.1)`
-- Tab transition: `all 0.2s ease`
+**Tab Bar Specifications (shadcn Tabs):**
+- Component: `shadcn/ui Tabs` (https://ui.shadcn.com/docs/components/tabs)
+- Position: Top-left of container (20px from edges)
+- Tab container: Border `1px solid #d4d4d8`, border-radius `4px`
+- Tab button padding: `16px horizontal, 8px vertical`
+- Tab font-size: `12px` (text-xs in shadcn)
+- Tab font-family: `JetBrains Mono Quattro`
+- Inactive tab: Text color `#71717a` (zinc-500) or `#a1a1aa` (zinc-400)
+- Active tab: Background `#fafafa`, text color `#27272a`, shadow-sm
+- Tab trigger border-radius: `4px`
+
+**Menu Bar Layout (Board Tab):**
+- Height: `32px`
+- Width: `600px` (within 640px container, 20px padding each side)
+- Position: `top: 20px, left: 20px`
+- Layout: `display: flex, justify-content: space-between, align-items: center`
+- Elements (left to right):
+  - Tabs component (Board | Config | Metrics)
+  - Status text (e.g., "Status: Game Started")
+  - "New Game" button (shadcn Button, secondary variant)
+
+**Container Specifications:**
+- Board container: `640px × 640px`
+- Background: `#f4f4f5` (zinc-100)
+- Shadow: `0px 4px 4px rgba(0,0,0,0.25)`
 
 **Layout Behavior:**
-- Play tab shows game board on left/center with agent insights on right
-- Metrics tab uses full width with its own sub-tab navigation
-- Config tab centers the configuration panel
+- Board tab shows game grid centered with move history at bottom
+- Config tab shows form fields for LLM configuration
+- Metrics tab shows read-only metric displays
 - Switching tabs preserves game state
 
 ## Component Specifications
@@ -314,55 +328,62 @@ The UI is organized into three main tabs at the top level:
 
 **User Stories:** US-001, US-002, US-003, US-004, US-005
 
-**Visual Design:** `docs/ui/frames/game-board.png`
+**Visual Design:** Figma node-id: 1:2770 (Board), 1:2463 (Board Win), 1:2639 (Board Lost)
 
 **Layout:**
-- 3x3 grid with equal cell sizes
-- Cell dimensions: `100px x 100px` (min-height enforced)
-- Gap between cells: `12px`
-- Board container padding: `30px`
-- Board background: `#0f3460` (Card/Panel color)
-- Board border-radius: `16px`
-- Total board width: `336px` (3×100 + 2×12 + 2×30)
+- 3x3 grid centered in container (Play Area)
+- Cell dimensions: `100px × 100px`
+- Play Area dimensions: `298px × 298px` (centered in 640px container)
+- Gap between cells: `-1px` (cells share borders, creating grid lines)
+- Container background: `#f4f4f5` (zinc-100)
+- Container dimensions: `640px × 640px`
+- Container shadow: `0px 4px 4px rgba(0,0,0,0.25)`
 
-**Cell States:**
-- **Empty**:
-  - Background: `#16213e` (Surface)
-  - Border: `3px solid #533483` (Grid Lines)
-  - Border-radius: `12px`
+**Cell States (Field Component):**
+- **Empty/Default**:
+  - Background: transparent (inherits container background)
+  - Border: `1px solid #3f3f46` (zinc-700)
+  - Border-radius: `8px` on corners (tl for top-left, tr for top-right, bl for bottom-left, br for bottom-right)
   - Cursor: `pointer`
-  - Font-size: `3rem` (48px)
+  - Font-size: Large (symbols fill cell)
 
 - **Occupied (X)**:
-  - Color: `#e94560` (Player X)
-  - Font-weight: `700` (Bold)
-  - Background: `#16213e` (Surface)
+  - Text: "x" (lowercase in design)
+  - Color: `#3f3f46` (zinc-700)
+  - Font-family: `JetBrains Mono Quattro`
+  - Font-size: `98px` (fills cell)
+  - Text-align: center
   - Cursor: `default`
 
 - **Occupied (O)**:
-  - Color: `#00adb5` (Player O)
-  - Font-weight: `700` (Bold)
-  - Background: `#16213e` (Surface)
+  - Text: "o" (lowercase in design)
+  - Color: `#3f3f46` (zinc-700)
+  - Font-family: `JetBrains Mono Quattro`
+  - Font-size: `98px` (fills cell)
+  - Text-align: center
   - Cursor: `default`
 
 - **Hover (empty cell)**:
-  - Background: `#0f3460` (Card)
-  - Border-color: `#00adb5` (Primary Action)
-  - Transform: `scale(1.05)`
+  - Border-color: Slightly darker
+  - Cursor: `pointer`
   - Transition: `all 0.2s ease`
+
+- **Focus**:
+  - Outline for accessibility
+  - Cursor: `pointer`
 
 - **Disabled (AI turn)**:
   - Opacity: `0.6`
   - Cursor: `not-allowed`
+  - Pointer-events: `none`
 
-- **Last move**:
-  - Border-color: `#f72585` (Highlight)
-  - Box-shadow: `0 0 12px rgba(247, 37, 133, 0.4)`
+- **Win state (winning cells)**:
+  - Background: `#bbf7d0` (green-200) - Light green highlight
+  - Border: maintains original border
+  - Animation: subtle highlight
 
-- **Winning cell**:
-  - Background: `#06d6a0` (Win Line)
-  - Border-color: `#06d6a0`
-  - Animation: `pulse 0.5s ease-in-out`
+- **Lost state (losing indicator)**:
+  - Background: `#fecaca` (red-200) - Light red highlight (if needed)
 
 **Game Status Display:**
 - **Status bar**:
@@ -771,115 +792,80 @@ The UI is organized into three main tabs at the top level:
 
 **User Stories:** US-019, US-020, US-021
 
-**Visual Design:** `docs/ui/frames/config-panel.png`
+**Visual Design:** Figma node-id: 1:2239 (Config)
 
 **Layout:**
-- Background: `#16213e` (Surface)
-- Border-radius: `12px`
-- Padding: `24px`
-- Border: `1px solid #533483` (Grid Lines)
-- Form layout with sections
-- Section spacing: `24px`
-- Max-width: `500px`
+- Container: `640px × 640px` (same as board)
+- Background: `#f4f4f5` (zinc-100)
+- Shadow: `0px 4px 4px rgba(0,0,0,0.25)`
+- Content padding: `20px` from edges
+- Form layout with vertical sections
 
-**Section Headers:**
-- Font-size: `1.25rem` (20px)
-- Font-weight: `600` (Semibold)
-- Color: `#ffffff` (Heading)
-- Margin-bottom: `16px`
-- Border-bottom: `2px solid #533483`
-- Padding-bottom: `8px`
+**Tab Navigation:**
+- Same Tabs component as Board tab (Board | Config | Metrics)
+- "Config" tab is active (highlighted)
 
-**LLM Provider Selection (US-019):**
-- **Dropdown (select)**:
-  - Height: `44px`
-  - Background: `#0f3460` (Card)
-  - Border: `2px solid #533483` (Grid Lines)
-  - Border-radius: `6px`
-  - Padding: `12px 16px`
-  - Font-size: `1rem` (16px)
-  - Color: `#eaeaea` (Primary Text)
-  - Cursor: `pointer`
-  - Focus: Border-color `#00adb5` (Primary)
-  - Options: OpenAI, Anthropic, Google Gemini
+**Agent LLM Selection (shadcn Select):**
 
-- **Model name input**:
-  - Height: `44px`
-  - Background: `#0f3460` (Card)
-  - Border: `2px solid #533483` (Grid Lines)
-  - Border-radius: `6px`
-  - Padding: `12px 16px`
-  - Font-size: `1rem` (16px)
-  - Color: `#eaeaea` (Primary Text)
-  - Placeholder color: `#6c757d` (Disabled)
-  - Focus: Border-color `#00adb5`, box-shadow `0 0 0 3px rgba(0, 173, 181, 0.2)`
-  - Margin-top: `12px`
+Three Select dropdowns in a row for assigning LLMs to each agent:
 
-- **Save button**:
-  - Background: `#00adb5` (Primary)
-  - Color: `#1a1a2e` (Dark for contrast)
-  - Padding: `12px 24px`
-  - Border-radius: `6px`
-  - Font-size: `1rem` (16px)
-  - Font-weight: `600` (Semibold)
-  - Border: `none`
-  - Cursor: `pointer`
-  - Margin-top: `16px`
-  - Hover: Background `#00c4cf`, transform `translateY(-2px)`, box-shadow Elevation 2
-  - Disabled: Background `#6c757d`, cursor `not-allowed`, opacity `0.6`
+- **Scout Select**:
+  - Label: "Scout"
+  - Label color: `#3f3f46` (zinc-700)
+  - Label font-size: `14px`
+  - Component: shadcn Select (https://ui.shadcn.com/docs/components/select)
+  - Trigger height: `36px`
+  - Trigger border: `1px solid #a1a1aa` (zinc-400)
+  - Trigger border-radius: `4px`
+  - Trigger padding: `12px horizontal, 8px vertical`
+  - Trigger shadow: `shadow-xs`
+  - Default value: "LLMs"
+  - Dropdown icon: Chevron down
 
-**Agent Mode Selection (US-020):**
-- **Radio buttons**:
-  - Size: `20px`
-  - Color (unchecked): `#533483` (Grid Lines)
-  - Color (checked): `#00adb5` (Primary)
-  - Label font-size: `1rem` (16px)
-  - Label margin-left: `10px`
-  - Spacing between options: `16px`
-  - Options: Local Mode, Distributed MCP Mode
+- **Strategist Select**: Same styling as Scout
 
-- **Framework dropdown** (conditional):
-  - Same style as LLM provider dropdown
-  - Visible only when Distributed MCP Mode selected
-  - Margin-top: `12px`
-  - Padding-left: `24px` (indent)
+- **Executor Select**: Same styling as Scout
+
+- Layout: `display: flex, gap: 20px`
+- Position: `top: 112px, left: 20px`
+- Total width: `601px`
+
+**API Key Inputs (shadcn Input):**
+
+Three Input sections for API keys, each with provider label and model name:
+
+- **OpenAI Input**:
+  - Position: `top: 236px`
+  - Label row: "OpenAI" (zinc-700) + "GPT-5 mini" (zinc-400)
+  - Component: shadcn Input (https://ui.shadcn.com/docs/components/input)
+  - Input height: `36px`
+  - Input width: `600px`
+  - Input background: `#f4f4f5` (zinc-100)
+  - Input border: `1px solid #a1a1aa` (zinc-400)
+  - Input border-radius: `4px`
+  - Input shadow: `shadow-xs`
+  - Placeholder: "OpenAI Key"
+  - Placeholder color: `#a1a1aa` (zinc-400)
+
+- **Anthropic Input**:
+  - Position: `top: 320px`
+  - Label row: "Anthropic" (zinc-700) + "Claude Opus 4.5" (zinc-400)
+  - Placeholder: "Anthropic Key"
+
+- **Gemini Input**:
+  - Position: `top: 404px`
+  - Label row: "Gemini" (zinc-700) + "Gemini 3 Flash" (zinc-400)
+  - Placeholder: "Gemini Key"
+
+**Input Label Styling:**
+- Layout: `display: flex, gap: 4px, align-items: center`
+- Provider name: Font-size `14px`, color `#3f3f46` (zinc-700)
+- Model name: Font-size `14px`, color `#a1a1aa` (zinc-400)
+- Gap between label and input: `8px`
 
 **Game Settings (US-021):**
-- **Reset button**:
-  - Background: `#e94560` (Error)
-  - Color: `#ffffff` (White)
-  - Padding: `12px 24px`
-  - Border-radius: `6px`
-  - Font-size: `1rem` (16px)
-  - Font-weight: `600` (Semibold)
-  - Border: `none`
-  - Cursor: `pointer`
-  - Hover: Background `#ff5a75`, transform `translateY(-2px)`
-  - Confirmation modal required before reset
-
-- **Symbol selection** (X or O):
-  - Toggle button group style
-  - Each option width: `80px`, height: `44px`
-  - Background (inactive): `#0f3460` (Card)
-  - Background (active): `#00adb5` (Primary)
-  - Color (inactive): `#a8a8a8` (Secondary Text)
-  - Color (active): `#1a1a2e` (Dark)
-  - Border-radius: `6px` (outer group)
-  - Font-size: `1.5rem` (24px)
-  - Font-weight: `700` (Bold)
-  - Transition: `all 0.2s ease`
-
-- **Difficulty slider** (optional):
-  - Track height: `6px`
-  - Track background: `#0f3460` (Card)
-  - Track border-radius: `3px`
-  - Thumb size: `20px`
-  - Thumb background: `#00adb5` (Primary)
-  - Thumb border: `2px solid #ffffff`
-  - Range: Easy (1) to Hard (5)
-  - Labels at min/max/mid
-  - Label font-size: `0.875rem` (14px)
-  - Label color: `#a8a8a8` (Secondary Text)
+- "New Game" button on Board tab handles game reset
+- Symbol selection and difficulty can be added as additional Select components if needed
 
 ### Error States
 
@@ -1204,16 +1190,29 @@ The UI is organized into three main tabs at the top level:
 
 ## Implementation Notes
 
+**UI Component Library (REQUIRED):**
+- **Required**: [shadcn/ui](https://ui.shadcn.com/) - This design is built on shadcn components
+- **Setup**: `npx shadcn@latest init` then add required components
+- **Required components**:
+  - `npx shadcn@latest add tabs` - Main navigation
+  - `npx shadcn@latest add button` - New Game button
+  - `npx shadcn@latest add select` - Agent LLM selection
+  - `npx shadcn@latest add input` - API key inputs
+
 **CSS Framework:**
-- Recommended: CSS Modules or Vanilla CSS with CSS Variables
-- Alternative: Styled Components for React-based implementations
-- Avoid: Tailwind (prefer semantic styling for this design system)
-- CSS Variables defined for all color, spacing, and typography values in `:root`
+- Recommended: Tailwind CSS (comes with shadcn/ui)
+- shadcn/ui uses CSS Variables for theming (zinc color palette)
+- All design tokens accessible via shadcn CSS variables (--background, --foreground, etc.)
+- Custom CSS for game board cells (not covered by shadcn components)
+
+**Font Setup:**
+- Primary: JetBrains Mono Quattro (monospace)
+- Include via Google Fonts or local font files
+- Example: `@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap')`
 
 **Icon Library:**
-- Recommended: Custom SVG icons for primary UI elements
-- Alternative: Lucide Icons or Heroicons for clean, modern appearance
-- Avoid: Font Awesome (licensing and weight concerns)
+- Recommended: Lucide Icons (included with shadcn/ui)
+- Chevron icons for Select dropdowns (built into shadcn Select)
 - Icon format: SVG with `currentColor` for flexible theming
 - Icon sizes: `16px`, `20px`, `24px`, `32px` (consistent scale)
 

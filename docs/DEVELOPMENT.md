@@ -247,9 +247,76 @@ pytest tests/contract -v --tb=short
 
 See [Contract Testing Guide](guides/CONTRACT_TESTING.md) for detailed implementation and usage.
 
+## Phase 8: Web UI Setup (shadcn/ui)
+
+Phase 8 requires **shadcn/ui** as the component library. The UI follows the Figma design specification.
+
+**Figma Design**: [Tic-Tac-Toe Design](https://www.figma.com/design/mhNp0FKIqT0mSBP8qKKvbi/Tic-Tac-Toe?node-id=2-510)
+
+### Setting Up shadcn/ui
+
+```bash
+# Navigate to UI directory
+cd src/ui
+
+# Initialize shadcn/ui (select defaults: TypeScript, zinc color palette)
+npx shadcn@latest init
+
+# Add required components
+npx shadcn@latest add tabs      # Main navigation (Board | Config | Metrics)
+npx shadcn@latest add button    # New Game button
+npx shadcn@latest add select    # Agent LLM selection dropdowns
+npx shadcn@latest add input     # API key inputs, metrics display
+```
+
+### Font Setup (JetBrains Mono)
+
+Add JetBrains Mono font to your project:
+
+```html
+<!-- In index.html or layout file -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+```
+
+Configure in Tailwind:
+```js
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      fontFamily: {
+        mono: ['JetBrains Mono', 'monospace'],
+      },
+    },
+  },
+}
+```
+
+### Required shadcn Components
+
+| Component | Purpose | shadcn Link |
+|-----------|---------|-------------|
+| Tabs | Board / Config / Metrics navigation | https://ui.shadcn.com/docs/components/tabs |
+| Button | New Game button | https://ui.shadcn.com/docs/components/button |
+| Select | Agent LLM selection (Scout, Strategist, Executor) | https://ui.shadcn.com/docs/components/select |
+| Input | API key inputs, metrics display | https://ui.shadcn.com/docs/components/input |
+
+### Design Specifications
+
+- **Container**: 640×640px, zinc-100 background, shadow
+- **Color Palette**: Zinc (light theme)
+- **Font**: JetBrains Mono (monospace)
+- **Cell Sizes**: 100×100px for game board cells
+- **States**: Default, Hover, Focus, Win (green-200), Lost (red-200)
+
+See [ui-spec.md](spec/ui-spec.md) for complete visual specifications.
+
 ## See Also
 
 - [CONTRIBUTING.md](../CONTRIBUTING.md) - Collaboration guidelines and git workflow
 - [Implementation Plan](implementation-plan.md) - Detailed implementation guide with test coverage
 - [Full Specification](spec/spec.md) - Complete system architecture and design
+- [UI Specification](spec/ui-spec.md) - Visual design specification with Figma integration
 - [Contract Testing Guide](guides/CONTRACT_TESTING.md) - API contract testing implementation plan

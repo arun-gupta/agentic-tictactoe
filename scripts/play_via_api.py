@@ -19,19 +19,24 @@ API_BASE_URL = "http://localhost:8000"
 API_TIMEOUT = 30.0  # 30 seconds timeout for API requests
 
 
-def print_board(board_data: dict[str, Any]) -> None:
+def print_board(board_data: list[list[str | None]] | dict[str, Any]) -> None:
     """Print the current board state from API response.
 
     Args:
-        board_data: Board data from API response (board.cells structure)
+        board_data: Board data from API response - either a 2D array or dict with cells
     """
-    cells = board_data.get("cells", [])
+    # Handle both formats: direct 2D array or dict with "cells" key
+    if isinstance(board_data, list):
+        cells = board_data
+    else:
+        cells = board_data.get("cells", [])
+
     print("\n  0   1   2")
     for row in range(3):
         print(f"{row} ", end="")
         for col in range(3):
-            cell = cells[row][col] if row < len(cells) and col < len(cells[row]) else "EMPTY"
-            if cell == "EMPTY":
+            cell = cells[row][col] if row < len(cells) and col < len(cells[row]) else None
+            if cell is None:
                 print(".", end="")
             else:
                 print(cell, end="")
