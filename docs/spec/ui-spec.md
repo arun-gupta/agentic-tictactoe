@@ -10,6 +10,10 @@ This document defines the visual design for the Tic-Tac-Toe Multi-Agent Game UI.
 
 **Primary Figma File**: [Tic-Tac-Toe Multi-Agent Game Design](https://www.figma.com/design/mhNp0FKIqT0mSBP8qKKvbi/Tic-Tac-Toe?node-id=2-510)
 
+**MCP Integration Details**:
+- **File Key**: `mhNp0FKIqT0mSBP8qKKvbi`
+- **Default Node ID**: `2:510`
+
 **Key Design Frames**:
 - **Board** (node-id: 1:2770) - Game board with 3x3 grid, menu bar with tabs, status text, and New Game button
 - **Board Win** (node-id: 1:2463) - Win state with highlighted winning cells (green background)
