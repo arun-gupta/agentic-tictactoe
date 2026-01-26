@@ -6,11 +6,16 @@ The Strategist Agent processes BoardAnalysis from Scout and:
 - Assigns confidence scores based on priority levels
 - Generates game plan and risk assessment
 
-This is a rule-based implementation (Phase 3). LLM enhancement comes in Phase 5.
+Phase 5 implementation: LLM-enhanced with Pydantic AI and fallback to priority-based.
 """
 
+import asyncio
+import logging
 import time
 from typing import Literal
+
+from pydantic_ai import Agent
+from pydantic_ai.exceptions import UnexpectedModelBehavior
 
 from src.agents.base import BaseAgent
 from src.domain.agent_models import (
@@ -21,22 +26,57 @@ from src.domain.agent_models import (
 )
 from src.domain.models import Position
 from src.domain.result import AgentResult
+from src.llm.pydantic_ai_agents import create_strategist_agent
+
+logger = logging.getLogger(__name__)
 
 
 class StrategistAgent(BaseAgent):
     """Strategist Agent for move selection and strategy assembly.
 
-    Uses rule-based priority system to select best moves and generate
-    comprehensive game strategy with alternatives.
+    Uses LLM-enhanced strategy with fallback to priority-based logic.
+    Includes retry logic, timeout handling, and comprehensive error handling.
     """
 
-    def __init__(self, ai_symbol: str = "O") -> None:
+    def __init__(
+        self,
+        ai_symbol: str = "O",
+        llm_enabled: bool = False,
+        provider: str | None = None,
+        model: str | None = None,
+        timeout_seconds: float = 5.0,
+        max_retries: int = 3,
+    ) -> None:
         """Initialize Strategist Agent.
 
         Args:
             ai_symbol: The symbol this AI is playing as ('X' or 'O')
+            llm_enabled: Whether to use LLM for strategy (defaults to False for backward compatibility)
+            provider: LLM provider name (openai, anthropic, gemini). If None, uses first available.
+            model: Model name. If None, uses first model from config for the provider.
+            timeout_seconds: Timeout for LLM calls in seconds (default: 5.0)
+            max_retries: Maximum number of retries on timeout (default: 3)
         """
         self.ai_symbol = ai_symbol
+        self.llm_enabled = llm_enabled
+        self.timeout_seconds = timeout_seconds
+        self.max_retries = max_retries
+
+        # Initialize Pydantic AI agent if LLM is enabled
+        self._llm_agent: Agent[None, Strategy] | None = None
+        if self.llm_enabled:
+            try:
+                self._llm_agent = create_strategist_agent(provider, model)
+                logger.info(
+                    f"Strategist LLM enabled with provider={provider}, model={model}, "
+                    f"timeout={timeout_seconds}s, max_retries={max_retries}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Failed to initialize Strategist LLM agent: {e}. Falling back to priority-based."
+                )
+                self.llm_enabled = False
+                self._llm_agent = None
 
     def analyze(self, game_state: object) -> object:
         """Not used - Strategist uses plan() instead of analyze().
@@ -49,8 +89,8 @@ class StrategistAgent(BaseAgent):
     def plan(self, analysis: BoardAnalysis) -> AgentResult[Strategy]:
         """Generate strategy from board analysis.
 
-        Currently only implements 3.1.1 (Priority-Based Move Selection).
-        3.1.2 (Strategy Assembly) and 3.1.3 (Confidence Scoring) not yet implemented.
+        Uses LLM strategy if enabled, with fallback to priority-based on errors/timeout.
+        Implements priority-based move selection, strategy assembly, and confidence scoring.
 
         Args:
             analysis: BoardAnalysis from Scout agent
@@ -61,21 +101,25 @@ class StrategistAgent(BaseAgent):
         start_time = time.time()
 
         try:
-            # 3.1.1: Priority-Based Move Selection (IMPLEMENTED)
-            primary_move = self._select_primary_move(analysis)
+            # Try LLM strategy if enabled
+            if self.llm_enabled and self._llm_agent:
+                try:
+                    strategy = self._plan_with_llm(analysis)
+                    execution_time = (time.time() - start_time) * 1000
+                    logger.info(f"Strategist LLM planning completed in {execution_time:.2f}ms")
+                    return AgentResult[Strategy](
+                        success=True,
+                        data=strategy,
+                        execution_time_ms=execution_time,
+                    )
+                except Exception as llm_error:
+                    # Log LLM failure and fall back to priority-based
+                    logger.warning(
+                        f"Strategist LLM planning failed: {llm_error}. Falling back to priority-based."
+                    )
 
-            # 3.1.2: Strategy Assembly (IMPLEMENTING NOW)
-            alternatives = self._generate_alternatives(analysis, primary_move)
-            game_plan = self._generate_game_plan(analysis, primary_move)
-            risk_assessment = self._assess_risk(analysis)
-
-            # Create complete strategy
-            strategy = Strategy(
-                primary_move=primary_move,
-                alternatives=alternatives,
-                game_plan=game_plan,
-                risk_assessment=risk_assessment,
-            )
+            # Fallback to priority-based strategy
+            strategy = self._plan_priority_based(analysis)
 
             execution_time = (time.time() - start_time) * 1000  # Convert to ms
 
@@ -87,11 +131,155 @@ class StrategistAgent(BaseAgent):
 
         except Exception as e:
             execution_time = (time.time() - start_time) * 1000
+            logger.error(f"Strategist planning failed completely: {e}")
             return AgentResult[Strategy](
                 success=False,
                 error_message=str(e),
                 execution_time_ms=execution_time,
             )
+
+    def _plan_with_llm(self, analysis: BoardAnalysis) -> Strategy:
+        """Generate strategy using Pydantic AI with retry logic.
+
+        Args:
+            analysis: BoardAnalysis from Scout agent
+
+        Returns:
+            Strategy from LLM
+
+        Raises:
+            TimeoutError: If LLM call exceeds timeout after all retries
+            Exception: If LLM call fails with non-timeout error
+        """
+        # Build prompt with board analysis and game context
+        prompt = self._build_llm_prompt(analysis)
+
+        # Retry logic with exponential backoff
+        for attempt in range(self.max_retries):
+            try:
+                llm_start = time.time()
+
+                # Run LLM call with timeout
+                result = asyncio.run(
+                    asyncio.wait_for(
+                        self._llm_agent.run(prompt),  # type: ignore[union-attr]
+                        timeout=self.timeout_seconds,
+                    )
+                )
+
+                llm_latency = (time.time() - llm_start) * 1000
+
+                # Extract Strategy from result
+                strategy: Strategy = result.data
+
+                # Log LLM call metadata
+                logger.info(
+                    f"Strategist LLM call metadata: "
+                    f"attempt={attempt + 1}/{self.max_retries}, "
+                    f"latency={llm_latency:.2f}ms, "
+                    f"prompt_length={len(prompt)}"
+                )
+
+                return strategy
+
+            except TimeoutError as timeout_err:
+                wait_time = 2**attempt  # Exponential backoff: 1s, 2s, 4s
+                logger.warning(
+                    f"Strategist LLM timeout (attempt {attempt + 1}/{self.max_retries}). "
+                    f"Retrying in {wait_time}s..."
+                )
+                if attempt < self.max_retries - 1:
+                    time.sleep(wait_time)
+                else:
+                    raise TimeoutError(
+                        f"Strategist LLM call timed out after {self.max_retries} retries "
+                        f"(timeout: {self.timeout_seconds}s)"
+                    ) from timeout_err
+
+            except UnexpectedModelBehavior as e:
+                # Pydantic AI specific errors (parse errors, validation errors)
+                logger.error(f"Strategist LLM parse/validation error: {e}")
+                raise Exception(f"LLM parse error: {e}") from e
+
+            except Exception as e:
+                # Authentication errors, API errors, etc.
+                logger.error(f"Strategist LLM call failed: {e}")
+                raise
+
+        # This should never be reached (all paths return or raise)
+        raise RuntimeError("LLM planning failed: no successful attempts")
+
+    def _build_llm_prompt(self, analysis: BoardAnalysis) -> str:
+        """Build prompt for LLM with board analysis and game context.
+
+        Args:
+            analysis: BoardAnalysis from Scout
+
+        Returns:
+            Formatted prompt string
+        """
+        # Format threats
+        threats_str = "None"
+        if analysis.threats:
+            threats_str = ", ".join(
+                f"({t.position.row},{t.position.col})" for t in analysis.threats
+            )
+
+        # Format opportunities
+        opportunities_str = "None"
+        if analysis.opportunities:
+            opportunities_str = ", ".join(
+                f"({o.position.row},{o.position.col})" for o in analysis.opportunities
+            )
+
+        # Format strategic moves summary
+        strategic_summary = f"{len(analysis.strategic_moves)} positions available"
+
+        prompt = f"""Given this Tic-Tac-Toe board analysis, recommend the best move strategy:
+
+Game Phase: {analysis.game_phase}
+Board Evaluation: {analysis.board_evaluation_score}
+
+Threats (opponent wins): {threats_str}
+Opportunities (AI wins): {opportunities_str}
+Strategic Positions: {strategic_summary}
+
+AI Symbol: {self.ai_symbol}
+
+Provide a comprehensive strategy including:
+1. Primary move: The best move with highest priority (IMMEDIATE_WIN, BLOCK_THREAT, CENTER_CONTROL, CORNER_CONTROL, or EDGE_PLAY)
+2. Alternative moves: Backup options sorted by priority descending
+3. Game plan: Overall strategy explanation (2-3 sentences)
+4. Risk assessment: 'low', 'medium', or 'high' based on current position
+
+Return a structured Strategy with MoveRecommendation objects."""
+
+        return prompt
+
+    def _plan_priority_based(self, analysis: BoardAnalysis) -> Strategy:
+        """Generate strategy using priority-based logic (fallback).
+
+        Args:
+            analysis: BoardAnalysis from Scout agent
+
+        Returns:
+            Strategy from priority-based logic
+        """
+        # 3.1.1: Priority-Based Move Selection
+        primary_move = self._select_primary_move(analysis)
+
+        # 3.1.2: Strategy Assembly
+        alternatives = self._generate_alternatives(analysis, primary_move)
+        game_plan = self._generate_game_plan(analysis, primary_move)
+        risk_assessment = self._assess_risk(analysis)
+
+        # Create complete strategy
+        return Strategy(
+            primary_move=primary_move,
+            alternatives=alternatives,
+            game_plan=game_plan,
+            risk_assessment=risk_assessment,
+        )
 
     # =========================================================================
     # 3.1.1: Priority-Based Move Selection

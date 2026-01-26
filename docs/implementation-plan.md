@@ -1600,23 +1600,27 @@ python scripts/test_api_keys.py
 **Test Files**: `tests/unit/agents/test_scout_llm.py`
 **Implementation**: `src/agents/scout.py` - Added LLM integration with Pydantic AI, retry logic, fallback, and metadata logging
 
-**5.1.2. Strategist LLM Enhancement (Pydantic AI)**
-- Create Pydantic AI Agent with `Strategy` as response model
-- Define prompt: "Given this analysis, recommend best move..."
-- Use Pydantic AI's structured output to automatically validate response against `Strategy` domain model
-- Leverage Pydantic AI's built-in error handling and retry logic
-- Fallback to priority-based selection if LLM fails
-- Update `src/agents/strategist.py`
+**5.1.2. Strategist LLM Enhancement (Pydantic AI)** ✅
+- ✅ Create Pydantic AI Agent with `Strategy` as response model
+- ✅ Define prompt: "Given this analysis, recommend best move..."
+- ✅ Use Pydantic AI's structured output to automatically validate response against `Strategy` domain model
+- ✅ Leverage Pydantic AI's built-in error handling and retry logic
+- ✅ Fallback to priority-based selection if LLM fails
+- ✅ Update `src/agents/strategist.py`
 
-**Subsection Tests**:
-- StrategistAgent.plan() calls Pydantic AI Agent when LLM enabled
-- StrategistAgent.plan() prompts LLM with BoardAnalysis and game context
-- StrategistAgent.plan() receives Strategy from Pydantic AI structured output
-- StrategistAgent.plan() falls back to priority-based selection on LLM timeout (>5s)
-- StrategistAgent.plan() falls back to priority-based selection on LLM parse error
-- StrategistAgent.plan() falls back to priority-based selection on LLM authentication error
-- StrategistAgent.plan() retries LLM call on timeout (3 retries with exponential backoff)
-- StrategistAgent.plan() logs LLM call metadata (prompt, response, tokens, latency, model)
+**Subsection Tests**: ✅ All 8 tests passing
+- ✅ StrategistAgent.plan() calls Pydantic AI Agent when LLM enabled
+- ✅ StrategistAgent.plan() prompts LLM with BoardAnalysis and game context
+- ✅ StrategistAgent.plan() receives Strategy from Pydantic AI structured output
+- ✅ StrategistAgent.plan() falls back to priority-based selection on LLM timeout (>5s)
+- ✅ StrategistAgent.plan() falls back to priority-based selection on LLM parse error
+- ✅ StrategistAgent.plan() falls back to priority-based selection on LLM authentication error
+- ✅ StrategistAgent.plan() retries LLM call on timeout (3 retries with exponential backoff)
+- ✅ StrategistAgent.plan() logs LLM call metadata (prompt, response, tokens, latency, model)
+
+**Test Coverage**: ✅ 11 tests (8 subsection tests + 3 integration tests)
+**Test Files**: `tests/unit/agents/test_strategist_llm.py`
+**Implementation**: `src/agents/strategist.py` - Added LLM integration with Pydantic AI, retry logic, fallback, and metadata logging
 
 **5.1.3. Executor (No LLM)**
 - Executor remains rule-based (no LLM needed for validation/execution)
