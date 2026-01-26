@@ -77,13 +77,13 @@ class TestGeminiProviderGenerate:
         provider = GeminiProvider(api_key="test-key")
         response = provider.generate(
             prompt="Test prompt",
-            model="gemini-3-flash-preview",
+            model="gemini-2.5-flash",
             max_tokens=100,
             temperature=0.7,
         )
 
         # Verify API was called correctly
-        mock_generative_model.assert_called_once_with("gemini-3-flash-preview")
+        mock_generative_model.assert_called_once_with("gemini-2.5-flash")
         mock_model.generate_content.assert_called_once_with(
             "Test prompt",
             generation_config={"max_output_tokens": 100, "temperature": 0.7},
@@ -100,7 +100,7 @@ class TestGeminiProviderGenerate:
     def test_generate_supports_gemini_3_flash_preview_model(
         self, mock_configure: MagicMock, mock_generative_model: MagicMock
     ) -> None:
-        """Test that GeminiProvider supports gemini-3-flash-preview model."""
+        """Test that GeminiProvider supports gemini-2.5-flash model."""
         mock_response = Mock()
         mock_response.text = "Response"
         mock_response.usage_metadata = Mock(prompt_token_count=10, candidates_token_count=10)
@@ -110,10 +110,10 @@ class TestGeminiProviderGenerate:
         mock_generative_model.return_value = mock_model
 
         provider = GeminiProvider(api_key="test-key")
-        response = provider.generate(prompt="Test", model="gemini-3-flash-preview")
+        response = provider.generate(prompt="Test", model="gemini-2.5-flash")
 
         assert response.text == "Response"
-        mock_generative_model.assert_called_once_with("gemini-3-flash-preview")
+        mock_generative_model.assert_called_once_with("gemini-2.5-flash")
 
     @patch("src.llm.gemini_provider.genai.GenerativeModel")
     @patch("src.llm.gemini_provider.genai.configure")
@@ -150,14 +150,14 @@ class TestGeminiProviderGenerate:
         with patch.dict(os.environ, {"GOOGLE_API_KEY": "test-key"}):
             provider = GeminiProvider()
             with pytest.raises(ValueError, match="max_tokens must be at least 1"):
-                provider.generate(prompt="Test", model="gemini-3-flash-preview", max_tokens=0)
+                provider.generate(prompt="Test", model="gemini-2.5-flash", max_tokens=0)
 
     def test_generate_validates_temperature_range(self) -> None:
         """Test that generate() validates temperature is between 0.0 and 2.0."""
         with patch.dict(os.environ, {"GOOGLE_API_KEY": "test-key"}):
             provider = GeminiProvider()
             with pytest.raises(ValueError, match="temperature must be between 0.0 and 2.0"):
-                provider.generate(prompt="Test", model="gemini-3-flash-preview", temperature=2.1)
+                provider.generate(prompt="Test", model="gemini-2.5-flash", temperature=2.1)
 
 
 class TestGeminiProviderErrorHandling:
@@ -183,7 +183,7 @@ class TestGeminiProviderErrorHandling:
         mock_generative_model.return_value = mock_model
 
         provider = GeminiProvider(api_key="test-key")
-        response = provider.generate(prompt="Test", model="gemini-3-flash-preview")
+        response = provider.generate(prompt="Test", model="gemini-2.5-flash")
 
         assert response.text == "Success"
         assert mock_model.generate_content.call_count == 2
@@ -202,7 +202,7 @@ class TestGeminiProviderErrorHandling:
 
         provider = GeminiProvider(api_key="test-key")
         with pytest.raises(RuntimeError):  # Our code wraps it in RuntimeError
-            provider.generate(prompt="Test", model="gemini-3-flash-preview")
+            provider.generate(prompt="Test", model="gemini-2.5-flash")
 
         # Should not retry on auth errors
         assert mock_model.generate_content.call_count == 1
@@ -235,7 +235,7 @@ class TestGeminiProviderErrorHandling:
         mock_generative_model.return_value = mock_model
 
         provider = GeminiProvider(api_key="test-key")
-        response = provider.generate(prompt="Test", model="gemini-3-flash-preview")
+        response = provider.generate(prompt="Test", model="gemini-2.5-flash")
 
         assert response.text == "Success"
         # Should wait 4 seconds (from Retry-After header) before retry
@@ -265,7 +265,7 @@ class TestGeminiProviderErrorHandling:
         mock_generative_model.return_value = mock_model
 
         provider = GeminiProvider(api_key="test-key")
-        response = provider.generate(prompt="Test", model="gemini-3-flash-preview")
+        response = provider.generate(prompt="Test", model="gemini-2.5-flash")
 
         assert response.text == "Success"
         assert mock_model.generate_content.call_count == 2
@@ -284,7 +284,7 @@ class TestGeminiProviderErrorHandling:
 
         provider = GeminiProvider(api_key="test-key")
         with pytest.raises(RuntimeError):
-            provider.generate(prompt="Test", model="gemini-3-flash-preview")
+            provider.generate(prompt="Test", model="gemini-2.5-flash")
 
         # Should not retry on permission errors
         assert mock_model.generate_content.call_count == 1
@@ -310,7 +310,7 @@ class TestGeminiProviderErrorHandling:
         mock_generative_model.return_value = mock_model
 
         provider = GeminiProvider(api_key="test-key")
-        response = provider.generate(prompt="Test", model="gemini-3-flash-preview")
+        response = provider.generate(prompt="Test", model="gemini-2.5-flash")
 
         assert response.text == "Response"
         assert response.tokens_used == 10
@@ -328,7 +328,7 @@ class TestGeminiProviderErrorHandling:
 
         provider = GeminiProvider(api_key="test-key")
         with pytest.raises(RuntimeError, match="Google Gemini API error"):
-            provider.generate(prompt="Test", model="gemini-3-flash-preview")
+            provider.generate(prompt="Test", model="gemini-2.5-flash")
 
     @patch("src.llm.gemini_provider.genai.GenerativeModel")
     @patch("src.llm.gemini_provider.genai.configure")
@@ -342,7 +342,7 @@ class TestGeminiProviderErrorHandling:
 
         provider = GeminiProvider(api_key="test-key")
         with pytest.raises(RuntimeError, match="Unexpected error"):
-            provider.generate(prompt="Test", model="gemini-3-flash-preview")
+            provider.generate(prompt="Test", model="gemini-2.5-flash")
 
     @patch("src.llm.gemini_provider.genai.GenerativeModel")
     @patch("src.llm.gemini_provider.genai.configure")
@@ -359,7 +359,7 @@ class TestGeminiProviderErrorHandling:
         mock_generative_model.return_value = mock_model
 
         provider = GeminiProvider(api_key="test-key")
-        response = provider.generate(prompt="Test", model="gemini-3-flash-preview")
+        response = provider.generate(prompt="Test", model="gemini-2.5-flash")
 
         assert isinstance(response, LLMResponse)
         assert response.text == "Generated text"
@@ -389,4 +389,4 @@ class TestGeminiProviderErrorHandling:
         # Models should come from config.json, not hardcoded
         assert len(provider.SUPPORTED_MODELS) > 0, "No models configured in config.json"
         # Verify at least one model is configured (exact model names come from config)
-        assert "gemini-3-flash-preview" in provider.SUPPORTED_MODELS
+        assert "gemini-2.5-flash" in provider.SUPPORTED_MODELS

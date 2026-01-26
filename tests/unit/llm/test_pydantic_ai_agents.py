@@ -111,19 +111,19 @@ class TestPydanticAIScoutAgent:
         """Test that create_scout_agent creates Agent with BoardAnalysis response model for Gemini."""
         # Setup mocks
         mock_config_instance = MagicMock()
-        mock_config_instance.get_supported_models.return_value = {"gemini-3-flash-preview"}
+        mock_config_instance.get_supported_models.return_value = {"gemini-2.5-flash"}
         mock_config.return_value = mock_config_instance
         mock_get_api_key.return_value = "test-google-key"
         mock_model_instance = MagicMock()
         mock_google_model.return_value = mock_model_instance
 
         # Create agent - should update env var since it differs
-        agent = create_scout_agent(provider="gemini", model="gemini-3-flash-preview")
+        agent = create_scout_agent(provider="gemini", model="gemini-2.5-flash")
 
         # Verify
         assert agent is not None
         assert agent.output_type == BoardAnalysis
-        mock_google_model.assert_called_once_with("gemini-3-flash-preview")
+        mock_google_model.assert_called_once_with("gemini-2.5-flash")
         # Verify environment variable was updated
         assert os.environ.get("GOOGLE_API_KEY") == "test-google-key"
 
@@ -267,19 +267,19 @@ class TestPydanticAIStrategistAgent:
         """Test that create_strategist_agent creates Agent with Strategy response model for Gemini."""
         # Setup mocks
         mock_config_instance = MagicMock()
-        mock_config_instance.get_supported_models.return_value = {"gemini-3-flash-preview"}
+        mock_config_instance.get_supported_models.return_value = {"gemini-2.5-flash"}
         mock_config.return_value = mock_config_instance
         mock_get_api_key.return_value = "test-google-key"
         mock_model_instance = MagicMock()
         mock_google_model.return_value = mock_model_instance
 
         # Create agent
-        agent = create_strategist_agent(provider="gemini", model="gemini-3-flash-preview")
+        agent = create_strategist_agent(provider="gemini", model="gemini-2.5-flash")
 
         # Verify
         assert agent is not None
         assert agent.output_type == Strategy
-        mock_google_model.assert_called_once_with("gemini-3-flash-preview")
+        mock_google_model.assert_called_once_with("gemini-2.5-flash")
         mock_get_api_key.assert_called_once_with("GOOGLE_API_KEY")
 
     @patch("src.llm.pydantic_ai_agents.get_api_key")
@@ -315,7 +315,7 @@ class TestPydanticAIMultiProviderSupport:
         mock_config_instance.get_supported_models.side_effect = [
             {"gpt-5.2"},  # openai
             {"claude-haiku-4-5-20251001"},  # anthropic
-            {"gemini-3-flash-preview"},  # gemini
+            {"gemini-2.5-flash"},  # gemini
         ]
         mock_config.return_value = mock_config_instance
         mock_get_api_key.side_effect = ["test-openai-key", "test-anthropic-key", "test-google-key"]
@@ -328,7 +328,7 @@ class TestPydanticAIMultiProviderSupport:
         anthropic_agent = create_scout_agent(
             provider="anthropic", model="claude-haiku-4-5-20251001"
         )
-        gemini_agent = create_scout_agent(provider="gemini", model="gemini-3-flash-preview")
+        gemini_agent = create_scout_agent(provider="gemini", model="gemini-2.5-flash")
 
         # Verify all agents created successfully
         assert openai_agent is not None
@@ -341,4 +341,4 @@ class TestPydanticAIMultiProviderSupport:
         # Verify correct models were called
         mock_openai_model.assert_called_once_with("gpt-5.2")
         mock_anthropic_model.assert_called_once_with("claude-haiku-4-5-20251001")
-        mock_google_model.assert_called_once_with("gemini-3-flash-preview")
+        mock_google_model.assert_called_once_with("gemini-2.5-flash")
