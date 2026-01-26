@@ -6,11 +6,16 @@ This directory contains Claude Code skills (slash commands) that define standard
 
 ### 🚀 Subsection Implementation (Primary Workflow)
 
-**Command**: `/subsection-implementation <number>`
+**Command**: `/subsection-implementation <number>` or `/si <number>` (short alias)
 
 **Purpose**: Complete end-to-end implementation of a single subsection from the implementation plan.
 
 **Usage**:
+```
+/si 5.1.1
+```
+
+Or the full version:
 ```
 /subsection-implementation 5.1.1
 ```
