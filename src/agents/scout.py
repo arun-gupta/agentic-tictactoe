@@ -6,40 +6,81 @@ The Scout Agent analyzes the game board to identify:
 - Strategic positions (center, corners, edges)
 - Game phase (opening, midgame, endgame)
 
-This is a rule-based implementation (Phase 3). LLM enhancement comes in Phase 5.
+Phase 5 implementation: LLM-enhanced with Pydantic AI and fallback to rule-based.
 """
 
+import asyncio
+import logging
 import time
 from collections.abc import Sequence
 from typing import Literal
+
+from pydantic_ai import Agent
+from pydantic_ai.exceptions import ModelRetry, UnexpectedModelBehavior
 
 from src.agents.base import BaseAgent
 from src.domain.agent_models import BoardAnalysis, Opportunity, StrategicMove, Threat
 from src.domain.models import GameState, PlayerSymbol, Position
 from src.domain.result import AgentResult
+from src.llm.pydantic_ai_agents import create_scout_agent
 
 GamePhase = Literal["opening", "midgame", "endgame"]
+
+logger = logging.getLogger(__name__)
 
 
 class ScoutAgent(BaseAgent):
     """Scout Agent for board analysis and threat detection.
 
-    Uses rule-based logic to scan the board for threats, opportunities,
-    and strategic positions. Returns comprehensive BoardAnalysis.
+    Uses LLM-enhanced analysis (Pydantic AI) with fallback to rule-based logic.
+    Includes retry logic, timeout handling, and comprehensive error handling.
     """
 
-    def __init__(self, ai_symbol: PlayerSymbol = "O") -> None:
+    def __init__(
+        self,
+        ai_symbol: PlayerSymbol = "O",
+        llm_enabled: bool = False,
+        provider: str | None = None,
+        model: str | None = None,
+        timeout_seconds: float = 5.0,
+        max_retries: int = 3,
+    ) -> None:
         """Initialize Scout Agent.
 
         Args:
             ai_symbol: The symbol this AI is playing as ('X' or 'O')
+            llm_enabled: Whether to use LLM for analysis (defaults to False for backward compatibility)
+            provider: LLM provider name (openai, anthropic, gemini). If None, uses first available.
+            model: Model name. If None, uses first model from config for the provider.
+            timeout_seconds: Timeout for LLM calls in seconds (default: 5.0)
+            max_retries: Maximum number of retries on timeout (default: 3)
         """
         self.ai_symbol = ai_symbol
         self.opponent_symbol: PlayerSymbol = "X" if ai_symbol == "O" else "O"
+        self.llm_enabled = llm_enabled
+        self.timeout_seconds = timeout_seconds
+        self.max_retries = max_retries
+
+        # Initialize Pydantic AI agent if LLM is enabled
+        self._llm_agent: Agent[None, BoardAnalysis] | None = None
+        if self.llm_enabled:
+            try:
+                self._llm_agent = create_scout_agent(provider, model)
+                logger.info(
+                    f"Scout LLM enabled with provider={provider}, model={model}, "
+                    f"timeout={timeout_seconds}s, max_retries={max_retries}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Failed to initialize Scout LLM agent: {e}. Falling back to rule-based."
+                )
+                self.llm_enabled = False
+                self._llm_agent = None
 
     def analyze(self, game_state: GameState) -> AgentResult[BoardAnalysis]:
         """Analyze the game state and return board analysis.
 
+        Uses LLM analysis if enabled, with fallback to rule-based on errors/timeout.
         Detects threats, opportunities, strategic positions, and evaluates board state.
 
         Args:
@@ -51,29 +92,25 @@ class ScoutAgent(BaseAgent):
         start_time = time.time()
 
         try:
-            # Detect threats (opponent two-in-a-row)
-            threats = self._detect_threats(game_state)
+            # Try LLM analysis if enabled
+            if self.llm_enabled and self._llm_agent:
+                try:
+                    analysis = self._analyze_with_llm(game_state)
+                    execution_time = (time.time() - start_time) * 1000
+                    logger.info(f"Scout LLM analysis completed in {execution_time:.2f}ms")
+                    return AgentResult[BoardAnalysis](
+                        success=True,
+                        data=analysis,
+                        execution_time_ms=execution_time,
+                    )
+                except Exception as llm_error:
+                    # Log LLM failure and fall back to rule-based
+                    logger.warning(
+                        f"Scout LLM analysis failed: {llm_error}. Falling back to rule-based analysis."
+                    )
 
-            # Detect opportunities (AI two-in-a-row)
-            opportunities = self._detect_opportunities(game_state)
-
-            # Analyze strategic positions (center, corners, edges)
-            strategic_moves = self._analyze_strategic_positions(game_state)
-
-            # Determine game phase
-            game_phase = self._detect_game_phase(game_state)
-
-            # Evaluate board position
-            eval_score = self._evaluate_board(game_state, threats, opportunities)
-
-            # Create board analysis
-            analysis = BoardAnalysis(
-                threats=threats,
-                opportunities=opportunities,
-                strategic_moves=strategic_moves,
-                game_phase=game_phase,
-                board_evaluation_score=eval_score,
-            )
+            # Fallback to rule-based analysis
+            analysis = self._analyze_rule_based(game_state)
 
             execution_time = (time.time() - start_time) * 1000  # Convert to ms
 
@@ -85,11 +122,159 @@ class ScoutAgent(BaseAgent):
 
         except Exception as e:
             execution_time = (time.time() - start_time) * 1000
+            logger.error(f"Scout analysis failed completely: {e}")
             return AgentResult[BoardAnalysis](
                 success=False,
                 error_message=str(e),
                 execution_time_ms=execution_time,
             )
+
+    def _analyze_with_llm(self, game_state: GameState) -> BoardAnalysis:
+        """Analyze game state using Pydantic AI with retry logic.
+
+        Args:
+            game_state: Current game state to analyze
+
+        Returns:
+            BoardAnalysis from LLM
+
+        Raises:
+            TimeoutError: If LLM call exceeds timeout after all retries
+            Exception: If LLM call fails with non-timeout error
+        """
+        # Build prompt with board state and game context
+        prompt = self._build_llm_prompt(game_state)
+
+        # Retry logic with exponential backoff
+        for attempt in range(self.max_retries):
+            try:
+                llm_start = time.time()
+
+                # Run LLM call with timeout
+                result = asyncio.run(
+                    asyncio.wait_for(
+                        self._llm_agent.run(prompt),  # type: ignore[union-attr]
+                        timeout=self.timeout_seconds,
+                    )
+                )
+
+                llm_latency = (time.time() - llm_start) * 1000
+
+                # Extract BoardAnalysis from result
+                analysis: BoardAnalysis = result.data
+
+                # Log LLM call metadata
+                logger.info(
+                    f"Scout LLM call metadata: "
+                    f"attempt={attempt + 1}/{self.max_retries}, "
+                    f"latency={llm_latency:.2f}ms, "
+                    f"prompt_length={len(prompt)}"
+                )
+
+                return analysis
+
+            except TimeoutError as timeout_err:
+                wait_time = 2**attempt  # Exponential backoff: 1s, 2s, 4s
+                logger.warning(
+                    f"Scout LLM timeout (attempt {attempt + 1}/{self.max_retries}). "
+                    f"Retrying in {wait_time}s..."
+                )
+                if attempt < self.max_retries - 1:
+                    time.sleep(wait_time)
+                else:
+                    raise TimeoutError(
+                        f"Scout LLM call timed out after {self.max_retries} retries "
+                        f"(timeout: {self.timeout_seconds}s)"
+                    ) from timeout_err
+
+            except (ModelRetry, UnexpectedModelBehavior) as e:
+                # Pydantic AI specific errors (parse errors, validation errors)
+                logger.error(f"Scout LLM parse/validation error: {e}")
+                raise Exception(f"LLM parse error: {e}") from e
+
+            except Exception as e:
+                # Authentication errors, API errors, etc.
+                logger.error(f"Scout LLM call failed: {e}")
+                raise
+
+        # This should never be reached (all paths return or raise)
+        raise RuntimeError("LLM analysis failed: no successful attempts")
+
+    def _build_llm_prompt(self, game_state: GameState) -> str:
+        """Build prompt for LLM with board state and game context.
+
+        Args:
+            game_state: Current game state
+
+        Returns:
+            Formatted prompt string
+        """
+        # Format board state
+        board_lines = []
+        for row in range(3):
+            row_cells = []
+            for col in range(3):
+                cell = game_state.board.cells[row][col]
+                if cell == "EMPTY":
+                    row_cells.append(".")
+                else:
+                    row_cells.append(cell)
+            board_lines.append(" ".join(row_cells))
+
+        board_str = "\n".join(board_lines)
+
+        prompt = f"""Analyze this Tic-Tac-Toe board state:
+
+{board_str}
+
+AI Symbol: {self.ai_symbol}
+Opponent Symbol: {self.opponent_symbol}
+Move Count: {game_state.move_count}
+Current Player: {game_state.get_current_player()}
+
+Provide a comprehensive board analysis including:
+1. Threats: Opponent two-in-a-row patterns with empty cell (immediate danger)
+2. Opportunities: AI two-in-a-row patterns with empty cell (winning moves)
+3. Strategic positions: Available center, corner, and edge positions with priorities
+4. Game phase: opening (0-2 moves), midgame (3-6 moves), or endgame (7-9 moves)
+5. Board evaluation score: -1.0 (opponent winning) to 1.0 (AI winning)
+
+Return a structured BoardAnalysis."""
+
+        return prompt
+
+    def _analyze_rule_based(self, game_state: GameState) -> BoardAnalysis:
+        """Analyze game state using rule-based logic (fallback).
+
+        Args:
+            game_state: Current game state to analyze
+
+        Returns:
+            BoardAnalysis from rule-based logic
+        """
+        # Detect threats (opponent two-in-a-row)
+        threats = self._detect_threats(game_state)
+
+        # Detect opportunities (AI two-in-a-row)
+        opportunities = self._detect_opportunities(game_state)
+
+        # Analyze strategic positions (center, corners, edges)
+        strategic_moves = self._analyze_strategic_positions(game_state)
+
+        # Determine game phase
+        game_phase = self._detect_game_phase(game_state)
+
+        # Evaluate board position
+        eval_score = self._evaluate_board(game_state, threats, opportunities)
+
+        # Create board analysis
+        return BoardAnalysis(
+            threats=threats,
+            opportunities=opportunities,
+            strategic_moves=strategic_moves,
+            game_phase=game_phase,
+            board_evaluation_score=eval_score,
+        )
 
     def _detect_threats(self, game_state: GameState) -> list[Threat]:
         """Detect opponent threats (two-in-a-row with empty position).

@@ -1578,23 +1578,27 @@ python scripts/test_api_keys.py
 
 **Spec Reference**: Section 16.3 - LLM Usage Patterns, Section 19 (Pydantic AI framework)
 
-**5.1.1. Scout LLM Enhancement (Pydantic AI)**
-- Create Pydantic AI Agent with `BoardAnalysis` as response model
-- Define prompt: "Analyze this Tic-Tac-Toe board..."
-- Use Pydantic AI's structured output to automatically validate response against `BoardAnalysis` domain model
-- Leverage Pydantic AI's built-in error handling and retry logic
-- Fallback to rule-based if LLM fails/times out
-- Update `src/agents/scout.py`
+**5.1.1. Scout LLM Enhancement (Pydantic AI)** ✅
+- ✅ Create Pydantic AI Agent with `BoardAnalysis` as response model
+- ✅ Define prompt: "Analyze this Tic-Tac-Toe board..."
+- ✅ Use Pydantic AI's structured output to automatically validate response against `BoardAnalysis` domain model
+- ✅ Leverage Pydantic AI's built-in error handling and retry logic
+- ✅ Fallback to rule-based if LLM fails/times out
+- ✅ Update `src/agents/scout.py`
 
-**Subsection Tests**:
-- ScoutAgent.analyze() calls Pydantic AI Agent when LLM enabled
-- ScoutAgent.analyze() prompts LLM with board state and game context
-- ScoutAgent.analyze() receives BoardAnalysis from Pydantic AI structured output
-- ScoutAgent.analyze() falls back to rule-based analysis on LLM timeout (>5s)
-- ScoutAgent.analyze() falls back to rule-based analysis on LLM parse error
-- ScoutAgent.analyze() falls back to rule-based analysis on LLM authentication error
-- ScoutAgent.analyze() retries LLM call on timeout (3 retries with exponential backoff)
-- ScoutAgent.analyze() logs LLM call metadata (prompt, response, tokens, latency, model)
+**Subsection Tests**: ✅ All 8 tests passing
+- ✅ ScoutAgent.analyze() calls Pydantic AI Agent when LLM enabled
+- ✅ ScoutAgent.analyze() prompts LLM with board state and game context
+- ✅ ScoutAgent.analyze() receives BoardAnalysis from Pydantic AI structured output
+- ✅ ScoutAgent.analyze() falls back to rule-based analysis on LLM timeout (>5s)
+- ✅ ScoutAgent.analyze() falls back to rule-based analysis on LLM parse error
+- ✅ ScoutAgent.analyze() falls back to rule-based analysis on LLM authentication error
+- ✅ ScoutAgent.analyze() retries LLM call on timeout (3 retries with exponential backoff)
+- ✅ ScoutAgent.analyze() logs LLM call metadata (prompt, response, tokens, latency, model)
+
+**Test Coverage**: ✅ 11 tests (8 subsection tests + 3 integration tests)
+**Test Files**: `tests/unit/agents/test_scout_llm.py`
+**Implementation**: `src/agents/scout.py` - Added LLM integration with Pydantic AI, retry logic, fallback, and metadata logging
 
 **5.1.2. Strategist LLM Enhancement (Pydantic AI)**
 - Create Pydantic AI Agent with `Strategy` as response model
