@@ -1,7 +1,22 @@
-"""Tests for LLM configuration management."""
+"""Tests for LLM Configuration - Subsection 5.2.1.
+
+Subsection tests for Phase 5.2.1: Environment Variables
+These tests verify:
+1. LLMConfig loads provider from LLM_PROVIDER environment variable
+2. LLMConfig loads model from LLM_MODEL environment variable
+3. LLMConfig loads API keys from provider-specific environment variables
+4. LLMConfig supports .env file for local development
+5. LLMConfig configuration hierarchy: env vars > .env file > defaults
+6. LLMConfig validates API key format
+7. LLMConfig validates provider value
+8. LLMConfig validates model value per provider
+9. LLMConfig runtime provider switching
+10. LLMConfig returns error when required API key missing for selected provider
+"""
 
 import json
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -9,193 +24,448 @@ import pytest
 from src.config.llm_config import LLMConfig, get_llm_config
 
 
-class TestLLMConfigInitialization:
-    """Test LLMConfig initialization."""
+class TestLLMConfigEnvironmentVariables:
+    """Test LLM configuration loading from environment variables."""
 
-    def test_initialization_with_default_config_path(self, tmp_path: Path) -> None:
-        """Test that LLMConfig uses default config path when not provided."""
-        with patch("src.config.llm_config.get_config_path", return_value=tmp_path / "config.json"):
-            # Config file doesn't exist, should use defaults
+    def test_subsection_5_2_1_1_loads_provider_from_env_var(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Subsection test 1: LLMConfig loads provider from LLM_PROVIDER environment variable."""
+        monkeypatch.setenv("LLM_PROVIDER", "openai")
+
+        config = LLMConfig()
+        config_data = config.get_config()
+
+        assert config_data.provider == "openai"
+
+    def test_subsection_5_2_1_2_loads_model_from_env_var(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Subsection test 2: LLMConfig loads model from LLM_MODEL environment variable."""
+        monkeypatch.setenv("LLM_MODEL", "gpt-4o-mini")
+
+        config = LLMConfig()
+        config_data = config.get_config()
+
+        assert config_data.model == "gpt-4o-mini"
+
+    def test_subsection_5_2_1_3_loads_api_keys_from_provider_specific_env_vars(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Subsection test 3: LLMConfig loads API keys from provider-specific environment variables."""
+        # Test OpenAI API key
+        monkeypatch.setenv("LLM_PROVIDER", "openai")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-openai-key-12345")
+
+        config = LLMConfig()
+        config_data = config.get_config()
+
+        assert config_data.api_key == "sk-test-openai-key-12345"
+
+        # Test Anthropic API key
+        monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-anthropic-key-12345")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+        config2 = LLMConfig()
+        config_data2 = config2.get_config()
+
+        assert config_data2.api_key == "sk-ant-test-anthropic-key-12345"
+
+        # Test Google API key
+        monkeypatch.setenv("LLM_PROVIDER", "gemini")
+        monkeypatch.setenv("GOOGLE_API_KEY", "google-test-api-key-12345")
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+        config3 = LLMConfig()
+        config_data3 = config3.get_config()
+
+        assert config_data3.api_key == "google-test-api-key-12345"
+
+    def test_subsection_5_2_1_4_supports_dotenv_file(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Subsection test 4: LLMConfig supports .env file for local development."""
+        # Clear any existing env vars first
+        for key in ["LLM_PROVIDER", "LLM_MODEL", "OPENAI_API_KEY"]:
+            monkeypatch.delenv(key, raising=False)
+
+        # Create a temporary .env file
+        env_file = tmp_path / ".env"
+        env_file.write_text(
+            "LLM_PROVIDER=openai\n" "LLM_MODEL=gpt-4o\n" "OPENAI_API_KEY=sk-dotenv-test-key-12345\n"
+        )
+
+        # Mock _find_env_file to return our temp env file
+        with patch("src.utils.env_loader._find_env_file", return_value=env_file):
+            # Reload env to pick up the .env file
+            from src.utils.env_loader import reload_env
+
+            reload_env()
+
             config = LLMConfig()
-            assert config._config_path == tmp_path / "config.json"
-            assert "llm" in config._config
+            config_data = config.get_config()
 
-    def test_initialization_with_custom_config_path(self, tmp_path: Path) -> None:
-        """Test that LLMConfig uses custom config path when provided."""
-        custom_path = tmp_path / "custom.json"
-        config = LLMConfig(config_path=custom_path)
-        assert config._config_path == custom_path
+            # Verify values loaded from .env file
+            assert config_data.provider == "openai"
+            assert config_data.model == "gpt-4o"
+            assert config_data.api_key == "sk-dotenv-test-key-12345"
 
-    def test_initialization_loads_config_from_file(self, tmp_path: Path) -> None:
-        """Test that LLMConfig loads config from existing file."""
+    def test_subsection_5_2_1_5_configuration_hierarchy(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Subsection test 5: LLMConfig configuration hierarchy: env vars > .env file > defaults."""
+        # Create .env file with defaults
+        env_file = tmp_path / ".env"
+        env_file.write_text("LLM_PROVIDER=anthropic\n" "LLM_MODEL=claude-3-5-sonnet-latest\n")
+
+        with patch("src.utils.env_loader._find_env_file", return_value=env_file):
+            from src.utils.env_loader import reload_env
+
+            reload_env()
+
+            # Set environment variable to override .env file
+            monkeypatch.setenv("LLM_PROVIDER", "openai")
+            # LLM_MODEL should still come from .env file
+
+            config = LLMConfig()
+            config_data = config.get_config()
+
+            # Environment variable takes precedence
+            assert config_data.provider == "openai"
+            # .env file value used when env var not set
+            assert config_data.model == "claude-3-5-sonnet-latest"
+
+        # Test defaults when neither env var nor .env file set
+        monkeypatch.delenv("LLM_PROVIDER", raising=False)
+        monkeypatch.delenv("LLM_MODEL", raising=False)
+
+        # Mock no .env file found
+        with patch("src.utils.env_loader._find_env_file", return_value=None):
+            reload_env()
+
+            config2 = LLMConfig()
+            config_data2 = config2.get_config()
+
+            # Defaults: provider and model are None
+            assert config_data2.provider is None
+            assert config_data2.model is None
+            assert config_data2.enabled is False  # Default is disabled
+
+    def test_subsection_5_2_1_6_validates_api_key_format(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Subsection test 6: LLMConfig validates API key format (basic validation, not actual API check)."""
+        # Clear any model env var from previous tests
+        monkeypatch.delenv("LLM_MODEL", raising=False)
+
+        # Valid OpenAI key format
+        monkeypatch.setenv("LLM_ENABLED", "true")
+        monkeypatch.setenv("LLM_PROVIDER", "openai")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-valid-openai-key-12345")
+
+        config = LLMConfig()
+        is_valid, error = config.validate_config()
+
+        assert is_valid is True
+        assert error is None
+
+        # Invalid OpenAI key format (missing 'sk-' prefix)
+        monkeypatch.setenv("OPENAI_API_KEY", "invalid-key-format")
+
+        config2 = LLMConfig()
+        is_valid2, error2 = config2.validate_config()
+
+        assert is_valid2 is False
+        assert "Invalid API key format" in error2  # type: ignore
+
+        # Valid Anthropic key format
+        monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-valid-anthropic-key-12345")
+
+        config3 = LLMConfig()
+        is_valid3, error3 = config3.validate_config()
+
+        assert is_valid3 is True
+        assert error3 is None
+
+        # Invalid Anthropic key format
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "invalid-key")
+
+        config4 = LLMConfig()
+        is_valid4, error4 = config4.validate_config()
+
+        assert is_valid4 is False
+        assert "Invalid API key format" in error4  # type: ignore
+
+        # Too short key
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-short")
+
+        config5 = LLMConfig()
+        is_valid5, error5 = config5.validate_config()
+
+        assert is_valid5 is False
+        assert "Invalid API key format" in error5  # type: ignore
+
+    def test_subsection_5_2_1_7_validates_provider_value(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Subsection test 7: LLMConfig validates provider value (must be openai, anthropic, or gemini)."""
+        # Clear any model env var from previous tests
+        monkeypatch.delenv("LLM_MODEL", raising=False)
+
+        # Valid provider
+        monkeypatch.setenv("LLM_ENABLED", "true")
+        monkeypatch.setenv("LLM_PROVIDER", "openai")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-valid-key-12345678")
+
+        config = LLMConfig()
+        is_valid, error = config.validate_config()
+
+        assert is_valid is True
+
+        # Invalid provider
+        monkeypatch.setenv("LLM_PROVIDER", "invalid_provider")
+
+        config2 = LLMConfig()
+        config_data = config2.get_config()
+
+        # Invalid provider is not loaded (returns None)
+        assert config_data.provider is None
+
+        # Validation fails when enabled but no provider
+        is_valid2, error2 = config2.validate_config()
+        assert is_valid2 is False
+        assert "provider not set" in error2  # type: ignore
+
+        # Test set_provider with invalid value
+        monkeypatch.setenv("LLM_PROVIDER", "openai")
+        config3 = LLMConfig()
+        success, error3 = config3.set_provider("invalid_provider")
+
+        assert success is False
+        assert "Invalid provider" in error3  # type: ignore
+        # Check all valid providers are mentioned (order may vary)
+        assert "anthropic" in error3.lower()  # type: ignore
+        assert "gemini" in error3.lower()  # type: ignore
+        assert "openai" in error3.lower()  # type: ignore
+
+    def test_subsection_5_2_1_8_validates_model_value_per_provider(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Subsection test 8: LLMConfig validates model value per provider."""
+        # Create a config.json with supported models
         config_file = tmp_path / "config.json"
         config_data = {
             "llm": {
                 "providers": {
-                    "openai": {"models": ["gpt-5.2", "gpt-4o"]},
+                    "openai": {
+                        "models": [
+                            "gpt-4o",
+                            "gpt-4o-mini",
+                            "gpt-3.5-turbo",
+                        ]
+                    },
+                    "anthropic": {
+                        "models": [
+                            "claude-3-5-sonnet-latest",
+                            "claude-3-5-haiku-latest",
+                        ]
+                    },
+                    "gemini": {"models": ["gemini-2.0-flash-exp", "gemini-1.5-pro"]},
                 }
             }
         }
         config_file.write_text(json.dumps(config_data))
 
-        config = LLMConfig(config_path=config_file)
-        assert config._config == config_data
+        monkeypatch.setenv("LLM_ENABLED", "true")
+        monkeypatch.setenv("LLM_PROVIDER", "openai")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-valid-key-12345678")
 
-    def test_initialization_uses_defaults_when_file_not_exists(self, tmp_path: Path) -> None:
-        """Test that LLMConfig uses default config when file doesn't exist."""
-        config_file = tmp_path / "nonexistent.json"
-        config = LLMConfig(config_path=config_file)
-        # Should use default config
-        assert "llm" in config._config
-        assert "providers" in config._config["llm"]
-        assert "openai" in config._config["llm"]["providers"]
-
-    def test_initialization_handles_json_decode_error(self, tmp_path: Path) -> None:
-        """Test that LLMConfig handles JSON decode errors."""
-        config_file = tmp_path / "invalid.json"
-        config_file.write_text("invalid json content {")
-
-        with pytest.raises(ValueError, match="Failed to load config"):
-            LLMConfig(config_path=config_file)
-
-    def test_initialization_handles_file_read_error(self, tmp_path: Path) -> None:
-        """Test that LLMConfig handles file read errors."""
-        config_file = tmp_path / "config.json"
-        config_file.write_text('{"llm": {"providers": {}}}')  # Create file first
-
-        # Make file unreadable by mocking open to raise OSError on read
-        with patch("builtins.open", side_effect=OSError("Permission denied")):
-            with pytest.raises(ValueError, match="Failed to load config"):
-                LLMConfig(config_path=config_file)
-
-    def test_initialization_uses_defaults_when_llm_key_missing(self, tmp_path: Path) -> None:
-        """Test that LLMConfig uses defaults when 'llm' key is missing."""
-        config_file = tmp_path / "config.json"
-        config_data = {"other": "data"}
-        config_file.write_text(json.dumps(config_data))
+        # Valid model for OpenAI
+        monkeypatch.setenv("LLM_MODEL", "gpt-4o-mini")
 
         config = LLMConfig(config_path=config_file)
-        # Should use default config when 'llm' key missing
-        assert "llm" in config._config
-        assert "providers" in config._config["llm"]
+        is_valid, error = config.validate_config()
 
+        assert is_valid is True
+        assert error is None
 
-class TestLLMConfigGetSupportedModels:
-    """Test get_supported_models() method."""
+        # Invalid model for OpenAI
+        monkeypatch.setenv("LLM_MODEL", "invalid-model")
 
-    def test_get_supported_models_returns_models_for_provider(self, tmp_path: Path) -> None:
-        """Test that get_supported_models returns models for specified provider."""
+        config2 = LLMConfig(config_path=config_file)
+        is_valid2, error2 = config2.validate_config()
+
+        assert is_valid2 is False
+        assert "not supported by provider" in error2  # type: ignore
+
+        # Valid model for Anthropic
+        monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+        monkeypatch.setenv("LLM_MODEL", "claude-3-5-sonnet-latest")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-valid-key-12345678")
+
+        config3 = LLMConfig(config_path=config_file)
+        is_valid3, error3 = config3.validate_config()
+
+        assert is_valid3 is True
+
+    def test_subsection_5_2_1_9_runtime_provider_switching(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Subsection test 9: LLMConfig runtime provider switching (updates provider/model without restart)."""
+        # Create config file
         config_file = tmp_path / "config.json"
-        config_data = {
+        config_data: dict[str, Any] = {
             "llm": {
                 "providers": {
-                    "openai": {"models": ["gpt-5.2", "gpt-4o"]},
-                    "anthropic": {"models": ["claude-haiku-4-5-20251001"]},
+                    "openai": {"models": ["gpt-4o-mini"]},
+                    "anthropic": {"models": ["claude-3-5-sonnet-latest"]},
+                    "gemini": {"models": ["gemini-2.0-flash-exp"]},
                 }
             }
         }
         config_file.write_text(json.dumps(config_data))
 
-        config = LLMConfig(config_path=config_file)
-        models = config.get_supported_models("openai")
-
-        assert models == {"gpt-5.2", "gpt-4o"}
-
-    def test_get_supported_models_is_case_insensitive(self, tmp_path: Path) -> None:
-        """Test that get_supported_models is case insensitive for provider name."""
-        config_file = tmp_path / "config.json"
-        config_data = {
-            "llm": {
-                "providers": {
-                    "openai": {"models": ["gpt-5.2"]},
-                }
-            }
-        }
-        config_file.write_text(json.dumps(config_data))
+        # Set up initial provider
+        monkeypatch.setenv("LLM_PROVIDER", "openai")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-key-12345678")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-anthropic-key-12345678")
 
         config = LLMConfig(config_path=config_file)
-        models_upper = config.get_supported_models("OPENAI")
-        models_lower = config.get_supported_models("openai")
+        initial_config = config.get_config()
 
-        assert models_upper == models_lower
+        assert initial_config.provider == "openai"
 
-    def test_get_supported_models_raises_error_for_unknown_provider(self, tmp_path: Path) -> None:
-        """Test that get_supported_models raises ValueError for unknown provider."""
-        config_file = tmp_path / "config.json"
-        config_data = {
-            "llm": {
-                "providers": {
-                    "openai": {"models": ["gpt-5.2"]},
-                }
-            }
-        }
-        config_file.write_text(json.dumps(config_data))
+        # Switch to Anthropic at runtime
+        success, error = config.set_provider("anthropic", "claude-3-5-sonnet-latest")
 
-        config = LLMConfig(config_path=config_file)
-        with pytest.raises(ValueError, match="Provider 'unknown' not found"):
-            config.get_supported_models("unknown")
+        assert success is True
+        assert error is None
 
-    def test_get_supported_models_returns_empty_set_when_no_models(self, tmp_path: Path) -> None:
-        """Test that get_supported_models returns empty set when provider has no models."""
-        config_file = tmp_path / "config.json"
-        config_data = {
-            "llm": {
-                "providers": {
-                    "openai": {},
-                }
-            }
-        }
-        config_file.write_text(json.dumps(config_data))
+        # Verify provider switched
+        updated_config = config.get_config()
+        assert updated_config.provider == "anthropic"
+        assert updated_config.model == "claude-3-5-sonnet-latest"
 
-        config = LLMConfig(config_path=config_file)
-        models = config.get_supported_models("openai")
+        # Try switching to provider without API key
+        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+        success2, error2 = config.set_provider("gemini")
 
-        assert models == set()
+        assert success2 is False
+        assert "API key missing" in error2  # type: ignore
+
+    def test_subsection_5_2_1_10_returns_error_when_api_key_missing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Subsection test 10: LLMConfig returns error when required API key missing for selected provider."""
+        # Clear any model env var from previous tests
+        monkeypatch.delenv("LLM_MODEL", raising=False)
+
+        # Enable LLM and set provider but no API key
+        monkeypatch.setenv("LLM_ENABLED", "true")
+        monkeypatch.setenv("LLM_PROVIDER", "openai")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+        config = LLMConfig()
+        is_valid, error = config.validate_config()
+
+        assert is_valid is False
+        assert "API key missing" in error  # type: ignore
+        assert "OPENAI_API_KEY" in error  # type: ignore
+
+        # Test with Anthropic
+        monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+        config2 = LLMConfig()
+        is_valid2, error2 = config2.validate_config()
+
+        assert is_valid2 is False
+        assert "API key missing" in error2  # type: ignore
+        assert "ANTHROPIC_API_KEY" in error2  # type: ignore
+
+        # Test with Gemini
+        monkeypatch.setenv("LLM_PROVIDER", "gemini")
+        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+
+        config3 = LLMConfig()
+        is_valid3, error3 = config3.validate_config()
+
+        assert is_valid3 is False
+        assert "API key missing" in error3  # type: ignore
+        assert "GOOGLE_API_KEY" in error3  # type: ignore
+
+
+class TestLLMConfigDefaults:
+    """Test LLM configuration defaults and disabled state."""
+
+    def test_llm_disabled_by_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """When LLM_ENABLED not set, LLM should be disabled by default."""
+        monkeypatch.delenv("LLM_ENABLED", raising=False)
+
+        config = LLMConfig()
+        config_data = config.get_config()
+
+        assert config_data.enabled is False
+
+    def test_llm_enabled_with_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """When LLM_ENABLED=true, LLM should be enabled."""
+        monkeypatch.setenv("LLM_ENABLED", "true")
+
+        config = LLMConfig()
+        config_data = config.get_config()
+
+        assert config_data.enabled is True
+
+        # Test various truthy values
+        for value in ["1", "yes", "True", "TRUE"]:
+            monkeypatch.setenv("LLM_ENABLED", value)
+            config = LLMConfig()
+            assert config.get_config().enabled is True
+
+    def test_disabled_llm_always_valid(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """When LLM is disabled, validation should always pass."""
+        monkeypatch.setenv("LLM_ENABLED", "false")
+        # No provider or API key set
+
+        config = LLMConfig()
+        is_valid, error = config.validate_config()
+
+        # Should be valid even without provider/API key when disabled
+        assert is_valid is True
+        assert error is None
 
 
 class TestLLMConfigReload:
-    """Test reload() method."""
+    """Test LLM configuration reload functionality."""
 
-    def test_reload_updates_config_from_file(self, tmp_path: Path) -> None:
-        """Test that reload() updates config from file."""
-        config_file = tmp_path / "config.json"
-        initial_data = {
-            "llm": {
-                "providers": {
-                    "openai": {"models": ["gpt-5.2"]},
-                }
-            }
-        }
-        config_file.write_text(json.dumps(initial_data))
+    def test_reload_picks_up_new_env_vars(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test that reload() picks up new environment variables."""
+        monkeypatch.setenv("LLM_PROVIDER", "openai")
 
-        config = LLMConfig(config_path=config_file)
-        assert config.get_supported_models("openai") == {"gpt-5.2"}
+        config = LLMConfig()
+        initial_config = config.get_config()
 
-        # Update config file
-        updated_data = {
-            "llm": {
-                "providers": {
-                    "openai": {"models": ["gpt-5.2", "gpt-4o"]},
-                }
-            }
-        }
-        config_file.write_text(json.dumps(updated_data))
+        assert initial_config.provider == "openai"
+
+        # Change environment
+        monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+        monkeypatch.setenv("LLM_MODEL", "claude-3-5-sonnet-latest")
 
         # Reload config
         config.reload()
-        assert config.get_supported_models("openai") == {"gpt-5.2", "gpt-4o"}
+        reloaded_config = config.get_config()
+
+        assert reloaded_config.provider == "anthropic"
+        assert reloaded_config.model == "claude-3-5-sonnet-latest"
 
 
-class TestGetLLMConfig:
-    """Test get_llm_config() function."""
+class TestLLMConfigGlobalInstance:
+    """Test global LLM config instance."""
 
     def test_get_llm_config_returns_singleton(self) -> None:
-        """Test that get_llm_config returns the same instance."""
-        # Reset global instance
-        import src.config.llm_config
-
-        src.config.llm_config._llm_config = None
-
+        """Test that get_llm_config() returns a singleton instance."""
         config1 = get_llm_config()
         config2 = get_llm_config()
 
