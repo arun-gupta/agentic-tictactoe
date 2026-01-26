@@ -10,15 +10,35 @@ These tests verify that:
 6. AgentPipeline keeps Executor rule-based (no LLM)
 7. Config values propagate correctly to agents
 8. Default values work when config not provided
+
+Note: These tests mock LLM agent creation to test configuration wiring
+without requiring actual API keys (important for CI environments).
 """
 
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.agents.pipeline import AgentPipeline
+
+
+@pytest.fixture
+def mock_llm_agents():
+    """Mock LLM agent creation to avoid requiring API keys in tests."""
+    with (
+        patch("src.agents.scout.create_scout_agent") as mock_scout,
+        patch("src.agents.strategist.create_strategist_agent") as mock_strategist,
+    ):
+        # Return mock agents that won't fail
+        mock_scout.return_value = MagicMock()
+        mock_strategist.return_value = MagicMock()
+        yield mock_scout, mock_strategist
 
 
 class TestAgentPipelineConfigurationWiring:
     """Test that AgentPipeline correctly wires LLM configuration to agents."""
 
-    def test_subsection_5_2_3_1_accepts_llm_enabled_parameter(self) -> None:
+    def test_subsection_5_2_3_1_accepts_llm_enabled_parameter(self, mock_llm_agents) -> None:
         """Subsection test 1: AgentPipeline accepts llm_enabled parameter."""
         # Should accept llm_enabled without error
         pipeline = AgentPipeline(ai_symbol="O", llm_enabled=True)
@@ -29,7 +49,7 @@ class TestAgentPipelineConfigurationWiring:
         assert hasattr(pipeline, "strategist")
         assert hasattr(pipeline, "executor")
 
-    def test_subsection_5_2_3_2_accepts_per_agent_provider_config(self) -> None:
+    def test_subsection_5_2_3_2_accepts_per_agent_provider_config(self, mock_llm_agents) -> None:
         """Subsection test 2: AgentPipeline accepts per-agent provider configuration."""
         # Should accept different providers for each agent
         pipeline = AgentPipeline(
@@ -44,7 +64,7 @@ class TestAgentPipelineConfigurationWiring:
         assert pipeline.scout is not None
         assert pipeline.strategist is not None
 
-    def test_subsection_5_2_3_3_accepts_per_agent_model_config(self) -> None:
+    def test_subsection_5_2_3_3_accepts_per_agent_model_config(self, mock_llm_agents) -> None:
         """Subsection test 3: AgentPipeline accepts per-agent model configuration."""
         # Should accept different models for each agent
         pipeline = AgentPipeline(
@@ -61,7 +81,9 @@ class TestAgentPipelineConfigurationWiring:
         assert pipeline.scout is not None
         assert pipeline.strategist is not None
 
-    def test_subsection_5_2_3_4_creates_scout_with_correct_llm_config(self) -> None:
+    def test_subsection_5_2_3_4_creates_scout_with_correct_llm_config(
+        self, mock_llm_agents
+    ) -> None:
         """Subsection test 4: AgentPipeline creates Scout with correct LLM config."""
         pipeline = AgentPipeline(
             ai_symbol="O",
@@ -77,7 +99,9 @@ class TestAgentPipelineConfigurationWiring:
         # Note: These are private attributes, but we can verify through behavior
         assert pipeline.scout is not None
 
-    def test_subsection_5_2_3_5_creates_strategist_with_correct_llm_config(self) -> None:
+    def test_subsection_5_2_3_5_creates_strategist_with_correct_llm_config(
+        self, mock_llm_agents
+    ) -> None:
         """Subsection test 5: AgentPipeline creates Strategist with correct LLM config."""
         pipeline = AgentPipeline(
             ai_symbol="O",
@@ -92,7 +116,7 @@ class TestAgentPipelineConfigurationWiring:
         # Verify Strategist configured correctly
         assert pipeline.strategist is not None
 
-    def test_subsection_5_2_3_6_keeps_executor_rule_based(self) -> None:
+    def test_subsection_5_2_3_6_keeps_executor_rule_based(self, mock_llm_agents) -> None:
         """Subsection test 6: AgentPipeline keeps Executor rule-based (no LLM)."""
         pipeline = AgentPipeline(
             ai_symbol="O",
@@ -106,7 +130,7 @@ class TestAgentPipelineConfigurationWiring:
         assert not hasattr(pipeline.executor, "_llm_agent")
         assert pipeline.executor is not None
 
-    def test_subsection_5_2_3_7_config_values_propagate_correctly(self) -> None:
+    def test_subsection_5_2_3_7_config_values_propagate_correctly(self, mock_llm_agents) -> None:
         """Subsection test 7: Config values propagate correctly to agents."""
         pipeline = AgentPipeline(
             ai_symbol="O",
@@ -126,7 +150,9 @@ class TestAgentPipelineConfigurationWiring:
         assert pipeline.strategist is not None
         assert pipeline.executor is not None
 
-    def test_subsection_5_2_3_8_default_values_work_when_config_not_provided(self) -> None:
+    def test_subsection_5_2_3_8_default_values_work_when_config_not_provided(
+        self,
+    ) -> None:
         """Subsection test 8: Default values work when config not provided."""
         # Should work with no LLM config (defaults to rule-based)
         pipeline = AgentPipeline(ai_symbol="O")
