@@ -157,6 +157,82 @@ class LLMConfig:
             api_key=api_key,
         )
 
+    def get_agent_config(self, agent_name: str) -> LLMConfigData:
+        """Get LLM configuration for a specific agent.
+
+        Per-agent configuration uses {AGENT}_PROVIDER environment variables:
+        - SCOUT_PROVIDER for Scout agent
+        - STRATEGIST_PROVIDER for Strategist agent
+
+        The model is automatically selected from config.json as the first model
+        for the configured provider.
+
+        Args:
+            agent_name: Agent name (scout, strategist)
+
+        Returns:
+            LLMConfigData with agent-specific configuration
+        """
+        # Load agent-specific provider from environment
+        provider = self._load_agent_provider(agent_name)
+
+        # Get default model for this provider from config.json
+        model = None
+        if provider:
+            model = self._get_default_model_for_provider(provider)
+
+        # Get API key for provider
+        api_key = None
+        if provider:
+            api_key = self._get_api_key(provider)
+
+        return LLMConfigData(
+            enabled=self._enabled,
+            provider=provider,
+            model=model,
+            api_key=api_key,
+        )
+
+    def _load_agent_provider(self, agent_name: str) -> str | None:
+        """Load provider for a specific agent from environment.
+
+        Reads {AGENT}_PROVIDER environment variable (e.g., SCOUT_PROVIDER).
+
+        Args:
+            agent_name: Agent name (scout, strategist)
+
+        Returns:
+            Provider name if set and valid, None otherwise
+        """
+        env_var = f"{agent_name.upper()}_PROVIDER"
+        provider = os.getenv(env_var)
+        if provider and provider.lower() in self.VALID_PROVIDERS:
+            return provider.lower()
+        return None
+
+    def _get_default_model_for_provider(self, provider: str) -> str | None:
+        """Get default model for a provider from config.json.
+
+        Returns the first model in the provider's model list (preserves order from config.json).
+
+        Args:
+            provider: Provider name
+
+        Returns:
+            Default model name, or None if no models configured
+        """
+        try:
+            provider_lower = provider.lower()
+            providers = self._file_config.get("llm", {}).get("providers", {})
+            if provider_lower not in providers:
+                return None
+            models = providers[provider_lower].get("models", [])
+            if models and isinstance(models[0], str):
+                return str(models[0])
+        except (KeyError, IndexError):
+            pass
+        return None
+
     def _get_api_key(self, provider: str) -> str | None:
         """Get API key for provider.
 
@@ -208,6 +284,47 @@ class LLMConfig:
         # Basic API key format validation
         if not self._validate_api_key_format(api_key, self._provider):
             return False, f"Invalid API key format for provider '{self._provider}'"
+
+        return True, None
+
+    def validate_agent_config(self, agent_name: str) -> tuple[bool, str | None]:
+        """Validate configuration for a specific agent.
+
+        Args:
+            agent_name: Agent name (scout, strategist)
+
+        Returns:
+            Tuple of (is_valid, error_message)
+            - (True, None) if valid
+            - (False, error_message) if invalid
+        """
+        # If LLM is disabled, always valid
+        if not self._enabled:
+            return True, None
+
+        # Get agent-specific config
+        config = self.get_agent_config(agent_name)
+
+        # If enabled, provider must be set
+        if not config.provider:
+            env_var = f"{agent_name.upper()}_PROVIDER"
+            return False, f"LLM enabled but provider not set for {agent_name} (set {env_var})"
+
+        # Validate provider is valid
+        if config.provider not in self.VALID_PROVIDERS:
+            return (
+                False,
+                f"Invalid provider '{config.provider}' for {agent_name}, must be one of: {', '.join(sorted(self.VALID_PROVIDERS))}",
+            )
+
+        # Validate API key exists
+        if not config.api_key:
+            env_var = self.API_KEY_ENV_VARS[config.provider]
+            return False, f"API key missing for {agent_name} provider '{config.provider}' (set {env_var})"
+
+        # Validate API key format
+        if not self._validate_api_key_format(config.api_key, config.provider):
+            return False, f"Invalid API key format for {agent_name} provider '{config.provider}'"
 
         return True, None
 

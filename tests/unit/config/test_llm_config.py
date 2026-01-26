@@ -470,3 +470,184 @@ class TestLLMConfigGlobalInstance:
         config2 = get_llm_config()
 
         assert config1 is config2
+
+
+class TestLLMConfigPerAgentConfiguration:
+    """Test per-agent LLM configuration (SCOUT_PROVIDER, STRATEGIST_PROVIDER)."""
+
+    def test_get_agent_config_loads_agent_specific_provider(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that get_agent_config() loads agent-specific provider from env vars."""
+        monkeypatch.setenv("LLM_ENABLED", "true")
+        monkeypatch.setenv("SCOUT_PROVIDER", "openai")
+        monkeypatch.setenv("STRATEGIST_PROVIDER", "anthropic")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-key-12345678")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-anthropic-key-12345678")
+
+        config = LLMConfig()
+
+        scout_config = config.get_agent_config("scout")
+        strategist_config = config.get_agent_config("strategist")
+
+        assert scout_config.provider == "openai"
+        assert strategist_config.provider == "anthropic"
+
+    def test_get_agent_config_loads_default_model_from_config_json(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that get_agent_config() loads default model (first model) from config.json."""
+        # Create config.json with models
+        config_file = tmp_path / "config.json"
+        config_data = {
+            "llm": {
+                "providers": {
+                    "openai": {"models": ["gpt-5.2", "gpt-4o"]},
+                    "anthropic": {
+                        "models": ["claude-haiku-4-5-20251001", "claude-haiku-4-5"]
+                    },
+                }
+            }
+        }
+        config_file.write_text(json.dumps(config_data))
+
+        monkeypatch.setenv("LLM_ENABLED", "true")
+        monkeypatch.setenv("SCOUT_PROVIDER", "openai")
+        monkeypatch.setenv("STRATEGIST_PROVIDER", "anthropic")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-key-12345678")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-anthropic-key-12345678")
+
+        config = LLMConfig(config_path=config_file)
+
+        scout_config = config.get_agent_config("scout")
+        strategist_config = config.get_agent_config("strategist")
+
+        # Should get first model from list for each provider
+        assert scout_config.model == "gpt-5.2"
+        assert strategist_config.model == "claude-haiku-4-5-20251001"
+
+    def test_get_agent_config_includes_api_key(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that get_agent_config() includes the API key for the agent's provider."""
+        monkeypatch.setenv("LLM_ENABLED", "true")
+        monkeypatch.setenv("SCOUT_PROVIDER", "openai")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-scout-openai-key")
+
+        config = LLMConfig()
+        scout_config = config.get_agent_config("scout")
+
+        assert scout_config.api_key == "sk-scout-openai-key"
+
+    def test_validate_agent_config_validates_agent_provider(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that validate_agent_config() validates agent-specific provider configuration."""
+        monkeypatch.setenv("LLM_ENABLED", "true")
+        monkeypatch.setenv("SCOUT_PROVIDER", "openai")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-valid-key-12345678")
+
+        config = LLMConfig()
+        is_valid, error = config.validate_agent_config("scout")
+
+        assert is_valid is True
+        assert error is None
+
+    def test_validate_agent_config_fails_when_provider_missing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that validate_agent_config() fails when agent provider not set."""
+        monkeypatch.setenv("LLM_ENABLED", "true")
+        # No SCOUT_PROVIDER set
+
+        config = LLMConfig()
+        is_valid, error = config.validate_agent_config("scout")
+
+        assert is_valid is False
+        assert "SCOUT_PROVIDER" in error  # type: ignore
+
+    def test_validate_agent_config_fails_when_api_key_missing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that validate_agent_config() fails when API key missing for agent's provider."""
+        monkeypatch.setenv("LLM_ENABLED", "true")
+        monkeypatch.setenv("STRATEGIST_PROVIDER", "anthropic")
+        # No ANTHROPIC_API_KEY set
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+        config = LLMConfig()
+        is_valid, error = config.validate_agent_config("strategist")
+
+        assert is_valid is False
+        assert "API key missing" in error  # type: ignore
+        assert "ANTHROPIC_API_KEY" in error  # type: ignore
+
+    def test_different_providers_per_agent(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test using different providers for Scout and Strategist."""
+        config_file = tmp_path / "config.json"
+        config_data = {
+            "llm": {
+                "providers": {
+                    "openai": {"models": ["gpt-5.2"]},
+                    "gemini": {"models": ["gemini-2.5-flash"]},
+                }
+            }
+        }
+        config_file.write_text(json.dumps(config_data))
+
+        monkeypatch.setenv("LLM_ENABLED", "true")
+        monkeypatch.setenv("SCOUT_PROVIDER", "openai")
+        monkeypatch.setenv("STRATEGIST_PROVIDER", "gemini")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-key-12345678")
+        monkeypatch.setenv("GOOGLE_API_KEY", "google-api-key-12345678")
+
+        config = LLMConfig(config_path=config_file)
+
+        scout_config = config.get_agent_config("scout")
+        strategist_config = config.get_agent_config("strategist")
+
+        # Scout uses OpenAI
+        assert scout_config.provider == "openai"
+        assert scout_config.model == "gpt-5.2"
+        assert scout_config.api_key == "sk-openai-key-12345678"
+
+        # Strategist uses Gemini
+        assert strategist_config.provider == "gemini"
+        assert strategist_config.model == "gemini-2.5-flash"
+        assert strategist_config.api_key == "google-api-key-12345678"
+
+        # Validate both agents
+        assert config.validate_agent_config("scout")[0] is True
+        assert config.validate_agent_config("strategist")[0] is True
+
+    def test_same_provider_for_both_agents(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test using same provider for both Scout and Strategist."""
+        config_file = tmp_path / "config.json"
+        config_data = {
+            "llm": {
+                "providers": {
+                    "openai": {"models": ["gpt-5.2"]},
+                }
+            }
+        }
+        config_file.write_text(json.dumps(config_data))
+
+        monkeypatch.setenv("LLM_ENABLED", "true")
+        monkeypatch.setenv("SCOUT_PROVIDER", "openai")
+        monkeypatch.setenv("STRATEGIST_PROVIDER", "openai")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-key-12345678")
+
+        config = LLMConfig(config_path=config_file)
+
+        scout_config = config.get_agent_config("scout")
+        strategist_config = config.get_agent_config("strategist")
+
+        # Both use OpenAI
+        assert scout_config.provider == "openai"
+        assert strategist_config.provider == "openai"
+        assert scout_config.model == "gpt-5.2"
+        assert strategist_config.model == "gpt-5.2"
