@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Human vs AI Tic-Tac-Toe game demo.
+"""Human vs Bot Tic-Tac-Toe game demo.
 
-This script demonstrates Phase 5: LLM-enhanced AI System
-A human player plays against LLM-powered AI using the Agent Pipeline:
-- Scout Agent: LLM-enhanced board analysis with strategic insights
-- Strategist Agent: LLM-based move selection with reasoning
-- Executor Agent: Rule-based validation (no LLM, kept fast)
+This script demonstrates Phase 3: Rule-based Bot System
+A human player plays against rule-based bots using the Agent Pipeline:
+- Scout Agent: Rule-based board analysis (threats, opportunities, strategic positions)
+- Strategist Agent: Priority-based move selection using rule-based logic
+- Executor Agent: Move validation and execution with fallback strategies
 
-Note: This uses LLM-enhanced AI. For rule-based bot, see play_human_vs_bot.py
+Note: This is the pure rule-based version. For LLM-enhanced AI, see play_human_vs_ai.py
 """
 
 import random
@@ -16,7 +16,6 @@ from typing import Literal
 
 from src.agents.pipeline import AgentPipeline
 from src.agents.scout import ScoutAgent
-from src.config.llm_config import get_llm_config
 from src.domain.agent_models import BoardAnalysis, MoveExecution
 from src.domain.models import GameState, Position
 from src.domain.result import AgentResult
@@ -52,13 +51,13 @@ def print_game_status(engine: GameEngine) -> None:
     print(f"Available moves: {len(engine.get_available_moves())}")
 
 
-def print_ai_analysis(
+def print_bot_analysis(
     pipeline_result: AgentResult[MoveExecution],
     game_state: GameState,
     scout: ScoutAgent,
     verbose: bool = False,
 ) -> None:
-    """Print AI analysis and reasoning.
+    """Print bot analysis and reasoning.
 
     Args:
         pipeline_result: Result from AgentPipeline.execute_pipeline()
@@ -67,20 +66,20 @@ def print_ai_analysis(
         verbose: If True, show detailed analysis
     """
     if not pipeline_result.success or not pipeline_result.data:
-        print("⚠️  AI failed to generate move")
+        print("⚠️  Bot failed to generate move")
         if pipeline_result.error_message:
             print(f"   Error: {pipeline_result.error_message}")
         return
 
     execution = pipeline_result.data
     if not execution.success or not execution.position:
-        print("⚠️  AI move execution failed")
+        print("⚠️  Bot move execution failed")
         if execution.reasoning:
             print(f"   {execution.reasoning}")
         return
 
     pos = execution.position
-    print(f"🤖 AI plays at ({pos.row}, {pos.col})")
+    print(f"🤖 Bot plays at ({pos.row}, {pos.col})")
 
     if execution.actual_priority_used:
         priority_name = (
@@ -182,26 +181,15 @@ def simulate_human_move(engine: GameEngine) -> tuple[int, int] | None:
 
 
 def main() -> None:
-    """Run a human vs AI game."""
+    """Run a human vs bot game."""
     print("=" * 60)
-    print("TIC-TAC-TOE: Human vs AI (LLM-Enhanced)")
+    print("TIC-TAC-TOE: Human vs Bot (Rule-based)")
     print("=" * 60)
-    print("\nDemonstrating Phase 5: LLM Integration")
-    print("- Scout Agent: LLM-enhanced board analysis")
-    print("- Strategist Agent: LLM-based move selection")
-    print("- Executor Agent: Rule-based validation (no LLM)")
-    print("- Agent Pipeline: Complete orchestration with timeouts and fallbacks")
-
-    # Display LLM configuration
-    llm_config = get_llm_config()
-    scout_config = llm_config.get_agent_config("scout")
-    strategist_config = llm_config.get_agent_config("strategist")
-
-    print("\nLLM Configuration:")
-    print(f"  Scout Provider: {scout_config.provider}")
-    print(f"  Scout Model: {scout_config.model}")
-    print(f"  Strategist Provider: {strategist_config.provider}")
-    print(f"  Strategist Model: {strategist_config.model}\n")
+    print("\nDemonstrating Phase 3: Rule-based Bot System")
+    print("- Scout Agent: Board analysis and threat detection")
+    print("- Strategist Agent: Move selection with priority system")
+    print("- Executor Agent: Move execution with validation")
+    print("- Agent Pipeline: Complete orchestration with timeouts and fallbacks\n")
 
     # Parse command line arguments if provided
     mode: Literal["1", "2"] | None = None
@@ -212,28 +200,26 @@ def main() -> None:
         mode_arg = sys.argv[1].strip()
         if mode_arg in ("1", "2"):
             mode = mode_arg  # type: ignore[assignment]
-        elif mode_arg in ("-v", "--verbose"):
-            verbose = True
         else:
-            print(f"Invalid argument: {mode_arg}. Use 1 (interactive) or 2 (simulation)")
+            print(f"Invalid mode: {mode_arg}. Use 1 (interactive) or 2 (simulation)")
             sys.exit(1)
 
         # Check for verbose flag
         if len(sys.argv) > 2 and sys.argv[2].strip().lower() in ("-v", "--verbose", "verbose", "y"):
             verbose = True
 
-    # If no mode specified via arguments, always try to prompt (default to interactive for Human vs Agent)
+    # If no mode specified via arguments, always try to prompt
     if mode is None:
         try:
             print("Game Mode:")
             print("1. Interactive (you make moves)")
-            print("2. Simulation (both players use AI/random)")
+            print("2. Simulation (both players use bot/random)")
             mode_input = input("Select mode (1 or 2, default=1): ").strip()
             mode = mode_input if mode_input in ("1", "2") else "1"  # type: ignore[assignment]
 
             if mode == "1":
                 verbose_input = (
-                    input("Show detailed AI analysis? (y/n, default=n): ").strip().lower()
+                    input("Show detailed bot analysis? (y/n, default=n): ").strip().lower()
                 )
                 verbose = verbose_input == "y"
         except (EOFError, KeyboardInterrupt):
@@ -244,22 +230,15 @@ def main() -> None:
 
     interactive = mode == "1"
 
-    # Initialize game engine and AI pipeline
+    # Initialize game engine and bot pipeline
     engine = GameEngine(player_symbol="X", ai_symbol="O")
-    ai_pipeline = AgentPipeline(ai_symbol="O")
+    bot_pipeline = AgentPipeline(ai_symbol="O")
     scout = ScoutAgent(ai_symbol="O")  # For detailed analysis display
 
     print("\n" + "=" * 60)
     print("GAME START")
     print("=" * 60)
-    print("\nPlayer (X) vs AI (O)")
-
-    print(
-        "\n⚠️  Note: LLM configuration validated, but agent LLM integration not yet implemented."
-    )
-    print("    Agents will use rule-based logic until subsection 5.3+ is complete.")
-    print("    This demo validates the LLM configuration infrastructure.")
-
+    print("\nPlayer (X) vs Bot (O)")
     print_board(engine)
     print_game_status(engine)
 
@@ -300,44 +279,44 @@ def main() -> None:
             print_board(engine)
 
         else:
-            # AI turn
+            # Bot turn
             print("\n" + "-" * 60)
-            print(f"Move {move_count + 1}: AI (O) TURN")
+            print(f"Move {move_count + 1}: BOT (O) TURN")
             print("-" * 60)
-            print("🤖 AI is thinking...")
+            print("🤖 Bot is thinking...")
 
-            # Get current game state for AI
+            # Get current game state for bot
             current_state = engine.get_current_state()
 
-            # Execute AI pipeline
-            pipeline_result = ai_pipeline.execute_pipeline(current_state)
+            # Execute bot pipeline
+            pipeline_result = bot_pipeline.execute_pipeline(current_state)
 
-            # Print AI analysis
-            print_ai_analysis(pipeline_result, current_state, scout, verbose=verbose)
+            # Print bot analysis
+            print_bot_analysis(pipeline_result, current_state, scout, verbose=verbose)
 
             if (
                 not pipeline_result.success
                 or not pipeline_result.data
                 or not pipeline_result.data.success
             ):
-                print("❌ AI failed to make a move")
+                print("❌ Bot failed to make a move")
                 print(f"   Error: {pipeline_result.error_message or 'Unknown error'}")
                 break
 
             execution = pipeline_result.data
             if not execution.position:
-                print("❌ AI did not provide a valid position")
+                print("❌ Bot did not provide a valid position")
                 break
 
             pos = execution.position
 
-            # Execute AI move
+            # Execute bot move
             success, error = engine.make_move(pos.row, pos.col, "O")
             if not success:
-                print(f"❌ AI MOVE FAILED: {error}")
+                print(f"❌ BOT MOVE FAILED: {error}")
                 break
 
-            print("✓ AI move successful")
+            print("✓ Bot move successful")
             print_board(engine)
 
         move_count += 1
@@ -349,7 +328,7 @@ def main() -> None:
             if winner == "X":
                 print("🎉 GAME OVER: PLAYER (X) WINS!")
             else:
-                print("🎉 GAME OVER: AI (O) WINS!")
+                print("🎉 GAME OVER: BOT (O) WINS!")
             print("=" * 60)
             print("\nFinal Stats:")
             print(f"- Total moves: {engine.get_current_state().move_count}")
@@ -372,7 +351,7 @@ def main() -> None:
 
         print_game_status(engine)
 
-    # Show API capabilities demonstrated
+    # Show capabilities demonstrated
     print("\n" + "=" * 60)
     print("PHASE 3 CAPABILITIES DEMONSTRATED:")
     print("=" * 60)

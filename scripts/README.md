@@ -5,14 +5,14 @@ Demonstration scripts showing implemented phase capabilities.
 ## Run Demo
 
 ```bash
-# Default: Human vs Agent (Phase 3 - Rule-based Agent System)
+# Default: Human vs Bot (Phase 3 - Rule-based)
 ./run_demo.sh
 
-# Human vs Agent (Phase 3 - Rule-based)
-./run_demo.sh h2agent
+# Human vs Bot (Phase 3 - Rule-based)
+./run_demo.sh bot
 
-# Human vs Agent with LLM (Phase 5 - LLM Integration)
-./run_demo.sh llm
+# Human vs AI (Phase 5 - LLM-enhanced)
+./run_demo.sh ai
 
 # Human vs Human (Phase 2)
 ./run_demo.sh h2h
@@ -22,6 +22,10 @@ Demonstration scripts showing implemented phase capabilities.
 
 # Interactive menu
 ./run_demo.sh interactive
+
+# Legacy aliases (still supported):
+./run_demo.sh h2agent  # Same as 'bot'
+./run_demo.sh llm      # Same as 'ai'
 ```
 
 ## Available Demos
@@ -36,11 +40,11 @@ Demonstrates Phase 2 (Game Engine):
 
 **Run:** `python scripts/play_human_vs_human.py`
 
-### Human vs Agent Game (Rule-based)
+### Human vs Bot Game (Rule-based)
 
-**Script:** `scripts/play_human_vs_ai.py`
+**Script:** `scripts/play_human_vs_bot.py`
 
-Demonstrates Phase 3 (Rule-based Agent System):
+Demonstrates Phase 3 (Rule-based Bot System):
 - Agent Pipeline orchestration (Scout → Strategist → Executor)
 - Scout Agent: Rule-based board analysis, threat/opportunity detection
 - Strategist Agent: Priority-based move selection using rule-based logic
@@ -48,11 +52,13 @@ Demonstrates Phase 3 (Rule-based Agent System):
 - Fallback strategies for timeouts and failures
 - Two modes: Interactive (human input) or Simulation (auto)
 
-**Run:** `./run_demo.sh h2agent` or `python scripts/play_human_vs_ai.py`
+**Run:** `./run_demo.sh bot` or `python scripts/play_human_vs_bot.py`
 
-### Human vs Agent Game (LLM-enhanced)
+**Note:** This is pure rule-based logic - no LLM, no machine learning. The "bot" uses programmed rules and heuristics.
 
-**Script:** `scripts/play_human_vs_ai.py --llm`
+### Human vs AI Game (LLM-enhanced)
+
+**Script:** `scripts/play_human_vs_ai.py`
 
 Demonstrates Phase 5 (LLM Integration):
 - LLM-enhanced Scout: Board analysis with strategic insights from LLM
@@ -68,7 +74,9 @@ Demonstrates Phase 5 (LLM Integration):
 - Add corresponding API keys (OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY)
 - Set LLM_ENABLED=true
 
-**Run:** `./run_demo.sh llm` or `python scripts/play_human_vs_ai.py --llm`
+**Run:** `./run_demo.sh ai` or `python scripts/play_human_vs_ai.py`
+
+**Note:** This is true AI - uses large language models for strategic decision-making.
 
 ### Play via REST API
 

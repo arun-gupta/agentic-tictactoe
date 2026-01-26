@@ -2,12 +2,16 @@
 # Simple script to setup environment and run demo scripts
 #
 # Usage:
-#   ./run_demo.sh              # Default: Human vs Agent (Phase 3 - Rule-based Agent System)
-#   ./run_demo.sh h2agent      # Human vs Agent (Phase 3 - Rule-based Agent System)
-#   ./run_demo.sh llm          # Human vs Agent with LLM (Phase 5 - LLM Integration)
+#   ./run_demo.sh              # Default: Human vs Bot (Phase 3 - Rule-based)
+#   ./run_demo.sh bot          # Human vs Bot (Phase 3 - Rule-based)
+#   ./run_demo.sh ai           # Human vs AI (Phase 5 - LLM-enhanced)
 #   ./run_demo.sh h2h          # Human vs Human (Phase 2 - Game Engine)
 #   ./run_demo.sh api          # Play via REST API (Phase 4 - REST API Layer)
 #   ./run_demo.sh interactive  # Interactive menu
+#
+# Legacy aliases (still supported):
+#   ./run_demo.sh h2agent      # Same as 'bot'
+#   ./run_demo.sh llm          # Same as 'ai'
 
 set -e  # Exit on error
 
@@ -58,7 +62,7 @@ fi
 # Parse command line argument
 choice=""
 if [ $# -eq 0 ]; then
-    # No argument provided - default to Human vs Agent (Phase 3 - Rule-based Agent System)
+    # No argument provided - default to Human vs Bot (Phase 3 - Rule-based)
     choice="phase3"
 elif [ $# -eq 1 ]; then
     arg=$(echo "$1" | tr '[:upper:]' '[:lower:]')
@@ -66,10 +70,10 @@ elif [ $# -eq 1 ]; then
         h2h|humanvshuman|human-vs-human)
             choice="phase2"
             ;;
-        h2agent|humanvsagent|human-vs-agent)
+        bot|h2agent|humanvsagent|human-vs-agent)
             choice="phase3"
             ;;
-        llm|llm-agent|llm-agents)
+        ai|llm|llm-agent|llm-agents)
             choice="phase5"
             ;;
         api|playviaapi|play-via-api)
@@ -81,9 +85,9 @@ elif [ $# -eq 1 ]; then
         *)
             echo -e "${YELLOW}Invalid argument: $1${NC}"
             echo -e "${BLUE}Usage:${NC}"
-            echo "  ./run_demo.sh              # Default: Human vs Agent (Phase 3 - Rule-based Agent System)"
-            echo "  ./run_demo.sh h2agent      # Human vs Agent (Phase 3 - Rule-based Agent System)"
-            echo "  ./run_demo.sh llm          # Human vs Agent with LLM (Phase 5 - LLM Integration)"
+            echo "  ./run_demo.sh              # Default: Human vs Bot (Phase 3 - Rule-based)"
+            echo "  ./run_demo.sh bot          # Human vs Bot (Phase 3 - Rule-based)"
+            echo "  ./run_demo.sh ai           # Human vs AI (Phase 5 - LLM-enhanced)"
             echo "  ./run_demo.sh h2h          # Human vs Human (Phase 2 - Game Engine)"
             echo "  ./run_demo.sh api          # Play via REST API (Phase 4 - REST API Layer)"
             echo "  ./run_demo.sh interactive  # Interactive menu"
@@ -91,7 +95,7 @@ elif [ $# -eq 1 ]; then
             ;;
     esac
 else
-    echo -e "${YELLOW}Too many arguments. Usage: ./run_demo.sh [h2h|h2agent|api|interactive]${NC}"
+    echo -e "${YELLOW}Too many arguments. Usage: ./run_demo.sh [h2h|bot|ai|api|interactive]${NC}"
     exit 1
 fi
 
@@ -100,8 +104,8 @@ if [ "$choice" = "interactive" ]; then
     # Interactive mode
     echo -e "${BLUE}Available demos:${NC}"
     echo "  1) Human vs Human (Phase 2 - Game Engine)"
-    echo "  2) Human vs Agent (Phase 3 - Rule-based Agent System)"
-    echo "  3) Human vs Agent with LLM (Phase 5 - LLM Integration)"
+    echo "  2) Human vs Bot (Phase 3 - Rule-based)"
+    echo "  3) Human vs AI (Phase 5 - LLM-enhanced)"
     echo "  4) Play via REST API (Phase 4 - REST API Layer)"
     echo "  5) Exit"
     echo ""
@@ -138,11 +142,11 @@ case $choice in
         python -m scripts.play_human_vs_human
         ;;
     phase3)
-        echo -e "\n${BLUE}Running: Human vs Agent (Phase 3 - Rule-based Agent System)${NC}\n"
-        python -m scripts.play_human_vs_ai
+        echo -e "\n${BLUE}Running: Human vs Bot (Phase 3 - Rule-based)${NC}\n"
+        python -m scripts.play_human_vs_bot
         ;;
     phase5)
-        echo -e "\n${BLUE}Running: Human vs Agent with LLM (Phase 5 - LLM Integration)${NC}\n"
+        echo -e "\n${BLUE}Running: Human vs AI (Phase 5 - LLM-enhanced)${NC}\n"
 
         # Validate .env file exists
         if [ ! -f ".env" ]; then
@@ -165,8 +169,8 @@ case $choice in
 
         echo -e "${GREEN}✓ LLM configuration is valid${NC}\n"
 
-        # Run with LLM mode enabled
-        python -m scripts.play_human_vs_ai --llm
+        # Run AI demo (LLM-enhanced)
+        python -m scripts.play_human_vs_ai
         ;;
     phase4)
         echo -e "\n${BLUE}Running: Play via REST API (Phase 4 - REST API Layer)${NC}\n"

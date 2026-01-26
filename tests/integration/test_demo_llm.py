@@ -164,10 +164,10 @@ class TestDemoScriptLLMSupport:
         env["OPENAI_API_KEY"] = "sk-test-key-12345678901234567890"
         env["ANTHROPIC_API_KEY"] = "sk-ant-test-key-12345678901234567890"
 
-        # Run play script with --llm flag in simulation mode (mode 2)
+        # Run AI script in simulation mode (mode 2)
         # Pass input via stdin to avoid hanging
         result = subprocess.run(
-            [sys.executable, "-m", "scripts.play_human_vs_ai", "--llm", "2"],
+            [sys.executable, "-m", "scripts.play_human_vs_ai", "2"],
             capture_output=True,
             text=True,
             input="",  # Empty input for simulation mode
@@ -197,9 +197,9 @@ class TestDemoScriptLLMSupport:
         env["OPENAI_API_KEY"] = "sk-test-key-12345678901234567890"
         env["ANTHROPIC_API_KEY"] = "sk-ant-test-key-12345678901234567890"
 
-        # Run play script with --llm flag
+        # Run AI script in simulation mode
         result = subprocess.run(
-            [sys.executable, "-m", "scripts.play_human_vs_ai", "--llm", "2"],
+            [sys.executable, "-m", "scripts.play_human_vs_ai", "2"],
             capture_output=True,
             text=True,
             input="",
