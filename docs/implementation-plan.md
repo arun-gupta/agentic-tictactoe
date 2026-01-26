@@ -1678,6 +1678,37 @@ GOOGLE_API_KEY=...
 **Test Files**: `tests/unit/config/test_llm_config.py`
 **Implementation**: Enhanced `src/config/llm_config.py` with environment variable support, validation, and runtime switching
 
+**5.2.2. Demo Script LLM Support** ✅
+
+**Files Modified:**
+- `run_demo.sh` - Added `llm` mode for LLM-enhanced gameplay
+- `scripts/play_human_vs_ai.py` - Added `--llm` flag and configuration display
+- `scripts/validate_llm_config.py` - Created validation script for LLM configuration
+- `scripts/README.md` - Updated documentation for new scripts and modes
+
+**Implementation:** ✅
+- ✅ Add new demo mode: `./run_demo.sh llm` for LLM-enhanced gameplay
+- ✅ Validate .env configuration before running (LLM_ENABLED, SCOUT_PROVIDER, STRATEGIST_PROVIDER, API keys)
+- ✅ Display LLM configuration info at start (which providers/models are being used)
+- ✅ Created validation script (`scripts/validate_llm_config.py`) for pre-flight checks
+- ✅ Updated interactive menu to include LLM mode option
+- ⏸️ Show LLM call logs during gameplay - Deferred to subsections that implement actual LLM agent integration
+
+**Subsection Tests**: ✅ All 8 tests passing
+- ✅ Demo script validates .env file exists when llm mode selected
+- ✅ Demo script validates LLM_ENABLED is true when llm mode selected
+- ✅ Demo script validates required provider environment variables are set (SCOUT_PROVIDER, STRATEGIST_PROVIDER)
+- ✅ Demo script validates API keys exist for configured providers
+- ✅ Demo script initializes agents with LLM enabled when llm mode selected
+- ✅ Demo script displays configuration info at startup (providers, models)
+- ✅ Demo script runs successfully with valid LLM configuration
+- ✅ Demo script shows helpful error message when configuration invalid
+
+**Test Coverage**: ✅ 8 tests for Phase 5.2.2 demo script validation and LLM mode
+- **Test Files**: `tests/integration/test_demo_llm.py`
+
+**Note**: This subsection provides the demo infrastructure for LLM mode. Actual LLM agent integration (Scout and Strategist) will be implemented in subsections 5.3+. The demo currently validates configuration and displays it, but agents remain rule-based until their respective LLM implementations are complete.
+
 #### 5.3. Metrics and Tracking
 
 **Spec Reference**: Section 12.1 - LLM Provider Metadata and Experimentation Tracking

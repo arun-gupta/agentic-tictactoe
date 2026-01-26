@@ -4,6 +4,7 @@
 # Usage:
 #   ./run_demo.sh              # Default: Human vs Agent (Phase 3 - Rule-based Agent System)
 #   ./run_demo.sh h2agent      # Human vs Agent (Phase 3 - Rule-based Agent System)
+#   ./run_demo.sh llm          # Human vs Agent with LLM (Phase 5 - LLM Integration)
 #   ./run_demo.sh h2h          # Human vs Human (Phase 2 - Game Engine)
 #   ./run_demo.sh api          # Play via REST API (Phase 4 - REST API Layer)
 #   ./run_demo.sh interactive  # Interactive menu
@@ -68,6 +69,9 @@ elif [ $# -eq 1 ]; then
         h2agent|humanvsagent|human-vs-agent)
             choice="phase3"
             ;;
+        llm|llm-agent|llm-agents)
+            choice="phase5"
+            ;;
         api|playviaapi|play-via-api)
             choice="phase4"
             ;;
@@ -79,6 +83,7 @@ elif [ $# -eq 1 ]; then
             echo -e "${BLUE}Usage:${NC}"
             echo "  ./run_demo.sh              # Default: Human vs Agent (Phase 3 - Rule-based Agent System)"
             echo "  ./run_demo.sh h2agent      # Human vs Agent (Phase 3 - Rule-based Agent System)"
+            echo "  ./run_demo.sh llm          # Human vs Agent with LLM (Phase 5 - LLM Integration)"
             echo "  ./run_demo.sh h2h          # Human vs Human (Phase 2 - Game Engine)"
             echo "  ./run_demo.sh api          # Play via REST API (Phase 4 - REST API Layer)"
             echo "  ./run_demo.sh interactive  # Interactive menu"
@@ -96,10 +101,11 @@ if [ "$choice" = "interactive" ]; then
     echo -e "${BLUE}Available demos:${NC}"
     echo "  1) Human vs Human (Phase 2 - Game Engine)"
     echo "  2) Human vs Agent (Phase 3 - Rule-based Agent System)"
-    echo "  3) Play via REST API (Phase 4 - REST API Layer)"
-    echo "  4) Exit"
+    echo "  3) Human vs Agent with LLM (Phase 5 - LLM Integration)"
+    echo "  4) Play via REST API (Phase 4 - REST API Layer)"
+    echo "  5) Exit"
     echo ""
-    read -p "Select demo to run (1-4): " menu_choice
+    read -p "Select demo to run (1-5): " menu_choice
 
     case $menu_choice in
         1)
@@ -109,9 +115,12 @@ if [ "$choice" = "interactive" ]; then
             choice="phase3"
             ;;
         3)
-            choice="phase4"
+            choice="phase5"
             ;;
         4)
+            choice="phase4"
+            ;;
+        5)
             echo -e "${GREEN}Goodbye!${NC}"
             exit 0
             ;;
@@ -132,9 +141,36 @@ case $choice in
         echo -e "\n${BLUE}Running: Human vs Agent (Phase 3 - Rule-based Agent System)${NC}\n"
         python -m scripts.play_human_vs_ai
         ;;
+    phase5)
+        echo -e "\n${BLUE}Running: Human vs Agent with LLM (Phase 5 - LLM Integration)${NC}\n"
+
+        # Validate .env file exists
+        if [ ! -f ".env" ]; then
+            echo -e "${YELLOW}⚠ Warning: .env file not found${NC}"
+            echo -e "${YELLOW}   Create .env from .env.example to configure LLM settings${NC}"
+            echo -e "${YELLOW}   Example: cp .env.example .env${NC}\n"
+        fi
+
+        # Validate LLM configuration
+        python -m scripts.validate_llm_config
+        if [ $? -ne 0 ]; then
+            echo -e "\n${YELLOW}⚠ LLM configuration is invalid or incomplete${NC}"
+            echo -e "${YELLOW}   Please check your .env file and ensure:${NC}"
+            echo -e "${YELLOW}   1. LLM_ENABLED=true${NC}"
+            echo -e "${YELLOW}   2. SCOUT_PROVIDER and STRATEGIST_PROVIDER are set${NC}"
+            echo -e "${YELLOW}   3. Corresponding API keys are configured${NC}"
+            echo -e "${YELLOW}   See .env.example for configuration guide${NC}\n"
+            exit 1
+        fi
+
+        echo -e "${GREEN}✓ LLM configuration is valid${NC}\n"
+
+        # Run with LLM mode enabled
+        python -m scripts.play_human_vs_ai --llm
+        ;;
     phase4)
         echo -e "\n${BLUE}Running: Play via REST API (Phase 4 - REST API Layer)${NC}\n"
-        
+
         # Check if server is already running
         API_PORT=8000
         if curl -s "http://localhost:${API_PORT}/health" > /dev/null 2>&1; then
@@ -144,12 +180,12 @@ case $choice in
         else
             echo -e "${YELLOW}API server is not running. Starting it in the background...${NC}"
             echo -e "${BLUE}Starting server: uvicorn src.api.main:app --host 127.0.0.1 --port ${API_PORT}${NC}"
-            
+
             # Start server in background
             uvicorn src.api.main:app --host 127.0.0.1 --port ${API_PORT} > /dev/null 2>&1 &
             SERVER_PID=$!
             SERVER_STARTED_BY_SCRIPT=true
-            
+
             # Wait for server to be ready (max 10 seconds)
             echo -e "${BLUE}Waiting for server to start...${NC}"
             for i in {1..20}; do
@@ -164,7 +200,7 @@ case $choice in
                 fi
             done
         fi
-        
+
         # Run the demo script
         python -m scripts.play_via_api
         ;;

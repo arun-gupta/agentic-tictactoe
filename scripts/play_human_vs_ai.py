@@ -7,15 +7,22 @@ a human player to play against rule-based agents using the Agent Pipeline:
 - Strategist Agent: Priority-based move selection using rule-based logic
 - Executor Agent: Move validation and execution with fallback strategies
 
-Note: This uses rule-based agents (not LLM-based AI). LLM integration comes in Phase 5.
+With --llm flag (Phase 5):
+- Scout Agent: LLM-enhanced board analysis with strategic insights
+- Strategist Agent: LLM-based move selection with reasoning
+- Executor Agent: Rule-based validation (no LLM, kept fast)
+
+Note: Without --llm flag, uses rule-based agents only.
 """
 
+import argparse
 import random
 import sys
 from typing import Literal
 
 from src.agents.pipeline import AgentPipeline
 from src.agents.scout import ScoutAgent
+from src.config.llm_config import get_llm_config
 from src.domain.agent_models import BoardAnalysis, MoveExecution
 from src.domain.models import GameState, Position
 from src.domain.result import AgentResult
@@ -182,32 +189,65 @@ def simulate_human_move(engine: GameEngine) -> tuple[int, int] | None:
 
 def main() -> None:
     """Run a human vs AI game."""
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Play Tic-Tac-Toe against AI agents")
+    parser.add_argument(
+        "--llm",
+        action="store_true",
+        help="Enable LLM-enhanced agents (Phase 5)",
+    )
+    parser.add_argument(
+        "mode",
+        nargs="?",
+        choices=["1", "2"],
+        help="Game mode: 1=Interactive, 2=Simulation",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Show detailed AI analysis",
+    )
+
+    args = parser.parse_args()
+    llm_enabled = args.llm
+    mode: Literal["1", "2"] | None = args.mode
+    verbose = args.verbose
+
+    # Display header
     print("=" * 60)
-    print("TIC-TAC-TOE: Human vs Agent (Rule-based Agent System)")
+    if llm_enabled:
+        print("TIC-TAC-TOE: Human vs Agent (LLM-Enhanced)")
+    else:
+        print("TIC-TAC-TOE: Human vs Agent (Rule-based Agent System)")
     print("=" * 60)
-    print("\nDemonstrating Phase 3: Rule-based Agent System")
-    print("Note: Uses rule-based agents (not LLM-based AI). LLM integration in Phase 5.")
-    print("- Scout Agent: Board analysis and threat detection")
-    print("- Strategist Agent: Move selection with priority system")
-    print("- Executor Agent: Move execution with validation")
-    print("- Agent Pipeline: Complete orchestration with timeouts and fallbacks\n")
 
-    # Parse command line arguments if provided
-    mode: Literal["1", "2"] | None = None
-    verbose = False
+    if llm_enabled:
+        print("\nDemonstrating Phase 5: LLM Integration")
+        print("- Scout Agent: LLM-enhanced board analysis")
+        print("- Strategist Agent: LLM-based move selection")
+        print("- Executor Agent: Rule-based validation (no LLM)")
+        print("- Agent Pipeline: Complete orchestration with timeouts and fallbacks")
 
-    if len(sys.argv) > 1:
-        # Command line mode specified
-        mode_arg = sys.argv[1].strip()
-        if mode_arg in ("1", "2"):
-            mode = mode_arg  # type: ignore[assignment]
-        else:
-            print(f"Invalid mode: {mode_arg}. Use 1 (interactive) or 2 (simulation)")
-            sys.exit(1)
+        # Display LLM configuration
+        llm_config = get_llm_config()
+        scout_config = llm_config.get_agent_config("scout")
+        strategist_config = llm_config.get_agent_config("strategist")
 
-        # Check for verbose flag
-        if len(sys.argv) > 2 and sys.argv[2].strip().lower() in ("-v", "--verbose", "verbose", "y"):
-            verbose = True
+        print("\nLLM Configuration:")
+        print(f"  Scout Provider: {scout_config.provider}")
+        print(f"  Scout Model: {scout_config.model}")
+        print(f"  Strategist Provider: {strategist_config.provider}")
+        print(f"  Strategist Model: {strategist_config.model}\n")
+    else:
+        print("\nDemonstrating Phase 3: Rule-based Agent System")
+        print(
+            "Note: Uses rule-based agents (not LLM-based AI). Use --llm flag for LLM integration."
+        )
+        print("- Scout Agent: Board analysis and threat detection")
+        print("- Strategist Agent: Move selection with priority system")
+        print("- Executor Agent: Move execution with validation")
+        print("- Agent Pipeline: Complete orchestration with timeouts and fallbacks\n")
 
     # If no mode specified via arguments, always try to prompt (default to interactive for Human vs Agent)
     if mode is None:
@@ -240,6 +280,14 @@ def main() -> None:
     print("GAME START")
     print("=" * 60)
     print("\nPlayer (X) vs AI (O)")
+
+    if llm_enabled:
+        print(
+            "\n⚠️  Note: LLM configuration validated, but agent LLM integration not yet implemented."
+        )
+        print("    Agents will use rule-based logic until subsection 5.3+ is complete.")
+        print("    This demo validates the LLM configuration infrastructure.")
+
     print_board(engine)
     print_game_status(engine)
 

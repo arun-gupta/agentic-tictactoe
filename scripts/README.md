@@ -8,8 +8,11 @@ Demonstration scripts showing implemented phase capabilities.
 # Default: Human vs Agent (Phase 3 - Rule-based Agent System)
 ./run_demo.sh
 
-# Human vs Agent (Phase 3)
+# Human vs Agent (Phase 3 - Rule-based)
 ./run_demo.sh h2agent
+
+# Human vs Agent with LLM (Phase 5 - LLM Integration)
+./run_demo.sh llm
 
 # Human vs Human (Phase 2)
 ./run_demo.sh h2h
@@ -33,10 +36,11 @@ Demonstrates Phase 2 (Game Engine):
 
 **Run:** `python scripts/play_human_vs_human.py`
 
-### Human vs Agent Game
+### Human vs Agent Game (Rule-based)
+
+**Script:** `scripts/play_human_vs_ai.py`
 
 Demonstrates Phase 3 (Rule-based Agent System):
-- **Note**: This uses rule-based agents (not LLM-based AI). LLM integration comes in Phase 5.
 - Agent Pipeline orchestration (Scout → Strategist → Executor)
 - Scout Agent: Rule-based board analysis, threat/opportunity detection
 - Strategist Agent: Priority-based move selection using rule-based logic
@@ -44,7 +48,27 @@ Demonstrates Phase 3 (Rule-based Agent System):
 - Fallback strategies for timeouts and failures
 - Two modes: Interactive (human input) or Simulation (auto)
 
-**Run:** `python scripts/play_human_vs_ai.py`
+**Run:** `./run_demo.sh h2agent` or `python scripts/play_human_vs_ai.py`
+
+### Human vs Agent Game (LLM-enhanced)
+
+**Script:** `scripts/play_human_vs_ai.py --llm`
+
+Demonstrates Phase 5 (LLM Integration):
+- LLM-enhanced Scout: Board analysis with strategic insights from LLM
+- LLM-enhanced Strategist: Move selection with LLM reasoning
+- Rule-based Executor: Fast validation (no LLM, kept deterministic)
+- Per-agent LLM provider configuration (Scout and Strategist can use different providers)
+- LLM call logging and transparency
+- Requires `.env` configuration with LLM_ENABLED=true
+
+**Prerequisites:**
+- Set up `.env` file with LLM configuration (copy from `.env.example`)
+- Configure SCOUT_PROVIDER and STRATEGIST_PROVIDER
+- Add corresponding API keys (OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY)
+- Set LLM_ENABLED=true
+
+**Run:** `./run_demo.sh llm` or `python scripts/play_human_vs_ai.py --llm`
 
 ### Play via REST API
 
@@ -104,7 +128,27 @@ Runs the pytest-based LLM integration suite under `tests/integration/llm/`.
 ./run_tests.sh --llm-live --providers openai,anthropic
 ```
 
+### Validate LLM Configuration
+
+**Script:** `scripts/validate_llm_config.py`
+
+Validates LLM configuration for demo scripts (Phase 5.2):
+- Checks if LLM_ENABLED is true
+- Validates SCOUT_PROVIDER and STRATEGIST_PROVIDER are set
+- Verifies API keys exist for configured providers
+- Displays configuration summary
+
+**Run:** `python scripts/validate_llm_config.py`
+
+**Exit codes:**
+- 0: Configuration is valid
+- 1: Configuration is invalid or incomplete
+
+**Note:** This is automatically run by `./run_demo.sh llm` before starting the game.
+
 ### Test API Key Infrastructure
+
+**Script:** `scripts/test_api_keys.py`
 
 Verifies that API key loading works correctly (Phase 5.0):
 - Tests loading from `.env` file
