@@ -206,4 +206,7 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
-.claude/
+# Claude Code - ignore local session data but keep skills and config
+.claude/*
+!.claude/skills/
+!.claude/config.json

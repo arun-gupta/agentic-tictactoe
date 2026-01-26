@@ -1,0 +1,19 @@
+{
+  "allowed_tools": [
+    "Bash(*)",
+    "Read",
+    "Write",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Task",
+    "WebSearch",
+    "WebFetch",
+    "TaskOutput",
+    "TaskStop",
+    "AskUserQuestion",
+    "EnterPlanMode",
+    "ExitPlanMode"
+  ],
+  "description": "Permissions for agentic-tictactoe project development"
+}
