@@ -503,9 +503,7 @@ class TestLLMConfigPerAgentConfiguration:
             "llm": {
                 "providers": {
                     "openai": {"models": ["gpt-5.2", "gpt-4o"]},
-                    "anthropic": {
-                        "models": ["claude-haiku-4-5-20251001", "claude-haiku-4-5"]
-                    },
+                    "anthropic": {"models": ["claude-haiku-4-5-20251001", "claude-haiku-4-5"]},
                 }
             }
         }
@@ -526,9 +524,7 @@ class TestLLMConfigPerAgentConfiguration:
         assert scout_config.model == "gpt-5.2"
         assert strategist_config.model == "claude-haiku-4-5-20251001"
 
-    def test_get_agent_config_includes_api_key(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_get_agent_config_includes_api_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that get_agent_config() includes the API key for the agent's provider."""
         monkeypatch.setenv("LLM_ENABLED", "true")
         monkeypatch.setenv("SCOUT_PROVIDER", "openai")

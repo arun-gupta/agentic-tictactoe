@@ -320,7 +320,10 @@ class LLMConfig:
         # Validate API key exists
         if not config.api_key:
             env_var = self.API_KEY_ENV_VARS[config.provider]
-            return False, f"API key missing for {agent_name} provider '{config.provider}' (set {env_var})"
+            return (
+                False,
+                f"API key missing for {agent_name} provider '{config.provider}' (set {env_var})",
+            )
 
         # Validate API key format
         if not self._validate_api_key_format(config.api_key, config.provider):
