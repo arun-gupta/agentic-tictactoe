@@ -244,21 +244,45 @@ def main() -> None:
 
     interactive = mode == "1"
 
-    # Initialize game engine and AI pipeline
+    # Initialize game engine and AI pipeline with LLM configuration
     engine = GameEngine(player_symbol="X", ai_symbol="O")
-    ai_pipeline = AgentPipeline(ai_symbol="O")
-    scout = ScoutAgent(ai_symbol="O")  # For detailed analysis display
+
+    # Get LLM config for agents
+    config = get_llm_config()
+    config_data = config.get_config()
+    scout_config = config.get_agent_config("scout")
+    strategist_config = config.get_agent_config("strategist")
+
+    # Create pipeline with LLM enabled
+    ai_pipeline = AgentPipeline(
+        ai_symbol="O",
+        llm_enabled=config_data.enabled,
+        scout_provider=scout_config.provider,
+        scout_model=scout_config.model,
+        strategist_provider=strategist_config.provider,
+        strategist_model=strategist_config.model,
+    )
+
+    # Create scout for detailed analysis display
+    scout = ScoutAgent(
+        ai_symbol="O",
+        llm_enabled=config_data.enabled,
+        provider=scout_config.provider,
+        model=scout_config.model,
+    )
 
     print("\n" + "=" * 60)
     print("GAME START")
     print("=" * 60)
     print("\nPlayer (X) vs AI (O)")
 
-    print(
-        "\n⚠️  Note: LLM configuration validated, but agent LLM integration not yet implemented."
-    )
-    print("    Agents will use rule-based logic until subsection 5.3+ is complete.")
-    print("    This demo validates the LLM configuration infrastructure.")
+    if config_data.enabled:
+        print("\n✅ LLM Integration Active!")
+        print(f"   Scout using: {scout_config.provider}/{scout_config.model}")
+        print(f"   Strategist using: {strategist_config.provider}/{strategist_config.model}")
+    else:
+        print("\n⚠️  LLM disabled - using rule-based logic")
+        print("    Set LLM_ENABLED=true in .env to enable AI")
 
     print_board(engine)
     print_game_status(engine)

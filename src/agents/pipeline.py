@@ -39,6 +39,11 @@ class AgentPipeline:
         strategist_timeout: float = 3.0,
         executor_timeout: float = 2.0,
         total_timeout: float = 15.0,
+        llm_enabled: bool = False,
+        scout_provider: str | None = None,
+        scout_model: str | None = None,
+        strategist_provider: str | None = None,
+        strategist_model: str | None = None,
     ) -> None:
         """Initialize the agent pipeline.
 
@@ -48,10 +53,27 @@ class AgentPipeline:
             strategist_timeout: Timeout for Strategist agent in seconds (default: 3.0)
             executor_timeout: Timeout for Executor agent in seconds (default: 2.0)
             total_timeout: Total pipeline timeout in seconds (default: 15.0)
+            llm_enabled: Enable LLM for Scout and Strategist (default: False)
+            scout_provider: LLM provider for Scout (openai, anthropic, gemini)
+            scout_model: LLM model for Scout
+            strategist_provider: LLM provider for Strategist (openai, anthropic, gemini)
+            strategist_model: LLM model for Strategist
         """
         self.ai_symbol = ai_symbol
-        self.scout = ScoutAgent(ai_symbol=ai_symbol)
-        self.strategist = StrategistAgent(ai_symbol=ai_symbol)
+        self.scout = ScoutAgent(
+            ai_symbol=ai_symbol,
+            llm_enabled=llm_enabled,
+            provider=scout_provider,
+            model=scout_model,
+            timeout_seconds=scout_timeout,
+        )
+        self.strategist = StrategistAgent(
+            ai_symbol=ai_symbol,
+            llm_enabled=llm_enabled,
+            provider=strategist_provider,
+            model=strategist_model,
+            timeout_seconds=strategist_timeout,
+        )
         self.executor = ExecutorAgent(ai_symbol=ai_symbol)
         self.scout_timeout = scout_timeout
         self.strategist_timeout = strategist_timeout

@@ -1709,6 +1709,36 @@ GOOGLE_API_KEY=...
 
 **Note**: This subsection provides the demo infrastructure for LLM mode. Actual LLM agent integration (Scout and Strategist) will be implemented in subsections 5.3+. The demo currently validates configuration and displays it, but agents remain rule-based until their respective LLM implementations are complete.
 
+**5.2.3. Agent Pipeline Configuration Wiring** ✅
+
+**Files Modified:**
+- `src/agents/pipeline.py` - Added LLM config parameters to `__init__()`
+- `scripts/play_human_vs_ai.py` - Reads config and passes to AgentPipeline
+- `tests/unit/agents/test_pipeline_config.py` - Created with 9 subsection tests
+
+**Implementation:** ✅
+- ✅ Update `AgentPipeline.__init__()` to accept LLM configuration parameters
+- ✅ Pass LLM config (enabled, provider, model) to Scout and Strategist agents
+- ✅ Update demo script to read config and pass to AgentPipeline
+- ✅ Agents will use LLM when `llm_enabled=True` in config
+- ✅ Keep bot script (play_human_vs_bot.py) explicitly without LLM
+
+**Subsection Tests**: ✅ All 9 tests passing
+- ✅ AgentPipeline accepts llm_enabled parameter and passes to agents
+- ✅ AgentPipeline accepts per-agent provider configuration (scout_provider, strategist_provider)
+- ✅ AgentPipeline accepts per-agent model configuration (scout_model, strategist_model)
+- ✅ AgentPipeline creates Scout with correct LLM config from parameters
+- ✅ AgentPipeline creates Strategist with correct LLM config from parameters
+- ✅ AgentPipeline keeps Executor rule-based (no LLM)
+- ✅ Config values propagate correctly to agents
+- ✅ Default values work when config not provided
+- ✅ llm_enabled=False creates rule-based agents
+
+**Test Coverage**: ✅ 9 tests for Phase 5.2.3 config wiring
+- **Test Files**: `tests/unit/agents/test_pipeline_config.py`
+
+**Result**: LLM configuration is now fully connected! When `LLM_ENABLED=true` in `.env`, Scout and Strategist will make real LLM API calls using the configured providers and models from Phase 5.1 implementation.
+
 #### 5.3. Metrics and Tracking
 
 **Spec Reference**: Section 12.1 - LLM Provider Metadata and Experimentation Tracking
