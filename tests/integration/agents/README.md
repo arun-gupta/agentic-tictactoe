@@ -46,30 +46,41 @@ These tests make real API calls and **will incur costs**:
 
 ## Running Tests
 
-### Run all live agent integration tests
+### Using run_tests.sh (Recommended) ✅
+
+The tests are fully integrated with the project's unified test runner:
+
 ```bash
+# Run all live LLM tests (agents + providers)
+./run_tests.sh --llm-live
+
+# Run with specific providers
+./run_tests.sh --llm-live --providers gemini,openai
+
+# Run with verbose output
+./run_tests.sh --llm-live -- -v -s
+
+# Run only agent tests (not provider tests)
+./run_tests.sh --llm-live -- tests/integration/agents/ -v
+```
+
+### Using pytest directly
+
+You can also run tests directly with pytest:
+
+```bash
+# Run all live agent integration tests
 RUN_LIVE_LLM_TESTS=1 pytest -m live_llm tests/integration/agents/
-```
 
-### Run with verbose output
-```bash
+# Run with verbose output
 RUN_LIVE_LLM_TESTS=1 pytest -m live_llm -v -s tests/integration/agents/
-```
 
-### Run specific test class
-```bash
-# Scout tests only
+# Run specific test class
 RUN_LIVE_LLM_TESTS=1 pytest -m live_llm tests/integration/agents/ -k TestScout
-
-# Strategist tests only
 RUN_LIVE_LLM_TESTS=1 pytest -m live_llm tests/integration/agents/ -k TestStrategist
-
-# Pipeline tests only
 RUN_LIVE_LLM_TESTS=1 pytest -m live_llm tests/integration/agents/ -k TestPipeline
-```
 
-### Run single test
-```bash
+# Run single test
 RUN_LIVE_LLM_TESTS=1 pytest -m live_llm tests/integration/agents/ \
   -k test_pipeline_executes_with_llm_end_to_end -v -s
 ```

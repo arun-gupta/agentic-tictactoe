@@ -180,6 +180,23 @@ The agent integration tests verify the **complete agent pipeline** with real LLM
 - Full pipeline (Scout → Strategist → Executor) end-to-end
 
 **Run agent integration tests:**
+
+Using the unified test runner (recommended):
+```bash
+# Run all live LLM tests (agents + providers)
+./run_tests.sh --llm-live
+
+# Run with specific providers
+./run_tests.sh --llm-live --providers gemini,openai
+
+# Run with verbose output
+./run_tests.sh --llm-live -- -v -s
+
+# Run only agent tests
+./run_tests.sh --llm-live -- tests/integration/agents/ -v
+```
+
+Or using pytest directly:
 ```bash
 # Run all agent integration tests
 RUN_LIVE_LLM_TESTS=1 pytest -m live_llm tests/integration/agents/ -v

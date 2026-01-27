@@ -19,6 +19,7 @@ Selection flags (can be combined, except --all):
   --contract       Run contract tests
   --llm            Run non-live LLM integration tests
   --llm-live       Run live LLM integration tests (real API calls; may incur cost)
+                   Includes: Agent pipeline tests + Provider tests (~$0.50 total)
   --all            Run everything except live LLM tests
 
 Live options:

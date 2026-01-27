@@ -46,7 +46,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         path_str = str(path.as_posix())
         if "/tests/integration/" in path_str:
             item.add_marker(pytest.mark.integration)
-            if "/tests/integration/llm/" in path_str:
+            if "/tests/integration/llm/" in path_str or "/tests/integration/agents/" in path_str:
                 item.add_marker(pytest.mark.llm_integration)
         elif "/tests/unit/" in path_str:
             item.add_marker(pytest.mark.unit)
