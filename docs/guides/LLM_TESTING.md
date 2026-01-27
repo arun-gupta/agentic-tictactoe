@@ -5,14 +5,18 @@ This guide explains how to test the LLM integrations (Phase 5.0) with both mocke
 ## Test Types Overview
 
 **Mocked Tests (No API Calls - Safe for CI/CD):**
-- ✅ All unit tests in `tests/unit/llm/` - Use `unittest.mock` to mock API clients
-- ✅ `scripts/test_api_keys.py` - Tests API key loading infrastructure (mocked environment)
+- ✅ Unit tests in `tests/unit/llm/` - Mock API clients
+- ✅ Unit tests in `tests/unit/agents/` - Mock LLM agent creation
+- ✅ Unit tests in `tests/unit/config/` - Mock configuration
+- ✅ `scripts/test_api_keys.py` - Test key loading (mocked)
 - ✅ Fast, free, and safe to run without API keys
 
 **Real API Call Tests (Requires Valid API Keys):**
-- ⚠️ `scripts/test_llm_providers.py` - Makes actual LLM API calls to verify integration
-- ⚠️ Requires valid API keys in `.env` file or environment variables
-- ⚠️ Incurs small costs (~$0.01-0.05 per test run)
+- ⚠️ `scripts/test_llm_providers.py` - Basic provider testing (~$0.01-0.05)
+- ⚠️ `tests/integration/llm/` - Provider integration tests (~$0.05)
+- ⚠️ `tests/integration/agents/` - **Agent pipeline integration tests** (~$0.10-0.50)
+- ⚠️ Requires valid API keys in `.env` file
+- ⚠️ Incurs costs (varies by provider/model)
 
 ## Prerequisites
 
@@ -162,9 +166,51 @@ print(f"Tokens: {response.tokens_used}")
 print(f"Latency: {response.latency_ms}ms")
 ```
 
-### 5. Testing Pydantic AI Agents
+### 5. Agent Integration Tests (Real API Calls) ⚠️
 
-Test the Scout and Strategist agents with structured outputs:
+**Type**: Live integration tests with real LLM calls
+**API Calls**: Yes (end-to-end agent pipeline)
+**Cost**: ~$0.10-0.50 per full test suite
+**Requires API Keys**: Yes
+**Location**: `tests/integration/agents/`
+
+The agent integration tests verify the **complete agent pipeline** with real LLM calls:
+- Scout agent analysis with real LLM
+- Strategist agent planning with real LLM
+- Full pipeline (Scout → Strategist → Executor) end-to-end
+
+**Run agent integration tests:**
+```bash
+# Run all agent integration tests
+RUN_LIVE_LLM_TESTS=1 pytest -m live_llm tests/integration/agents/ -v
+
+# Run with verbose output
+RUN_LIVE_LLM_TESTS=1 pytest -m live_llm -v -s tests/integration/agents/
+
+# Run specific test class
+RUN_LIVE_LLM_TESTS=1 pytest -m live_llm tests/integration/agents/ -k TestScout
+RUN_LIVE_LLM_TESTS=1 pytest -m live_llm tests/integration/agents/ -k TestStrategist
+RUN_LIVE_LLM_TESTS=1 pytest -m live_llm tests/integration/agents/ -k TestPipeline
+```
+
+**What it tests:**
+- ✅ Scout detects threats/opportunities with real LLM
+- ✅ Strategist makes strategic decisions with real LLM
+- ✅ Pipeline executes complete flow with real LLM
+- ✅ Structured output parsing (BoardAnalysis, Strategy)
+- ✅ Real API latency and timeout handling
+- ✅ Multi-provider compatibility
+
+**Test Coverage** (8 tests):
+- **Scout**: Opening analysis, threat detection, opportunity detection
+- **Strategist**: Opening move planning, threat blocking
+- **Pipeline**: End-to-end execution, threat handling, midgame complexity
+
+See detailed documentation: `tests/integration/agents/README.md`
+
+### 6. Testing Pydantic AI Agents (Manual)
+
+Test the Scout and Strategist agents manually with structured outputs:
 
 ```python
 from src.llm.pydantic_ai_agents import create_scout_agent, create_strategist_agent
