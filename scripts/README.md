@@ -2,6 +2,21 @@
 
 Demonstration scripts showing implemented phase capabilities.
 
+## 🔑 Need API Keys?
+
+For LLM-enhanced demos (`./run_demo.sh ai`), you'll need API keys:
+
+**Quick Setup:**
+1. Copy the example: `cp .env.example .env`
+2. Get API keys from:
+   - **OpenAI**: https://platform.openai.com/api-keys
+   - **Anthropic**: https://console.anthropic.com/settings/keys
+   - **Google Gemini**: https://aistudio.google.com/app/apikey
+3. Add keys to `.env` file
+4. Set `LLM_ENABLED=true`
+
+**📖 Detailed Guide**: See [`docs/guides/INTEGRATION_TEST_SETUP.md`](../docs/guides/INTEGRATION_TEST_SETUP.md) for step-by-step instructions with troubleshooting.
+
 ## Run Demo
 
 ```bash

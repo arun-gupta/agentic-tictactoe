@@ -10,8 +10,41 @@ A multi-agent AI system for playing Tic-Tac-Toe, featuring specialized agents (S
 ### Quick Demo
 
 ```bash
-./run_demo.sh
+# Rule-based bot (no API keys needed)
+./run_demo.sh bot
+
+# LLM-enhanced AI (requires API keys)
+./run_demo.sh ai
 ```
+
+### LLM Setup (Optional)
+
+To use LLM-enhanced AI agents, you'll need API keys:
+
+1. **Copy environment template**:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Get API keys** from one or more providers:
+   - **OpenAI**: https://platform.openai.com/api-keys
+   - **Anthropic**: https://console.anthropic.com/settings/keys
+   - **Google Gemini**: https://aistudio.google.com/app/apikey
+
+3. **Configure `.env`**:
+   ```bash
+   LLM_ENABLED=true
+   SCOUT_PROVIDER=gemini
+   STRATEGIST_PROVIDER=gemini
+   GOOGLE_API_KEY=your_key_here
+   ```
+
+4. **Verify setup**:
+   ```bash
+   python scripts/validate_llm_config.py
+   ```
+
+**📖 Detailed Guide**: See [`docs/guides/INTEGRATION_TEST_SETUP.md`](docs/guides/INTEGRATION_TEST_SETUP.md) for complete step-by-step instructions.
 
 ### Development Setup
 
