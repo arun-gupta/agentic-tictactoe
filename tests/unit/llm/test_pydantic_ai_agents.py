@@ -325,9 +325,7 @@ class TestPydanticAIMultiProviderSupport:
 
         # Create agents for each provider
         openai_agent = create_scout_agent(provider="openai", model="gpt-5.2")
-        anthropic_agent = create_scout_agent(
-            provider="anthropic", model="claude-haiku-4-5"
-        )
+        anthropic_agent = create_scout_agent(provider="anthropic", model="claude-haiku-4-5")
         gemini_agent = create_scout_agent(provider="gemini", model="gemini-2.5-flash")
 
         # Verify all agents created successfully
