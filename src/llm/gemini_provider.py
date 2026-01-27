@@ -192,10 +192,10 @@ class GeminiProvider(LLMProvider):
                     },
                 ]
 
-                gemini_model = genai.GenerativeModel(
+                gemini_model = genai.GenerativeModel(  # type: ignore[attr-defined]
                     model,
-                    safety_settings=safety_settings,
-                )  # type: ignore[attr-defined]
+                    safety_settings=safety_settings,  # type: ignore[arg-type]
+                )
 
                 # Generate content
                 response = gemini_model.generate_content(
