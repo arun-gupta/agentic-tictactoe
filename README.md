@@ -52,9 +52,9 @@ See [Development Guide](docs/DEVELOPMENT.md) for setup instructions and developm
 
 ## Project Status
 
-**Current Phase**: Phase 4 Complete ✅ | Next: Phase 5 (LLM Integration) ⏸️
+**Current Phase**: Phase 5 (LLM Integration) - In Progress 🚧
 
-> **Note**: Phases 0-4 are complete (Domain Models, Game Engine, Agent System, REST API). Features listed below include both implemented and planned components.
+> **Note**: Phases 0-4 are complete. Phase 5 is actively in progress with LLM provider abstraction and agent enhancement completed.
 
 ### Completed (Phases 0-4)
 - ✅ **Phase 0**: Project Setup and Foundation
@@ -63,8 +63,16 @@ See [Development Guide](docs/DEVELOPMENT.md) for setup instructions and developm
 - ✅ **Phase 3**: Agent System (AI Layer) - Scout, Strategist, Executor, and Pipeline
 - ✅ **Phase 4**: REST API Layer - All endpoints, error handling, API demo script, and contract testing (Phase 4.6)
 
+### Phase 5 Progress (LLM Integration)
+- ✅ **5.0**: LLM Provider Abstraction - OpenAI, Anthropic, Gemini providers with unified interface
+- ✅ **5.1**: Agent LLM Enhancement - Scout and Strategist agents with Pydantic AI integration
+- ✅ **5.2**: Configuration - Environment variables, demo script support, agent pipeline wiring
+- 🚧 **5.3+**: Testing, validation, and integration (next steps)
+
 ### Current Metrics
-- **429 tests passing** (unit, integration, contract tests)
+- **612 tests passing** (unit, integration, contract, LLM integration tests)
+- **Complete LLM Integration**: OpenAI, Anthropic, and Google Gemini providers
+- **LLM-Enhanced Agents**: Scout and Strategist agents with real-time LLM calls
 - **Complete REST API** with all endpoints (game control, agent status, error handling)
 - **Contract Testing**: 16/18 contract tests passing (validates API matches OpenAPI specification; known limitation documented)
 - **Test coverage**: See badge above for current Codecov coverage
@@ -72,8 +80,8 @@ See [Development Guide](docs/DEVELOPMENT.md) for setup instructions and developm
   - 100% coverage on all implemented code (domain models, game engine, agents, API)
 - **100% type checking** (mypy strict mode)
 
-### Remaining Phases (5-11)
-- ⏸️ **Phase 5**: LLM Integration - LLM provider abstraction (OpenAI, Anthropic, Google Gemini) and agent enhancement
+### Remaining Phases (6-11)
+- 🚧 **Phase 5**: LLM Integration - Provider abstraction complete, agents enhanced, configuration wiring done (12/N subsections complete)
 - ⏸️ **Phase 6**: Cloud Native Deployment - Docker containerization and Kubernetes deployment
 - ⏸️ **Phase 7**: MCP Distributed Mode - Distributed agent coordination using Model Context Protocol
 - ⏸️ **Phase 8**: Web UI Layer - Interactive web interface for playing the game
@@ -88,7 +96,7 @@ See the [Implementation Plan](docs/implementation-plan.md) for full details on a
 - **Multi-Agent Architecture**: Three specialized agents (Scout, Strategist, Executor) working in coordination
 - **LLM Integration**: Support for OpenAI, Anthropic, and Google Gemini models with provider abstraction
 - **API-First Design**: RESTful API with comprehensive error handling and status codes
-- **Comprehensive Testing**: 412 tests with full test coverage traceability
+- **Comprehensive Testing**: 612 tests with full test coverage traceability
 - **Observability**: Structured logging, metrics collection, and health checks
 - **Deployment Ready**: Docker containerization and Kubernetes Helm charts
 - **Design System**: Complete UI specification with Figma integration
