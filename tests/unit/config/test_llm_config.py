@@ -137,6 +137,7 @@ class TestLLMConfigEnvironmentVariables:
             assert config_data.model == "claude-3-5-sonnet-latest"
 
         # Test defaults when neither env var nor .env file set
+        monkeypatch.delenv("LLM_ENABLED", raising=False)
         monkeypatch.delenv("LLM_PROVIDER", raising=False)
         monkeypatch.delenv("LLM_MODEL", raising=False)
 
@@ -554,7 +555,8 @@ class TestLLMConfigPerAgentConfiguration:
     ) -> None:
         """Test that validate_agent_config() fails when agent provider not set."""
         monkeypatch.setenv("LLM_ENABLED", "true")
-        # No SCOUT_PROVIDER set
+        # Explicitly clear SCOUT_PROVIDER to test missing provider case
+        monkeypatch.delenv("SCOUT_PROVIDER", raising=False)
 
         config = LLMConfig()
         is_valid, error = config.validate_agent_config("scout")

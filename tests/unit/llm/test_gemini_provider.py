@@ -83,7 +83,12 @@ class TestGeminiProviderGenerate:
         )
 
         # Verify API was called correctly
-        mock_generative_model.assert_called_once_with("gemini-2.5-flash")
+        # Note: safety_settings are now included to prevent false positive safety blocks
+        mock_generative_model.assert_called_once()
+        call_args = mock_generative_model.call_args
+        assert call_args[0][0] == "gemini-2.5-flash"  # First positional arg is model name
+        assert "safety_settings" in call_args[1]  # Keyword arg for safety settings
+
         mock_model.generate_content.assert_called_once_with(
             "Test prompt",
             generation_config={"max_output_tokens": 100, "temperature": 0.7},
@@ -113,7 +118,10 @@ class TestGeminiProviderGenerate:
         response = provider.generate(prompt="Test", model="gemini-2.5-flash")
 
         assert response.text == "Response"
-        mock_generative_model.assert_called_once_with("gemini-2.5-flash")
+        # Verify model was called (safety_settings are now included)
+        mock_generative_model.assert_called_once()
+        call_args = mock_generative_model.call_args
+        assert call_args[0][0] == "gemini-2.5-flash"
 
     @patch("src.llm.gemini_provider.genai.GenerativeModel")
     @patch("src.llm.gemini_provider.genai.configure")
@@ -135,8 +143,9 @@ class TestGeminiProviderGenerate:
         for model in provider.SUPPORTED_MODELS:
             response = provider.generate(prompt="Test", model=model)
             assert response.text == "Response"
-            # Verify API was called with correct model
-            mock_generative_model.assert_called_with(model)
+            # Verify API was called with correct model (safety_settings are now included)
+            call_args = mock_generative_model.call_args
+            assert call_args[0][0] == model  # First positional arg is model name
 
     def test_generate_rejects_unsupported_model(self) -> None:
         """Test that generate() rejects unsupported models."""

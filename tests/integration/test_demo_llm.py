@@ -28,11 +28,11 @@ class TestDemoScriptLLMSupport:
         return Path(__file__).parent.parent.parent
 
     def test_subsection_5_2_2_1_validates_env_file_exists(
-        self, project_root: Path, monkeypatch: pytest.MonkeyPatch
+        self, project_root: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
         """Subsection test 1: Demo script validates .env file exists when llm mode selected."""
-        # Change to project root for running scripts
-        monkeypatch.chdir(project_root)
+        # Use temp directory to avoid loading existing .env file
+        monkeypatch.chdir(tmp_path)
 
         # Create clean environment without LLM vars
         import os
@@ -47,6 +47,16 @@ class TestDemoScriptLLMSupport:
             "GOOGLE_API_KEY",
         ]:
             env.pop(key, None)
+
+        # Copy config.json to temp path so LLMConfig can find it
+        import shutil
+
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        shutil.copy(project_root / "config" / "config.json", config_dir / "config.json")
+
+        # Install the package path so imports work
+        env["PYTHONPATH"] = str(project_root)
 
         # Run validate_llm_config script (used by run_demo.sh llm)
         # This should work even without .env file if env vars are set
@@ -85,10 +95,11 @@ class TestDemoScriptLLMSupport:
         assert "LLM_ENABLED is not set to true" in result.stderr
 
     def test_subsection_5_2_2_3_validates_required_provider_env_vars(
-        self, project_root: Path, monkeypatch: pytest.MonkeyPatch
+        self, project_root: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
         """Subsection test 3: Demo script validates required provider environment variables are set."""
-        monkeypatch.chdir(project_root)
+        # Use temp directory to avoid loading existing .env file
+        monkeypatch.chdir(tmp_path)
 
         # Enable LLM but don't set provider
         import os
@@ -97,6 +108,16 @@ class TestDemoScriptLLMSupport:
         env["LLM_ENABLED"] = "true"
         env.pop("SCOUT_PROVIDER", None)
         env.pop("STRATEGIST_PROVIDER", None)
+
+        # Copy config.json to temp path so LLMConfig can find it
+        import shutil
+
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        shutil.copy(project_root / "config" / "config.json", config_dir / "config.json")
+
+        # Install the package path so imports work
+        env["PYTHONPATH"] = str(project_root)
 
         result = subprocess.run(
             [sys.executable, "-m", "scripts.validate_llm_config"],
