@@ -9,8 +9,14 @@ See issue: TODO - Migrate Gemini provider to google.genai package
 """
 
 import time
+import warnings
 
-import google.generativeai as genai
+# Suppress deprecation warning for google.generativeai package at import time
+# This package works but is deprecated in favor of google.genai
+# Migration tracked in implementation plan section 5.0.4
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
 from google.generativeai.types import GenerateContentResponse
 
