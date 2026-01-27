@@ -85,19 +85,19 @@ class TestPydanticAIScoutAgent:
         """Test that create_scout_agent creates Agent with BoardAnalysis response model for Anthropic."""
         # Setup mocks
         mock_config_instance = MagicMock()
-        mock_config_instance.get_supported_models.return_value = {"claude-haiku-4-5-20251001"}
+        mock_config_instance.get_supported_models.return_value = {"claude-haiku-4-5"}
         mock_config.return_value = mock_config_instance
         mock_get_api_key.return_value = "test-anthropic-key"
         mock_model_instance = MagicMock()
         mock_anthropic_model.return_value = mock_model_instance
 
         # Create agent - should update env var since it differs
-        agent = create_scout_agent(provider="anthropic", model="claude-haiku-4-5-20251001")
+        agent = create_scout_agent(provider="anthropic", model="claude-haiku-4-5")
 
         # Verify
         assert agent is not None
         assert agent.output_type == BoardAnalysis
-        mock_anthropic_model.assert_called_once_with("claude-haiku-4-5-20251001")
+        mock_anthropic_model.assert_called_once_with("claude-haiku-4-5")
         # Verify environment variable was updated
         assert os.environ.get("ANTHROPIC_API_KEY") == "test-anthropic-key"
 
@@ -243,19 +243,19 @@ class TestPydanticAIStrategistAgent:
         """Test that create_strategist_agent creates Agent with Strategy response model for Anthropic."""
         # Setup mocks
         mock_config_instance = MagicMock()
-        mock_config_instance.get_supported_models.return_value = {"claude-haiku-4-5-20251001"}
+        mock_config_instance.get_supported_models.return_value = {"claude-haiku-4-5"}
         mock_config.return_value = mock_config_instance
         mock_get_api_key.return_value = "test-anthropic-key"
         mock_model_instance = MagicMock()
         mock_anthropic_model.return_value = mock_model_instance
 
         # Create agent
-        agent = create_strategist_agent(provider="anthropic", model="claude-haiku-4-5-20251001")
+        agent = create_strategist_agent(provider="anthropic", model="claude-haiku-4-5")
 
         # Verify
         assert agent is not None
         assert agent.output_type == Strategy
-        mock_anthropic_model.assert_called_once_with("claude-haiku-4-5-20251001")
+        mock_anthropic_model.assert_called_once_with("claude-haiku-4-5")
         mock_get_api_key.assert_called_once_with("ANTHROPIC_API_KEY")
 
     @patch("src.llm.pydantic_ai_agents.get_api_key")
@@ -314,7 +314,7 @@ class TestPydanticAIMultiProviderSupport:
         mock_config_instance = MagicMock()
         mock_config_instance.get_supported_models.side_effect = [
             {"gpt-5.2"},  # openai
-            {"claude-haiku-4-5-20251001"},  # anthropic
+            {"claude-haiku-4-5"},  # anthropic
             {"gemini-2.5-flash"},  # gemini
         ]
         mock_config.return_value = mock_config_instance
@@ -326,7 +326,7 @@ class TestPydanticAIMultiProviderSupport:
         # Create agents for each provider
         openai_agent = create_scout_agent(provider="openai", model="gpt-5.2")
         anthropic_agent = create_scout_agent(
-            provider="anthropic", model="claude-haiku-4-5-20251001"
+            provider="anthropic", model="claude-haiku-4-5"
         )
         gemini_agent = create_scout_agent(provider="gemini", model="gemini-2.5-flash")
 
@@ -340,5 +340,5 @@ class TestPydanticAIMultiProviderSupport:
 
         # Verify correct models were called
         mock_openai_model.assert_called_once_with("gpt-5.2")
-        mock_anthropic_model.assert_called_once_with("claude-haiku-4-5-20251001")
+        mock_anthropic_model.assert_called_once_with("claude-haiku-4-5")
         mock_google_model.assert_called_once_with("gemini-2.5-flash")

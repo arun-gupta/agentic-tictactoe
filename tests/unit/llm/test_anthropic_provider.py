@@ -72,14 +72,14 @@ class TestAnthropicProviderGenerate:
         provider = AnthropicProvider(api_key="test-key")
         response = provider.generate(
             prompt="Test prompt",
-            model="claude-haiku-4-5-20251001",
+            model="claude-haiku-4-5",
             max_tokens=100,
             temperature=0.7,
         )
 
         # Verify API was called correctly
         mock_client.messages.create.assert_called_once_with(
-            model="claude-haiku-4-5-20251001",
+            model="claude-haiku-4-5",
             max_tokens=100,
             temperature=0.7,
             messages=[{"role": "user", "content": "Test prompt"}],
@@ -95,7 +95,7 @@ class TestAnthropicProviderGenerate:
     def test_generate_supports_claude_haiku_4_5_model(
         self, mock_anthropic_class: MagicMock
     ) -> None:
-        """Test that AnthropicProvider supports claude-haiku-4-5-20251001 model."""
+        """Test that AnthropicProvider supports claude-haiku-4-5 model."""
         mock_response = Mock()
         mock_response.content = [Mock(text="Response")]
         mock_response.usage = Mock(input_tokens=10, output_tokens=10)
@@ -105,7 +105,7 @@ class TestAnthropicProviderGenerate:
         mock_anthropic_class.return_value = mock_client
 
         provider = AnthropicProvider(api_key="test-key")
-        response = provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+        response = provider.generate(prompt="Test", model="claude-haiku-4-5")
 
         assert response.text == "Response"
         mock_client.messages.create.assert_called_once()
@@ -140,14 +140,14 @@ class TestAnthropicProviderGenerate:
         with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}):
             provider = AnthropicProvider()
             with pytest.raises(ValueError, match="max_tokens must be at least 1"):
-                provider.generate(prompt="Test", model="claude-haiku-4-5-20251001", max_tokens=0)
+                provider.generate(prompt="Test", model="claude-haiku-4-5", max_tokens=0)
 
     def test_generate_validates_temperature_range(self) -> None:
         """Test that generate() validates temperature is between 0.0 and 2.0."""
         with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}):
             provider = AnthropicProvider()
             with pytest.raises(ValueError, match="temperature must be between 0.0 and 2.0"):
-                provider.generate(prompt="Test", model="claude-haiku-4-5-20251001", temperature=2.1)
+                provider.generate(prompt="Test", model="claude-haiku-4-5", temperature=2.1)
 
 
 class TestAnthropicProviderErrorHandling:
@@ -172,7 +172,7 @@ class TestAnthropicProviderErrorHandling:
         mock_anthropic_class.return_value = mock_client
 
         provider = AnthropicProvider(api_key="test-key")
-        response = provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+        response = provider.generate(prompt="Test", model="claude-haiku-4-5")
 
         assert response.text == "Success"
         assert mock_client.messages.create.call_count == 2
@@ -191,7 +191,7 @@ class TestAnthropicProviderErrorHandling:
 
         provider = AnthropicProvider(api_key="test-key")
         with pytest.raises(RuntimeError):  # Our code wraps it in RuntimeError
-            provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+            provider.generate(prompt="Test", model="claude-haiku-4-5")
 
         # Should not retry on auth errors
         assert mock_client.messages.create.call_count == 1
@@ -221,7 +221,7 @@ class TestAnthropicProviderErrorHandling:
         mock_anthropic_class.return_value = mock_client
 
         provider = AnthropicProvider(api_key="test-key")
-        response = provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+        response = provider.generate(prompt="Test", model="claude-haiku-4-5")
 
         assert response.text == "Success"
         # Should wait 3 seconds (from Retry-After header) before retry
@@ -253,7 +253,7 @@ class TestAnthropicProviderErrorHandling:
 
         provider = AnthropicProvider(api_key="test-key")
         with pytest.raises(RuntimeError):
-            provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+            provider.generate(prompt="Test", model="claude-haiku-4-5")
 
         # Should not retry on permission errors
         assert mock_client.messages.create.call_count == 1
@@ -269,7 +269,7 @@ class TestAnthropicProviderErrorHandling:
 
         provider = AnthropicProvider(api_key="test-key")
         with pytest.raises(RuntimeError, match="Anthropic API error"):
-            provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+            provider.generate(prompt="Test", model="claude-haiku-4-5")
 
     @patch("src.llm.anthropic_provider.Anthropic")
     def test_handles_unexpected_exception_path(self, mock_anthropic_class: MagicMock) -> None:
@@ -280,7 +280,7 @@ class TestAnthropicProviderErrorHandling:
 
         provider = AnthropicProvider(api_key="test-key")
         with pytest.raises(RuntimeError, match="Unexpected error"):
-            provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+            provider.generate(prompt="Test", model="claude-haiku-4-5")
 
     @patch("src.llm.anthropic_provider.Anthropic")
     def test_returns_structured_response(self, mock_anthropic_class: MagicMock) -> None:
@@ -294,7 +294,7 @@ class TestAnthropicProviderErrorHandling:
         mock_anthropic_class.return_value = mock_client
 
         provider = AnthropicProvider(api_key="test-key")
-        response = provider.generate(prompt="Test", model="claude-haiku-4-5-20251001")
+        response = provider.generate(prompt="Test", model="claude-haiku-4-5")
 
         assert isinstance(response, LLMResponse)
         assert response.text == "Generated text"
@@ -320,6 +320,6 @@ class TestAnthropicProviderErrorHandling:
 
         # Verify SUPPORTED_MODELS includes Claude Haiku 4.5
         provider = AnthropicProvider(api_key="test-key")
-        assert "claude-haiku-4-5-20251001" in provider.SUPPORTED_MODELS
+        assert "claude-haiku-4-5" in provider.SUPPORTED_MODELS
         # Verify alias is also supported
         assert "claude-haiku-4-5" in provider.SUPPORTED_MODELS

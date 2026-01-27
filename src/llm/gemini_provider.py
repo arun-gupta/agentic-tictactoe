@@ -171,8 +171,31 @@ class GeminiProvider(LLMProvider):
 
         for attempt in range(max_retries):
             try:
-                # Create model instance
-                gemini_model = genai.GenerativeModel(model)  # type: ignore[attr-defined]
+                # Create model instance with safety settings
+                # Use lenient safety settings for testing/development
+                safety_settings = [
+                    {
+                        "category": "HARM_CATEGORY_HARASSMENT",
+                        "threshold": "BLOCK_NONE",
+                    },
+                    {
+                        "category": "HARM_CATEGORY_HATE_SPEECH",
+                        "threshold": "BLOCK_NONE",
+                    },
+                    {
+                        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                        "threshold": "BLOCK_NONE",
+                    },
+                    {
+                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                        "threshold": "BLOCK_NONE",
+                    },
+                ]
+
+                gemini_model = genai.GenerativeModel(
+                    model,
+                    safety_settings=safety_settings,
+                )  # type: ignore[attr-defined]
 
                 # Generate content
                 response = gemini_model.generate_content(

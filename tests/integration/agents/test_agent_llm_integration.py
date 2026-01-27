@@ -49,16 +49,21 @@ def _skip_if_not_enabled():
 
 
 def _verify_llm_config():
-    """Verify LLM configuration is valid."""
+    """Verify LLM configuration is valid for agents."""
     config = get_llm_config()
     config_data = config.get_config()
 
     if not config_data.enabled:
         pytest.skip("LLM_ENABLED=true must be set in .env or environment")
 
-    is_valid, error = config.validate_config()
-    if not is_valid:
-        pytest.skip(f"Invalid LLM configuration: {error}")
+    # Validate agent-specific configs (not global config which expects LLM_PROVIDER)
+    scout_valid, scout_error = config.validate_agent_config("scout")
+    if not scout_valid:
+        pytest.skip(f"Invalid Scout LLM configuration: {scout_error}")
+
+    strategist_valid, strategist_error = config.validate_agent_config("strategist")
+    if not strategist_valid:
+        pytest.skip(f"Invalid Strategist LLM configuration: {strategist_error}")
 
 
 def _get_test_game_state(scenario: str = "opening") -> GameState:

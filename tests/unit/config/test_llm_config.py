@@ -272,7 +272,7 @@ class TestLLMConfigEnvironmentVariables:
                             "claude-3-5-haiku-latest",
                         ]
                     },
-                    "gemini": {"models": ["gemini-2.0-flash-exp", "gemini-1.5-pro"]},
+                    "gemini": {"models": ["gemini-2.5-flash", "gemini-1.5-pro"]},
                 }
             }
         }
@@ -321,7 +321,7 @@ class TestLLMConfigEnvironmentVariables:
                 "providers": {
                     "openai": {"models": ["gpt-4o-mini"]},
                     "anthropic": {"models": ["claude-3-5-sonnet-latest"]},
-                    "gemini": {"models": ["gemini-2.0-flash-exp"]},
+                    "gemini": {"models": ["gemini-2.5-flash"]},
                 }
             }
         }
@@ -503,7 +503,7 @@ class TestLLMConfigPerAgentConfiguration:
             "llm": {
                 "providers": {
                     "openai": {"models": ["gpt-5.2", "gpt-4o"]},
-                    "anthropic": {"models": ["claude-haiku-4-5-20251001", "claude-haiku-4-5"]},
+                    "anthropic": {"models": ["claude-haiku-4-5", "claude-haiku-4-5"]},
                 }
             }
         }
@@ -522,7 +522,7 @@ class TestLLMConfigPerAgentConfiguration:
 
         # Should get first model from list for each provider
         assert scout_config.model == "gpt-5.2"
-        assert strategist_config.model == "claude-haiku-4-5-20251001"
+        assert strategist_config.model == "claude-haiku-4-5"
 
     def test_get_agent_config_includes_api_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that get_agent_config() includes the API key for the agent's provider."""
