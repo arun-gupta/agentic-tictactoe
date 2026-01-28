@@ -1739,35 +1739,43 @@ GOOGLE_API_KEY=...
 
 **Result**: LLM configuration is now fully connected! When `LLM_ENABLED=true` in `.env`, Scout and Strategist will make real LLM API calls using the configured providers and models from Phase 5.1 implementation.
 
-#### 5.3. Metrics and Tracking
+#### 5.3. Metrics and Tracking ✅
 
 **Spec Reference**: Section 12.1 - LLM Provider Metadata and Experimentation Tracking
 
-**Files to Create:**
-- `src/metrics/llm_metrics.py`
-- `tests/unit/metrics/test_llm_metrics.py`
+**Files Created:**
+- ✅ `src/metrics/llm_metrics.py`
+- ✅ `tests/unit/metrics/test_llm_metrics.py`
 
-**Implementation:**
-- Track LLM calls per agent
-- Record: prompt, response, tokens, latency, model, provider
-- Store in game session metadata
-- Enable post-game analysis (Section 6 - US-015)
+**Implementation:** ✅
+- ✅ Track LLM calls per agent (Scout, Strategist)
+- ✅ Record: prompt, response, tokens, latency, model, provider, timestamp
+- ✅ Store in game session metadata via GameSessionMetadata model
+- ✅ Enable post-game analysis with complete call history and aggregated metrics
 
-**Subsection Tests**:
-- LLMMetrics.track_call() records LLM call with agent_name, prompt, response, tokens_used, latency_ms, model, provider
-- LLMMetrics.get_agent_calls(agent_name) returns all calls for specific agent (Scout, Strategist)
-- LLMMetrics.get_game_session_metadata() returns aggregated metrics for current game session
-- LLMMetrics stores metadata in game session (persists across game state)
-- LLMMetrics export format includes all required fields (timestamp, agent, prompt, response, tokens, latency, model, provider)
-- LLMMetrics tracks total tokens used per game session
-- LLMMetrics tracks total LLM latency per game session
-- LLMMetrics tracks LLM calls count per agent
-- LLMMetrics enables post-game analysis (data available after game ends)
+**Subsection Tests**: ✅ All 9 tests passing (plus 6 additional validation tests)
+- ✅ LLMMetrics.track_call() records LLM call with agent_name, prompt, response, tokens_used, latency_ms, model, provider
+- ✅ LLMMetrics.get_agent_calls(agent_name) returns all calls for specific agent (Scout, Strategist)
+- ✅ LLMMetrics.get_game_session_metadata() returns aggregated metrics for current game session
+- ✅ LLMMetrics stores metadata in game session (GameSessionMetadata includes all calls)
+- ✅ LLMMetrics export format includes all required fields (timestamp, agent, prompt, response, tokens, latency, model, provider)
+- ✅ LLMMetrics tracks total tokens used per game session
+- ✅ LLMMetrics tracks total LLM latency per game session
+- ✅ LLMMetrics tracks LLM calls count per agent
+- ✅ LLMMetrics enables post-game analysis (data available after game ends)
 
-**Test Coverage** (planned):
-- **Subsection Tests**: ~9 tests for Phase 5.3 incremental development
-- **Acceptance Criteria**: LLM Metrics and Tracking (Section 12.1) - call tracking, metadata recording, session storage, export format
-- **Test Files**: `tests/unit/metrics/test_llm_metrics.py`, `tests/integration/test_llm_tracking.py`
+**Test Coverage**: ✅ 15 tests (9 subsection tests + 6 additional validation/edge case tests)
+- **Test Files**: ✅ `tests/unit/metrics/test_llm_metrics.py`
+- **Acceptance Criteria**: ✅ LLM Metrics and Tracking (Section 12.1) - call tracking, metadata recording, session storage, export format
+
+**Implementation Notes**:
+- Created `LLMCall` Pydantic model for structured call metadata with validation
+- Created `GameSessionMetadata` Pydantic model for aggregated metrics (total_tokens, total_latency_ms, total_calls, per-agent counts)
+- `LLMMetrics` class provides track_call(), get_agent_calls(), get_game_session_metadata() methods
+- ISO 8601 timestamps with timezone for all calls
+- All models support JSON serialization via model_dump() for export
+- Includes reset() method for starting new game sessions
+- Full type safety with mypy strict mode
 
 **Phase 5 Deliverables:**
 - LLM providers integrated (OpenAI, Anthropic, Google)
