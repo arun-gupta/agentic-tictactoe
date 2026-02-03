@@ -35,10 +35,10 @@ class AgentPipeline:
     def __init__(
         self,
         ai_symbol: PlayerSymbol = "O",
-        scout_timeout: float = 5.0,
-        strategist_timeout: float = 3.0,
+        scout_timeout: float = 20.0,
+        strategist_timeout: float = 15.0,
         executor_timeout: float = 2.0,
-        total_timeout: float = 15.0,
+        total_timeout: float = 120.0,
         llm_enabled: bool = False,
         scout_provider: str | None = None,
         scout_model: str | None = None,
@@ -49,10 +49,10 @@ class AgentPipeline:
 
         Args:
             ai_symbol: The symbol this AI is playing as ('X' or 'O')
-            scout_timeout: Timeout for Scout agent in seconds (default: 5.0)
-            strategist_timeout: Timeout for Strategist agent in seconds (default: 3.0)
+            scout_timeout: Timeout for Scout agent in seconds (default: 20.0)
+            strategist_timeout: Timeout for Strategist agent in seconds (default: 15.0)
             executor_timeout: Timeout for Executor agent in seconds (default: 2.0)
-            total_timeout: Total pipeline timeout in seconds (default: 15.0)
+            total_timeout: Total pipeline timeout in seconds (default: 120.0)
             llm_enabled: Enable LLM for Scout and Strategist (default: False)
             scout_provider: LLM provider for Scout (openai, anthropic, gemini)
             scout_model: LLM model for Scout

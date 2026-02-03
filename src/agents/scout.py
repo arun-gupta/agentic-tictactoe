@@ -9,10 +9,11 @@ The Scout Agent analyzes the game board to identify:
 Phase 5 implementation: LLM-enhanced with Pydantic AI and fallback to rule-based.
 """
 
-import asyncio
 import logging
 import time
 from collections.abc import Sequence
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from typing import Literal
 
 from pydantic_ai import Agent
@@ -42,7 +43,7 @@ class ScoutAgent(BaseAgent):
         llm_enabled: bool = False,
         provider: str | None = None,
         model: str | None = None,
-        timeout_seconds: float = 5.0,
+        timeout_seconds: float = 15.0,
         max_retries: int = 3,
     ) -> None:
         """Initialize Scout Agent.
@@ -150,18 +151,20 @@ class ScoutAgent(BaseAgent):
             try:
                 llm_start = time.time()
 
-                # Run LLM call with timeout
-                result = asyncio.run(
-                    asyncio.wait_for(
-                        self._llm_agent.run(prompt),  # type: ignore[union-attr]
-                        timeout=self.timeout_seconds,
-                    )
-                )
+                # Run LLM call with timeout using ThreadPoolExecutor
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(self._llm_agent.run_sync, prompt)  # type: ignore[union-attr]
+                    try:
+                        result = future.result(timeout=self.timeout_seconds)
+                    except FuturesTimeoutError as e:
+                        raise TimeoutError(
+                            f"LLM call timed out after {self.timeout_seconds}s"
+                        ) from e
 
                 llm_latency = (time.time() - llm_start) * 1000
 
                 # Extract BoardAnalysis from result
-                analysis: BoardAnalysis = result.data
+                analysis: BoardAnalysis = result.output
 
                 # Log LLM call metadata
                 logger.info(
@@ -233,11 +236,24 @@ Move Count: {game_state.move_count}
 Current Player: {game_state.get_current_player()}
 
 Provide a comprehensive board analysis including:
-1. Threats: Opponent two-in-a-row patterns with empty cell (immediate danger)
-2. Opportunities: AI two-in-a-row patterns with empty cell (winning moves)
+
+1. **Opportunities (AI Winning Moves)**: CRITICAL - Check ALL 8 lines (3 rows, 3 columns, 2 diagonals) for patterns where {self.ai_symbol} appears EXACTLY twice with one empty cell. These are IMMEDIATE WINNING MOVES for the AI. Each opportunity must specify:
+   - position: The empty cell that completes the winning line
+   - line_type: 'row', 'column', or 'diagonal'
+   - line_index: Which row/column/diagonal (0-2)
+   - confidence: 1.0 (immediate win)
+
+2. **Threats (Opponent Winning Moves)**: Check ALL 8 lines for patterns where {self.opponent_symbol} appears EXACTLY twice with one empty cell. These are positions the AI MUST block. Each threat must specify:
+   - position: The empty cell that would complete opponent's winning line
+   - line_type: 'row', 'column', or 'diagonal'
+   - line_index: Which row/column/diagonal (0-2)
+   - severity: 'critical' (must block immediately)
+
 3. Strategic positions: Available center, corner, and edge positions with priorities
 4. Game phase: opening (0-2 moves), midgame (3-6 moves), or endgame (7-9 moves)
 5. Board evaluation score: -1.0 (opponent winning) to 1.0 (AI winning)
+
+IMPORTANT: Always check for BOTH opportunities AND threats. A position can be BOTH an opportunity (AI winning move) AND a threat blocker, but it should be listed in opportunities if the AI has two-in-a-row there.
 
 Return a structured BoardAnalysis."""
 

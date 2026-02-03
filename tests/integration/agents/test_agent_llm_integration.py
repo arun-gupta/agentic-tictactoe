@@ -96,12 +96,12 @@ def _get_test_game_state(scenario: str = "opening") -> GameState:
         return GameState(board=board, player_symbol="X", ai_symbol="O", move_count=4)
 
     elif scenario == "midgame":
-        # Complex midgame position
+        # Complex midgame position (no winner yet)
         board = Board(
             cells=[
                 ["X", "O", "EMPTY"],
-                ["O", "X", "EMPTY"],
-                ["EMPTY", "EMPTY", "X"],
+                ["O", "EMPTY", "X"],
+                ["EMPTY", "X", "EMPTY"],
             ]
         )
         return GameState(board=board, player_symbol="X", ai_symbol="O", move_count=5)
